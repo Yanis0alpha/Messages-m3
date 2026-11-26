@@ -78,7 +78,9 @@ class FloatingChatChromeTest {
     }
 
     @Test
-    fun callAndOverflowFormASplitButtonWithTheExistingDropdown() {
+    fun callAndOverflowRemainASplitButtonWhileTheMenuUsesFabPills() {
+        val fabMenuItem = chat.substringAfter("private fun ChatFabMenuItem(")
+            .substringBefore("internal fun ChatTopBar(")
         val toolbar = chat.substringAfter("internal fun ChatTopBar(")
             .substringBefore("internal fun ChatMessageList(")
 
@@ -94,6 +96,17 @@ class FloatingChatChromeTest {
         assertTrue(toolbar.contains("SplitButtonDefaults.LeadingIconSize"))
         assertTrue(toolbar.contains("SplitButtonDefaults.TrailingIconSize"))
         assertTrue(toolbar.contains("expanded = menuOpen"))
+        assertTrue(toolbar.contains("containerColor = Color.Transparent"))
+        assertTrue(toolbar.contains("shadowElevation = 0.dp"))
+        assertTrue(toolbar.contains("Arrangement.spacedBy(4.dp)"))
+        assertTrue(toolbar.contains("ChatFabMenuItem("))
+        assertFalse(toolbar.contains("DropdownMenuItem("))
+        assertTrue(fabMenuItem.contains("modifier = Modifier.height(56.dp)"))
+        assertTrue(fabMenuItem.contains("shape = CircleShape"))
+        assertTrue(fabMenuItem.contains("color = MaterialTheme.colorScheme.primaryContainer"))
+        assertTrue(fabMenuItem.contains("contentColor = MaterialTheme.colorScheme.onPrimaryContainer"))
+        assertTrue(fabMenuItem.contains("Modifier.padding(horizontal = 24.dp)"))
+        assertTrue(fabMenuItem.contains("Arrangement.spacedBy(8.dp)"))
         assertTrue(chat.contains("onMenuToggle = { menuOpen = !menuOpen }"))
         assertTrue(toolbar.contains("\"split left=\$left top=\$top right=\$right bottom=\$bottom\""))
         assertTrue(versions.contains("material3 = \"1.5.0\""))

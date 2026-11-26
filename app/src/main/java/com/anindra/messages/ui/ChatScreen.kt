@@ -111,7 +111,10 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SimCard
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -247,7 +250,6 @@ import androidx.compose.ui.graphics.toArgb
 import com.anindra.messages.ui.theme.composerAttachDot
 import com.anindra.messages.ui.theme.motionSpring
 import com.anindra.messages.ui.theme.motionTween
-import com.anindra.messages.ui.theme.chatBar
 import com.anindra.messages.ui.theme.ChatMetaWeight
 import com.anindra.messages.ui.theme.incomingBubble
 import com.anindra.messages.ui.theme.inputPill
@@ -2884,6 +2886,37 @@ internal fun ChatSearchBar(
     )
 }
 
+@Composable
+private fun ChatFabMenuItem(
+    text: String,
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.height(56.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            icon()
+            Text(
+                text,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            trailing?.invoke()
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ChatTopBar(
@@ -3044,61 +3077,120 @@ internal fun ChatTopBar(
                 DropdownMenu(
                     expanded = menuOpen,
                     onDismissRequest = onMenuDismiss,
-                    containerColor = MaterialTheme.colorScheme.chatBar
+                    shape = RoundedCornerShape(0.dp),
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_search)) },
-                        onClick = { onMenuDismiss(); onSearch() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_add_people)) },
-                        onClick = { onMenuDismiss(); onAddPeople() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_details)) },
-                        onClick = { onMenuDismiss(); onOpenDetails() }
-                    )
-                    if (SimSwitcher.shouldShowSwitch(sims.size)) {
-                        sims.sortedBy { it.slotIndex }.forEach { sub ->
-                            val simLabel = simOptionLabel(context, sub)
-                            DropdownMenuItem(
-                                text = {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(simLabel, modifier = Modifier.weight(1f))
-                                        RadioButton(
-                                            selected = sub.subscriptionId == currentSimId,
-                                            onClick = null
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        ChatFabMenuItem(
+                            text = stringResource(R.string.chat_search),
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = { onMenuDismiss(); onSearch() }
+                        )
+                        ChatFabMenuItem(
+                            text = stringResource(R.string.chat_add_people),
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.PersonAdd,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = { onMenuDismiss(); onAddPeople() }
+                        )
+                        ChatFabMenuItem(
+                            text = stringResource(R.string.chat_details),
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = { onMenuDismiss(); onOpenDetails() }
+                        )
+                        if (SimSwitcher.shouldShowSwitch(sims.size)) {
+                            sims.sortedBy { it.slotIndex }.forEach { sub ->
+                                val simLabel = simOptionLabel(context, sub)
+                                ChatFabMenuItem(
+                                    text = simLabel,
+                                    icon = {
+                                        Icon(
+                                            Icons.Rounded.SimCard,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
                                         )
+                                    },
+                                    onClick = {
+                                        onMenuDismiss()
+                                        onSimSelect(sub.subscriptionId, simLabel)
+                                    },
+                                    trailing = {
+                                        CompositionLocalProvider(
+                                            LocalMinimumInteractiveComponentSize provides 0.dp
+                                        ) {
+                                            RadioButton(
+                                                selected = sub.subscriptionId == currentSimId,
+                                                onClick = null,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
                                     }
+                                )
+                            }
+                        }
+                        ChatFabMenuItem(
+                            text = stringResource(R.string.chat_archive),
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.Archive,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = { onMenuDismiss(); onArchive() }
+                        )
+                        ChatFabMenuItem(
+                            text = stringResource(R.string.chat_delete),
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.DeleteOutline,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = { onMenuDismiss(); onDelete() }
+                        )
+                        if (blockingEnabled) {
+                            ChatFabMenuItem(
+                                text = stringResource(
+                                    if (numberIsBlocked) {
+                                        R.string.chat_unblock_number
+                                    } else {
+                                        R.string.chat_block_number
+                                    }
+                                ),
+                                icon = {
+                                    Icon(
+                                        Icons.Rounded.Block,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
                                 },
                                 onClick = {
                                     onMenuDismiss()
-                                    onSimSelect(sub.subscriptionId, simLabel)
+                                    if (numberIsBlocked) onUnblock() else onBlock()
                                 }
-                            )
-                        }
-                    }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_archive)) },
-                        onClick = { onMenuDismiss(); onArchive() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_delete)) },
-                        onClick = { onMenuDismiss(); onDelete() }
-                    )
-                    if (blockingEnabled) {
-                        if (numberIsBlocked) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_unblock_number)) },
-                                onClick = { onMenuDismiss(); onUnblock() }
-                            )
-                        } else {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_block_number)) },
-                                onClick = { onMenuDismiss(); onBlock() }
                             )
                         }
                     }
