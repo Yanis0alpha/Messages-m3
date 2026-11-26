@@ -31,7 +31,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -195,6 +197,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.AnnotatedString
@@ -207,6 +210,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
@@ -2888,31 +2892,89 @@ internal fun ChatSearchBar(
 
 @Composable
 private fun ChatFabMenuItem(
+    order: Int,
+    expanded: Boolean,
+    backgroundRoot: android.view.View,
     text: String,
     icon: @Composable () -> Unit,
     onClick: () -> Unit,
     trailing: (@Composable () -> Unit)? = null
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.height(56.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val reduceMotion = LocalReduceMotion.current
+    val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
+    var visible by remember { mutableStateOf(false) }
+    var pillPosition by remember { mutableStateOf(Offset.Zero) }
+
+    LaunchedEffect(expanded, order, reduceMotion) {
+        if (!expanded) {
+            visible = false
+            return@LaunchedEffect
+        }
+        if (!reduceMotion) delay(order * 45L)
+        visible = true
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(
+            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4)
+        ) + expandHorizontally(
+            expandFrom = Alignment.End,
+            animationSpec = motionSpring(reduceMotion)
+        ),
+        exit = fadeOut(
+            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4)
+        ) + shrinkHorizontally(
+            shrinkTowards = Alignment.End,
+            animationSpec = motionSpring(reduceMotion)
+        )
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Surface(
+            onClick = onClick,
+            shape = CircleShape,
+            color = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ) {
-            icon()
-            Text(
-                text,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            trailing?.invoke()
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .onGloballyPositioned { coordinates ->
+                        val current = coordinates.positionInWindow()
+                        if (pillPosition != current) pillPosition = current
+                    }
+            ) {
+                DynamicBackdropBlur(
+                    backgroundRoot = backgroundRoot,
+                    samplePosition = pillPosition,
+                    blurRadius = 32.dp,
+                    modifier = Modifier.matchParentSize()
+                )
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(
+                                alpha = surfaceAlpha
+                            )
+                        )
+                )
+                Row(
+                    modifier = Modifier
+                        .height(56.dp)
+                        .padding(horizontal = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    icon()
+                    Text(
+                        text,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    trailing?.invoke()
+                }
+            }
         }
     }
 }
@@ -2942,6 +3004,7 @@ internal fun ChatTopBar(
     onSearch: () -> Unit
 ) {
     val context = LocalContext.current
+    val backdropRoot = LocalView.current.rootView
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
@@ -3086,7 +3149,11 @@ internal fun ChatTopBar(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        var itemOrder = 0
                         ChatFabMenuItem(
+                            order = itemOrder++,
+                            expanded = menuOpen,
+                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_search),
                             icon = {
                                 Icon(
@@ -3098,6 +3165,9 @@ internal fun ChatTopBar(
                             onClick = { onMenuDismiss(); onSearch() }
                         )
                         ChatFabMenuItem(
+                            order = itemOrder++,
+                            expanded = menuOpen,
+                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_add_people),
                             icon = {
                                 Icon(
@@ -3109,6 +3179,9 @@ internal fun ChatTopBar(
                             onClick = { onMenuDismiss(); onAddPeople() }
                         )
                         ChatFabMenuItem(
+                            order = itemOrder++,
+                            expanded = menuOpen,
+                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_details),
                             icon = {
                                 Icon(
@@ -3123,6 +3196,9 @@ internal fun ChatTopBar(
                             sims.sortedBy { it.slotIndex }.forEach { sub ->
                                 val simLabel = simOptionLabel(context, sub)
                                 ChatFabMenuItem(
+                                    order = itemOrder++,
+                                    expanded = menuOpen,
+                                    backgroundRoot = backdropRoot,
                                     text = simLabel,
                                     icon = {
                                         Icon(
@@ -3150,6 +3226,9 @@ internal fun ChatTopBar(
                             }
                         }
                         ChatFabMenuItem(
+                            order = itemOrder++,
+                            expanded = menuOpen,
+                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_archive),
                             icon = {
                                 Icon(
@@ -3161,6 +3240,9 @@ internal fun ChatTopBar(
                             onClick = { onMenuDismiss(); onArchive() }
                         )
                         ChatFabMenuItem(
+                            order = itemOrder++,
+                            expanded = menuOpen,
+                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_delete),
                             icon = {
                                 Icon(
@@ -3173,6 +3255,9 @@ internal fun ChatTopBar(
                         )
                         if (blockingEnabled) {
                             ChatFabMenuItem(
+                                order = itemOrder++,
+                                expanded = menuOpen,
+                                backgroundRoot = backdropRoot,
                                 text = stringResource(
                                     if (numberIsBlocked) {
                                         R.string.chat_unblock_number
