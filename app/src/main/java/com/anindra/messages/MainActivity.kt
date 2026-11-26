@@ -2059,11 +2059,14 @@ open class MainActivity : FragmentActivity() {
                     }
                 }
                 val chatUsesSheet = !twoPaneLayout && !bubbleMode
-                // A modal chat overlays the inbox; its top-level navigation
-                // remains composed underneath so it never blinks out and back.
+                val newChatUsesSheet = !twoPaneLayout && !bubbleMode
+                // Modal chats and the contact picker overlay the inbox; its
+                // top-level navigation remains composed underneath so it never
+                // blinks out and back through either sheet transition.
                 val showTopLevelNavigation = useNewUi && (
                     navRoute in setOf("list", "settings") ||
-                        (chatUsesSheet && navRoute == "chat")
+                        (chatUsesSheet && navRoute == "chat") ||
+                        (newChatUsesSheet && navRoute == "new")
                 )
                 var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
                 val leaveChat: () -> Unit = {
@@ -2108,6 +2111,27 @@ open class MainActivity : FragmentActivity() {
                         onInitialDraftConsumed = { pendingShareBody = "" },
                         onInitialMediaConsumed = { pendingShareMedia = emptyList() },
                         onInitialStagedMediaConsumed = { stagedMediaProbe = emptyList() }
+                    )
+                }
+
+                val leaveNewChat: () -> Unit = {
+                    pendingShareBody = ""
+                    pendingShareMedia = emptyList()
+                    navRoute = "list"
+                }
+                val newChatContent: @Composable (() -> Unit) -> Unit = { newChatBack ->
+                    NewChatScreen(
+                        vm = vm,
+                        onBack = newChatBack,
+                        showBackButton = !newChatUsesSheet,
+                        translucentBackground = newChatUsesSheet,
+                        onPick = { address, name ->
+                            vm.openOrCreate(address, name) { id ->
+                                chatId = id
+                                chatSearchQuery = null
+                                navRoute = "chat"
+                            }
+                        }
                     )
                 }
 
@@ -2160,6 +2184,10 @@ open class MainActivity : FragmentActivity() {
                                 when {
                                     chatUsesSheet &&
                                         (initialState == "chat" || targetState == "chat") ->
+                                        androidx.compose.animation.EnterTransition.None togetherWith
+                                            androidx.compose.animation.ExitTransition.None
+                                    newChatUsesSheet &&
+                                        (initialState == "new" || targetState == "new") ->
                                         androidx.compose.animation.EnterTransition.None togetherWith
                                             androidx.compose.animation.ExitTransition.None
                                     // Opening a chat covers the list from below, the
@@ -2218,27 +2246,16 @@ open class MainActivity : FragmentActivity() {
                             } else {
                                 androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
                             }
-                        } else if (target == "chat" && chatUsesSheet) {
+                        } else if (
+                            (target == "chat" && chatUsesSheet) ||
+                            (target == "new" && newChatUsesSheet)
+                        ) {
                             androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
                         } else {
                             androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                                 when (target) {
                                     "opening" -> androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
-                                    "new" -> NewChatScreen(
-                                        vm = vm,
-                                        onBack = {
-                                            pendingShareBody = ""
-                                            pendingShareMedia = emptyList()
-                                            navRoute = "list"
-                                        },
-                                        onPick = { address, name ->
-                                            vm.openOrCreate(address, name) { id ->
-                                                chatId = id
-                                                chatSearchQuery = null
-                                                navRoute = "chat"
-                                            }
-                                        }
-                                    )
+                                    "new" -> newChatContent(leaveNewChat)
                                     "settings" -> if (useNewUi) SettingsScreen(
                                         vm = vm,
                                         onBack = { navRoute = "list" },
@@ -2407,6 +2424,14 @@ onOpenAccessibility = { navRoute = "accessibility" },
                             onGestureDismiss = leaveChatByGesture
                         ) { requestDismiss ->
                             chatContent(requestDismiss)
+                        }
+                    }
+                    if (newChatUsesSheet && navRoute == "new") {
+                        ConversationChatSheet(
+                            onDismissed = leaveNewChat,
+                            onGestureDismiss = leaveNewChat
+                        ) { requestDismiss ->
+                            newChatContent(requestDismiss)
                         }
                     }
                     if (showTopLevelNavigation) {

@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,7 +47,13 @@ data class Contact(val name: String, val number: String, val workProfile: Boolea
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewChatScreen(vm: com.anindra.messages.AppViewModel, onBack: () -> Unit, onPick: (String, String?) -> Unit) {
+fun NewChatScreen(
+    vm: com.anindra.messages.AppViewModel,
+    onBack: () -> Unit,
+    onPick: (String, String?) -> Unit,
+    showBackButton: Boolean = true,
+    translucentBackground: Boolean = false
+) {
     var query by remember { mutableStateOf("") }
     val context = androidx.compose.ui.platform.LocalContext.current
     androidx.activity.compose.BackHandler(onBack = onBack)
@@ -60,9 +67,27 @@ fun NewChatScreen(vm: com.anindra.messages.AppViewModel, onBack: () -> Unit, onP
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.new_chat_title)) }, navigationIcon = {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back)) }
-        }) }
+        containerColor = if (translucentBackground) {
+            Color.Transparent
+        } else {
+            MaterialTheme.colorScheme.background
+        },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.new_chat_title)) },
+                navigationIcon = {
+                    if (showBackButton) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                stringResource(R.string.icon_back)
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             TextField(

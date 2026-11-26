@@ -44,19 +44,21 @@ class ConversationChatSheetTest {
         val sheet = source("java/com/anindra/messages/ui/ConversationChatSheet.kt")
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
         assertTrue(sheet.contains("CONTAINER_ALPHA = 0.88f"))
         assertTrue(sheet.contains("SCRIM_ALPHA = 0.18f"))
-        assertTrue(sheet.contains("RenderEffect.createBlurEffect("))
-        assertTrue(sheet.contains("backgroundRoot.draw(canvas)"))
-        assertTrue(sheet.contains("AndroidView("))
-        assertTrue(sheet.contains("blurView.followSheet(sheetPosition)"))
-        assertTrue(sheet.contains("getLocationOnScreen(ownLocation)"))
+        assertTrue(sheet.contains("DynamicBackdropBlur("))
+        assertTrue(blur.contains("RenderEffect.createBlurEffect("))
+        assertTrue(blur.contains("backgroundRoot.draw(canvas)"))
+        assertTrue(blur.contains("AndroidView("))
+        assertTrue(blur.contains("blurView.follow(samplePosition)"))
+        assertTrue(blur.contains("getLocationOnScreen(ownLocation)"))
         assertTrue(sheet.contains(".height(sheetHeight)"))
         assertTrue(sheet.contains(".clip(sheetShape)"))
         assertTrue(sheet.contains("coordinates.positionInWindow()"))
         assertTrue(sheet.contains("containerColor = Color.Transparent"))
-        assertFalse(sheet.contains("FLAG_BLUR_BEHIND"))
-        assertFalse(sheet.contains("setBackgroundBlurRadius"))
+        assertFalse(blur.contains("FLAG_BLUR_BEHIND"))
+        assertFalse(blur.contains("setBackgroundBlurRadius"))
         assertTrue(sheet.contains("alpha = ChatSheetLayout.CONTAINER_ALPHA"))
         assertTrue(activity.contains("translucentBackground = chatUsesSheet"))
         assertTrue(chat.contains("if (translucentBackground)"))
@@ -91,6 +93,34 @@ class ConversationChatSheetTest {
                     "(initialState == \"chat\" || targetState == \"chat\")"
             )
         )
+    }
+
+    @Test
+    fun longPressActionSheetUsesTheSameDynamicGlass() {
+        val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
+        val sheet = conversations.substringAfter("if (sheetConvo != null)")
+            .substringBefore("permanentDeleteTarget?.let")
+        assertTrue(sheet.contains("containerColor = Color.Transparent"))
+        assertTrue(sheet.contains("DynamicBackdropBlur("))
+        assertTrue(sheet.contains("actionSheetPosition"))
+        assertTrue(sheet.contains("coordinates.positionInWindow()"))
+        assertTrue(sheet.contains("alpha = ChatSheetLayout.CONTAINER_ALPHA"))
+        assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
+    }
+
+    @Test
+    fun startChatOpensTheContactPickerInTheSameGlassSheet() {
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val newChat = source("java/com/anindra/messages/ui/NewChatScreen.kt")
+        assertTrue(activity.contains("val newChatUsesSheet = !twoPaneLayout && !bubbleMode"))
+        assertTrue(activity.contains("newChatUsesSheet && navRoute == \"new\""))
+        assertTrue(activity.contains("newChatContent(requestDismiss)"))
+        assertTrue(activity.contains("onPick = { address, name ->"))
+        assertTrue(activity.contains("vm.openOrCreate(address, name)"))
+        assertTrue(activity.contains("navRoute = \"chat\""))
+        assertTrue(newChat.contains("showBackButton: Boolean = true"))
+        assertTrue(newChat.contains("translucentBackground: Boolean = false"))
+        assertTrue(newChat.contains("if (translucentBackground)"))
     }
 
     @Test

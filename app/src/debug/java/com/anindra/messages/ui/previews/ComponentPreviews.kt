@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.CameraAlt
@@ -19,8 +20,13 @@ import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -32,11 +38,13 @@ import com.anindra.messages.data.SwipeAction
 import com.anindra.messages.data.DatabaseCompatibility
 import com.anindra.messages.ui.AttachAction
 import com.anindra.messages.ui.AttachmentCarousel
+import com.anindra.messages.ui.BackdropCaptureGuard
 import com.anindra.messages.ui.AttachmentCarouselItem
 import com.anindra.messages.ui.BubblePosition
 import com.anindra.messages.ui.ChatBubble
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.DialogText
+import com.anindra.messages.ui.DynamicBackdropBlur
 import com.anindra.messages.ui.ReactionBar
 import com.anindra.messages.ui.SuggestionChips
 import com.anindra.messages.ui.ReactionChips
@@ -108,6 +116,50 @@ private fun MessagesNavigationBarPreview() {
                 selectedDestination = TopLevelDestination.MESSAGES,
                 onDestinationSelected = {}
             )
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Dynamic glass", showBackground = true, widthDp = 380, heightDp = 180)
+@Composable
+private fun DynamicBackdropBlurPreview() {
+    MessagesTheme(mode = "system") {
+        val backgroundRoot = LocalView.current.rootView
+        val captureGuard = remember { BackdropCaptureGuard() }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(88.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .drawWithContent {
+                        if (!captureGuard.active) drawContent()
+                    }
+            ) {
+                DynamicBackdropBlur(
+                    backgroundRoot = backgroundRoot,
+                    samplePosition = Offset.Zero,
+                    captureGuard = captureGuard,
+                    modifier = Modifier.matchParentSize()
+                )
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))
+                )
+                androidx.compose.material3.Text(
+                    "Dynamic glass",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }

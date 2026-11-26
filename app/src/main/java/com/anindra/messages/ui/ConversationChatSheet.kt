@@ -1,11 +1,5 @@
 package com.anindra.messages.ui
 
-import android.content.Context
-import android.graphics.Canvas
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.os.Build
-import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,7 +35,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.anindra.messages.R
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -52,57 +45,6 @@ internal object ChatSheetLayout {
     const val SCRIM_ALPHA = 0.18f
     val DRAG_HANDLE_HEIGHT = 48.dp
     val BACKGROUND_BLUR_RADIUS = 32.dp
-}
-
-/** Draws the activity behind the dialog into only this view's moving bounds. */
-private class SheetBackdropBlurView(
-    context: Context,
-    private val backgroundRoot: View,
-    blurRadiusPx: Float
-) : View(context) {
-    private var sampledX = Float.NaN
-    private var sampledY = Float.NaN
-    private val rootLocation = IntArray(2)
-    private val ownLocation = IntArray(2)
-
-    init {
-        setWillNotDraw(false)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            setRenderEffect(
-                RenderEffect.createBlurEffect(
-                    blurRadiusPx,
-                    blurRadiusPx,
-                    Shader.TileMode.CLAMP
-                )
-            )
-        }
-    }
-
-    fun followSheet(position: Offset) {
-        if (sampledX != position.x || sampledY != position.y) {
-            sampledX = position.x
-            sampledY = position.y
-            invalidate()
-        }
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
-            !backgroundRoot.isAttachedToWindow
-        ) {
-            return
-        }
-        backgroundRoot.getLocationOnScreen(rootLocation)
-        getLocationOnScreen(ownLocation)
-        val checkpoint = canvas.save()
-        canvas.translate(
-            (rootLocation[0] - ownLocation[0]).toFloat(),
-            (rootLocation[1] - ownLocation[1]).toFloat()
-        )
-        backgroundRoot.draw(canvas)
-        canvas.restoreToCount(checkpoint)
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,9 +61,6 @@ internal fun ConversationChatSheet(
     // Captured before ModalBottomSheet enters its dialog window: this is the
     // inbox/navigation tree that the glass samples, never the sheet itself.
     val backgroundRoot = LocalView.current.rootView
-    val blurRadiusPx = with(LocalDensity.current) {
-        ChatSheetLayout.BACKGROUND_BLUR_RADIUS.toPx()
-    }
     var sheetPosition by remember { mutableStateOf(Offset.Zero) }
 
     fun finishDismiss(action: () -> Unit) {
@@ -179,15 +118,12 @@ internal fun ConversationChatSheet(
                         )
                     }
             ) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    AndroidView(
-                        factory = { context ->
-                            SheetBackdropBlurView(context, backgroundRoot, blurRadiusPx)
-                        },
-                        update = { blurView -> blurView.followSheet(sheetPosition) },
-                        modifier = Modifier.matchParentSize()
-                    )
-                }
+                DynamicBackdropBlur(
+                    backgroundRoot = backgroundRoot,
+                    samplePosition = sheetPosition,
+                    blurRadius = ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
+                    modifier = Modifier.matchParentSize()
+                )
                 Box(
                     Modifier
                         .matchParentSize()

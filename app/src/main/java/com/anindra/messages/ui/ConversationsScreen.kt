@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -108,7 +109,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -125,6 +128,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -206,6 +210,8 @@ fun ConversationsScreen(
     val showArchived = selectedDestination == TopLevelDestination.ARCHIVED
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val backdropRoot = LocalView.current.rootView
+    var actionSheetPosition by remember { mutableStateOf(Offset.Zero) }
     val syncDone by vm.initialSyncDone.collectAsState()
     val syncProgress by vm.initialSyncProgress.collectAsState()
     // live SMS access state (re-checked on resume)
@@ -811,60 +817,128 @@ fun ConversationsScreen(
 
     if (sheetConvo != null) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val actionSheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ModalBottomSheet(
             onDismissRequest = { sheetConvoId = -1L },
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+            containerColor = Color.Transparent,
+            scrimColor = MaterialTheme.colorScheme.scrim.copy(
+                alpha = ChatSheetLayout.SCRIM_ALPHA
+            ),
+            shape = actionSheetShape,
+            dragHandle = null
         ) {
-            Column(
-                modifier = Modifier
+            Box(
+                Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp)
+                    .clip(actionSheetShape)
+                    .onGloballyPositioned { coordinates ->
+                        val current = coordinates.positionInWindow()
+                        if (actionSheetPosition != current) actionSheetPosition = current
+                    }
             ) {
-                Text(
-                    text = if (sheetConvo.name == sheetConvo.address) BidiText.ltr(sheetConvo.display) else sheetConvo.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                DynamicBackdropBlur(
+                    backgroundRoot = backdropRoot,
+                    samplePosition = actionSheetPosition,
+                    modifier = Modifier.matchParentSize()
                 )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(
+                            MaterialTheme.colorScheme.surface.copy(
+                                alpha = ChatSheetLayout.CONTAINER_ALPHA
+                            )
+                        )
                 )
-                if (showArchived) {
-                    SheetActionRow(Icons.Rounded.Archive, stringResource(R.string.sheet_unarchive), MaterialTheme.colorScheme.primary) {
-                        sheetConvoId = -1L; vm.unarchiveConversation(sheetConvo.id)
-                    }
-                } else {
-                    if (rowSettings.pinnedEnabled) {
-                        SheetActionRow(
-                            Icons.Rounded.PushPin,
-                            if (sheetConvo.pinned) stringResource(R.string.sheet_unpin) else stringResource(R.string.sheet_pin),
-                            MaterialTheme.colorScheme.primary
-                        ) { sheetConvoId = -1L; vm.togglePin(sheetConvo.id) }
-                    }
-                    if (rowSettings.archivingEnabled) {
-                        SheetActionRow(Icons.Rounded.Archive, stringResource(R.string.sheet_archive), MaterialTheme.colorScheme.primary) {
-                            sheetConvoId = -1L; archiveWithUndo(sheetConvo)
-                        }
-                    }
-                    SheetActionRow(
-                        Icons.Rounded.SelectAll,
-                        stringResource(R.string.sheet_multi_select),
-                        MaterialTheme.colorScheme.primary
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(ChatSheetLayout.DRAG_HANDLE_HEIGHT),
+                        contentAlignment = Alignment.Center
                     ) {
-                        sheetConvoId = -1L
-                        selectedIds = setOf(sheetConvo.id)
+                        BottomSheetDefaults.DragHandle()
                     }
-                    SheetActionRow(Icons.Rounded.Delete, stringResource(R.string.sheet_delete), MaterialTheme.colorScheme.error) {
-                        sheetConvoId = -1L; moveToTrash(sheetConvo)
-                    }
-                    if (rowSettings.blockingEnabled) {
-                        SheetActionRow(Icons.Rounded.Block, stringResource(R.string.sheet_block), MaterialTheme.colorScheme.error) {
-                            sheetConvoId = -1L; vm.blockNumber(sheetConvo.address)
+                    Text(
+                        text = if (sheetConvo.name == sheetConvo.address) {
+                            BidiText.ltr(sheetConvo.display)
+                        } else {
+                            sheetConvo.name
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    if (showArchived) {
+                        SheetActionRow(
+                            Icons.Rounded.Archive,
+                            stringResource(R.string.sheet_unarchive),
+                            MaterialTheme.colorScheme.primary
+                        ) {
+                            sheetConvoId = -1L
+                            vm.unarchiveConversation(sheetConvo.id)
+                        }
+                    } else {
+                        if (rowSettings.pinnedEnabled) {
+                            SheetActionRow(
+                                Icons.Rounded.PushPin,
+                                if (sheetConvo.pinned) {
+                                    stringResource(R.string.sheet_unpin)
+                                } else {
+                                    stringResource(R.string.sheet_pin)
+                                },
+                                MaterialTheme.colorScheme.primary
+                            ) {
+                                sheetConvoId = -1L
+                                vm.togglePin(sheetConvo.id)
+                            }
+                        }
+                        if (rowSettings.archivingEnabled) {
+                            SheetActionRow(
+                                Icons.Rounded.Archive,
+                                stringResource(R.string.sheet_archive),
+                                MaterialTheme.colorScheme.primary
+                            ) {
+                                sheetConvoId = -1L
+                                archiveWithUndo(sheetConvo)
+                            }
+                        }
+                        SheetActionRow(
+                            Icons.Rounded.SelectAll,
+                            stringResource(R.string.sheet_multi_select),
+                            MaterialTheme.colorScheme.primary
+                        ) {
+                            sheetConvoId = -1L
+                            selectedIds = setOf(sheetConvo.id)
+                        }
+                        SheetActionRow(
+                            Icons.Rounded.Delete,
+                            stringResource(R.string.sheet_delete),
+                            MaterialTheme.colorScheme.error
+                        ) {
+                            sheetConvoId = -1L
+                            moveToTrash(sheetConvo)
+                        }
+                        if (rowSettings.blockingEnabled) {
+                            SheetActionRow(
+                                Icons.Rounded.Block,
+                                stringResource(R.string.sheet_block),
+                                MaterialTheme.colorScheme.error
+                            ) {
+                                sheetConvoId = -1L
+                                vm.blockNumber(sheetConvo.address)
+                            }
                         }
                     }
                 }

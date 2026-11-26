@@ -1,5 +1,6 @@
 package com.anindra.messages.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,9 +24,19 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -38,6 +49,7 @@ enum class TopLevelDestination {
 }
 
 internal val TopLevelNavigationBarClearance = 104.dp
+internal const val TopLevelNavigationBarAlpha = 0.82f
 
 private data class TopLevelNavigationItem(
     val destination: TopLevelDestination,
@@ -52,6 +64,10 @@ internal fun MessagesNavigationBar(
     onDestinationSelected: (TopLevelDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backgroundRoot = LocalView.current.rootView
+    val captureGuard = remember { BackdropCaptureGuard() }
+    var barPosition by remember { mutableStateOf(Offset.Zero) }
+    val barShape = RoundedCornerShape(32.dp)
     val items = listOf(
         TopLevelNavigationItem(
             destination = TopLevelDestination.MESSAGES,
@@ -82,38 +98,69 @@ internal fun MessagesNavigationBar(
     ) {
         Surface(
             modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
+            shape = barShape,
+            color = Color.Transparent,
             shadowElevation = 8.dp
         ) {
-            NavigationBar(
-                modifier = Modifier.height(80.dp),
-                containerColor = Color.Transparent,
-                tonalElevation = 0.dp,
-                windowInsets = WindowInsets(0, 0, 0, 0)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(barShape)
+                    .onGloballyPositioned { coordinates ->
+                        val current = coordinates.positionInWindow()
+                        if (barPosition != current) barPosition = current
+                    }
+                    // A same-window capture would otherwise draw this bar into
+                    // its own backdrop. Skip it only during that nested draw.
+                    .drawWithContent {
+                        if (!captureGuard.active) drawContent()
+                    }
             ) {
-                items.forEach { item ->
-                    val selected = selectedDestination == item.destination
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = { onDestinationSelected(item.destination) },
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = null
+                DynamicBackdropBlur(
+                    backgroundRoot = backgroundRoot,
+                    samplePosition = barPosition,
+                    captureGuard = captureGuard,
+                    blurRadius = 24.dp,
+                    modifier = Modifier.matchParentSize()
+                )
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+                                alpha = TopLevelNavigationBarAlpha
                             )
-                        },
-                        label = { Text(item.label, maxLines = 1) },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    )
+                )
+                NavigationBar(
+                    modifier = Modifier.matchParentSize(),
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp,
+                    windowInsets = WindowInsets(0, 0, 0, 0)
+                ) {
+                    items.forEach { item ->
+                        val selected = selectedDestination == item.destination
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = { onDestinationSelected(item.destination) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = null
+                                )
+                            },
+                            label = { Text(item.label, maxLines = 1) },
+                            alwaysShowLabel = true,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    }
                 }
             }
         }
