@@ -43,7 +43,7 @@ class ChatSearchHandoffWiringTest {
     fun theHandoffIsStillAppliedWhenTheChatOpens() {
         // The clear must happen on the way *out*, never on the way in — clearing
         // it at open time would silently disable the whole feature.
-        val callSite = source.substringAfter("else -> ChatScreen(")
+        val callSite = source.substringAfter("ChatScreen(")
         assertTrue(
             "ChatScreen must still receive the query when opened from search",
             callSite.substringBefore(")").contains("searchQuery = chatSearchQuery"),

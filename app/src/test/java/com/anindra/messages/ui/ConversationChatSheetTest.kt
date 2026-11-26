@@ -35,7 +35,8 @@ class ConversationChatSheetTest {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         assertTrue(activity.contains("val chatUsesSheet = !twoPaneLayout && !bubbleMode"))
         assertTrue(activity.contains("target == \"chat\" && chatUsesSheet"))
-        assertTrue(activity.contains("ConversationChatSheet(onDismiss = leaveChat)"))
+        assertTrue(activity.contains("onDismissed = leaveChat"))
+        assertTrue(activity.contains("onGestureDismiss = leaveChatByGesture"))
         assertTrue(activity.contains("chatContent(requestDismiss)"))
         assertTrue(
             activity.contains(
@@ -53,8 +54,10 @@ class ConversationChatSheetTest {
 
     @Test
     fun aSwipeDismissStillPersistsTheLatestDraft() {
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
-        assertTrue(chat.contains("val latestDraft = rememberUpdatedState(draft)"))
-        assertTrue(chat.contains("vm.saveDraftAndMaybeTrash(conversationId, latestDraft.value.trim())"))
+        assertTrue(chat.contains("SideEffect { onDraftSnapshot(draft) }"))
+        assertTrue(activity.contains("vm.saveDraftAndMaybeTrash(chatId, chatDraftSnapshot.trim())"))
+        assertTrue(activity.contains("onGestureDismiss = leaveChatByGesture"))
     }
 }

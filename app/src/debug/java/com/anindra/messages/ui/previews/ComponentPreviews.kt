@@ -123,7 +123,7 @@ private fun ConversationChatSheetPreview() {
                 .height(800.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            ConversationChatSheet(onDismiss = {}) {
+            ConversationChatSheet(onDismissed = {}, onGestureDismiss = {}) {
                 Column(
                     Modifier
                         .fillMaxWidth()

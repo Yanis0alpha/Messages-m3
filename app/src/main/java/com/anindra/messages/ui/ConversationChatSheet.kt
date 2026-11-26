@@ -24,7 +24,8 @@ internal object ChatSheetLayout {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConversationChatSheet(
-    onDismiss: () -> Unit,
+    onDismissed: () -> Unit,
+    onGestureDismiss: () -> Unit,
     content: @Composable (requestDismiss: () -> Unit) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -32,10 +33,10 @@ internal fun ConversationChatSheet(
     var dismissing by remember { mutableStateOf(false) }
     var dismissed by remember { mutableStateOf(false) }
 
-    fun finishDismiss() {
+    fun finishDismiss(action: () -> Unit) {
         if (!dismissed) {
             dismissed = true
-            onDismiss()
+            action()
         }
     }
 
@@ -44,13 +45,13 @@ internal fun ConversationChatSheet(
             dismissing = true
             scope.launch {
                 sheetState.hide()
-                finishDismiss()
+                finishDismiss(onDismissed)
             }
         }
     }
 
     ModalBottomSheet(
-        onDismissRequest = { finishDismiss() },
+        onDismissRequest = { finishDismiss(onGestureDismiss) },
         modifier = Modifier.fillMaxHeight(ChatSheetLayout.HEIGHT_FRACTION),
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),

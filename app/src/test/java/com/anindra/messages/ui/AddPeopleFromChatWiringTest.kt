@@ -37,7 +37,7 @@ class AddPeopleFromChatWiringTest {
 
     @Test
     fun mainActivityOpensThePickerFromTheChat() {
-        val call = main.substringAfter("else -> ChatScreen(")
+        val call = main.substringAfter("ChatScreen(")
         assertTrue(
             "the chat must open the add-people picker for its own conversation",
             Regex("onAddPeople = \\{[\\s\\S]{0,200}?detailsId = chatId[\\s\\S]{0,200}?navRoute = \"add-people\"")

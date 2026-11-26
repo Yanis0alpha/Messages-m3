@@ -2059,6 +2059,7 @@ open class MainActivity : FragmentActivity() {
                     }
                 }
                 val chatUsesSheet = !twoPaneLayout && !bubbleMode
+                var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
                 val leaveChat: () -> Unit = {
                     pendingShareBody = ""
                     pendingShareMedia = emptyList()
@@ -2068,6 +2069,10 @@ open class MainActivity : FragmentActivity() {
                         BubbleBack.SHOW_LIST -> navRoute = "list"
                         BubbleBack.STAY -> Unit
                     }
+                }
+                val leaveChatByGesture: () -> Unit = {
+                    vm.saveDraftAndMaybeTrash(chatId, chatDraftSnapshot.trim())
+                    leaveChat()
                 }
                 val chatContent: @Composable (() -> Unit) -> Unit = { chatBack ->
                     ChatScreen(
@@ -2090,6 +2095,7 @@ open class MainActivity : FragmentActivity() {
                             addPeopleReturn = "chat"
                             navRoute = "add-people"
                         },
+                        onDraftSnapshot = { chatDraftSnapshot = it },
                         onInitialDraftConsumed = { pendingShareBody = "" },
                         onInitialMediaConsumed = { pendingShareMedia = emptyList() },
                         onInitialStagedMediaConsumed = { stagedMediaProbe = emptyList() }
@@ -2387,7 +2393,10 @@ onOpenAccessibility = { navRoute = "accessibility" },
                         }
                     }
                     if (chatUsesSheet && navRoute == "chat") {
-                        ConversationChatSheet(onDismiss = leaveChat) { requestDismiss ->
+                        ConversationChatSheet(
+                            onDismissed = leaveChat,
+                            onGestureDismiss = leaveChatByGesture
+                        ) { requestDismiss ->
                             chatContent(requestDismiss)
                         }
                     }
