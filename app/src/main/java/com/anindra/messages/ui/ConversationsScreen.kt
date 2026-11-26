@@ -534,6 +534,7 @@ fun ConversationsScreen(
         HomeShapeBackdrop()
         Scaffold(
             containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (showNavigationBar) {
@@ -574,7 +575,11 @@ fun ConversationsScreen(
             ) {
                 if (searching) {
                     IconButton(onClick = { searching = false; query = "" }) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_close_search))
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.icon_close_search),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
                     }
                     val focusRequester = remember { FocusRequester() }
                     LaunchedEffect(Unit) { focusRequester.requestFocus() }
@@ -584,8 +589,13 @@ fun ConversationsScreen(
                         placeholder = { Text(stringResource(R.string.conversations_search)) },
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent
                         ),
@@ -601,10 +611,15 @@ fun ConversationsScreen(
                             }
                         ),
                         style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = { searching = true }) {
-                        Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
+                        Icon(
+                            Icons.Outlined.Search,
+                            stringResource(R.string.icon_search),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
                     }
                 }
             }
@@ -1005,6 +1020,7 @@ fun ConversationsScreen(
                             sheetConvo.name
                         },
                         style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

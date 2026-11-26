@@ -193,12 +193,6 @@ private fun PersistentConversationSheetPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             HomeShapeBackdrop()
-            PersistentConversationSheet(
-                conversationOpen = false,
-                onCollapsed = {},
-                captureGuard = captureGuard,
-                peekHeight = 80.dp
-            ) { }
             MessagesNavigationBar(
                 selectedDestination = TopLevelDestination.MESSAGES,
                 onDestinationSelected = {},
@@ -207,6 +201,12 @@ private fun PersistentConversationSheetPreview() {
                     .padding(bottom = 80.dp),
                 sharedCaptureGuard = captureGuard
             )
+            PersistentConversationSheet(
+                conversationOpen = false,
+                onCollapsed = {},
+                captureGuard = captureGuard,
+                peekHeight = 80.dp
+            ) { }
         }
     }
 }

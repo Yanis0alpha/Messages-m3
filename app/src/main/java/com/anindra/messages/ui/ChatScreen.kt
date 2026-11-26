@@ -1680,6 +1680,7 @@ fun ChatScreen(
         } else {
             MaterialTheme.colorScheme.background
         },
+        contentColor = MaterialTheme.colorScheme.onBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             val topBarMode = when {
@@ -2524,6 +2525,7 @@ internal fun FloatingChatHeader(
             },
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         tonalElevation = 3.dp,
         shadowElevation = 4.dp
     ) {
@@ -2660,7 +2662,10 @@ internal fun ChatSearchBar(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
         navigationIcon = {
             IconButton(onClick = onClose) {
@@ -2678,8 +2683,13 @@ internal fun ChatSearchBar(
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge,
                 colors = TextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 ),
@@ -2753,7 +2763,10 @@ internal fun ChatTopBar(
     val context = LocalContext.current
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
         windowInsets = if (showBackButton) {
             TopAppBarDefaults.windowInsets
@@ -2809,6 +2822,7 @@ internal fun ChatTopBar(
                                     else BidiText.ltr(it.display)
                                 } ?: "",
                                 style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.widthIn(

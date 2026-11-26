@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -2095,7 +2096,7 @@ open class MainActivity : FragmentActivity() {
                     0.dp
                 }
                 // Sheets overlay the inbox while the top-level navigation stays
-                // composed above them, so it never blinks through a transition.
+                // composed beneath them, so it never blinks through a transition.
                 val showTopLevelNavigation = useNewUi && (
                     navRoute in setOf("list", "settings") ||
                         (chatUsesSheet && navRoute == "chat") ||
@@ -2446,7 +2447,8 @@ onOpenAccessibility = { navRoute = "accessibility" },
                 }
 
                 CompositionLocalProvider(
-                    LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha
+                    LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha,
+                    LocalContentColor provides MaterialTheme.colorScheme.onBackground
                 ) {
                     val sharedCaptureGuard = remember { BackdropCaptureGuard() }
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
@@ -2465,6 +2467,20 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 conversationList()
                                 routePane(Modifier.fillMaxSize())
                             }
+                        }
+                        if (showTopLevelNavigation) {
+                            MessagesNavigationBar(
+                                selectedDestination = if (navRoute == "settings") {
+                                    TopLevelDestination.SETTINGS
+                                } else {
+                                    topLevelDestination
+                                },
+                                onDestinationSelected = navigateTopLevel,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = topLevelNavigationBottomOffset),
+                                sharedCaptureGuard = sharedCaptureGuard
+                            )
                         }
                         if (persistentSheetVisible) {
                             PersistentConversationSheet(
@@ -2490,20 +2506,6 @@ onOpenAccessibility = { navRoute = "accessibility" },
                             ) { requestDismiss ->
                                 newChatContent(requestDismiss)
                             }
-                        }
-                        if (showTopLevelNavigation) {
-                            MessagesNavigationBar(
-                                selectedDestination = if (navRoute == "settings") {
-                                    TopLevelDestination.SETTINGS
-                                } else {
-                                    topLevelDestination
-                                },
-                                onDestinationSelected = navigateTopLevel,
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(bottom = topLevelNavigationBottomOffset),
-                                sharedCaptureGuard = sharedCaptureGuard
-                            )
                         }
                     }
                 }
