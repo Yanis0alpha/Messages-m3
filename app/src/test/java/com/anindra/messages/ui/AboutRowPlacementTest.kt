@@ -149,14 +149,19 @@ class AboutRowPlacementTest {
 
     @Test
     fun theListKeepsItsBottomMarginWithoutTheFooter() {
-        // The footer supplied the space under the last card; removing it left
-        // the About row flush against the bottom inset.
-        for ((name, src) in listOf("Settings" to settings, "legacy settings" to legacy)) {
-            assertTrue(
-                "$name must close the list with room under the last row",
-                src.contains("Spacer(Modifier.height(SettingsLayout.BOTTOM_GAP))")
+        // The modern page scrolls beneath its glass navigation, so its tail
+        // includes both the original card gap and the height needed to lift the
+        // last row back above that bar. Legacy has no floating navigation.
+        assertTrue(
+            "Settings must close with a scrollable gap below the glass navigation",
+            settings.contains(
+                "SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance"
             )
-        }
+        )
+        assertTrue(
+            "legacy settings must close the list with room under the last row",
+            legacy.contains("Spacer(Modifier.height(SettingsLayout.BOTTOM_GAP))")
+        )
         val about = source("ui/AboutScreen.kt")
         assertTrue(
             "the About screen ends with the same gap",
