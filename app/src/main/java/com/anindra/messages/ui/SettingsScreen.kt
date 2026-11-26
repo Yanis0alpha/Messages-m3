@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -289,6 +290,7 @@ fun SettingsScreen(
         // Google Messages paints the settings sheet a step lighter than the rest
         // of the app and insets the rows into it: page #1E1F20, row #131314.
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // No Scaffold bottom bar here: the floating glass navigation is drawn
         // above this screen by MainActivity, so settings rows can scroll behind
         // it and remain visible through its backdrop blur.

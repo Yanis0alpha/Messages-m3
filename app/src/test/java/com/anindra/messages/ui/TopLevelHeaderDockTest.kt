@@ -17,7 +17,7 @@ class TopLevelHeaderDockTest {
 
     @Test
     fun dockIsCompactButFitsTheSearchAndCenteredTitle() {
-        assertEquals(168.dp, TopLevelHeaderDockLayout.HEIGHT)
+        assertEquals(144.dp, TopLevelHeaderDockLayout.HEIGHT)
         assertTrue(TopLevelHeaderDockLayout.HEIGHT > TopLevelHeaderDockLayout.TOP_CONTROL_HEIGHT)
         assertEquals(56.dp, TopLevelHeaderDockLayout.SEARCH_HEIGHT)
     }
@@ -37,6 +37,7 @@ class TopLevelHeaderDockTest {
         assertTrue(dock.contains("if (!captureGuard.active) drawContent()"))
         assertTrue(dock.contains("alpha = TopLevelHeaderDockLayout.TINT_ALPHA"))
         assertTrue(dock.contains("contentAlignment = Alignment.Center"))
+        assertFalse(dock.contains(".statusBarsPadding()"))
         assertTrue(dock.contains("shape = MaterialShapes.Cookie6Sided.toShape()"))
         assertTrue(dock.contains("modifier = Modifier.size(20.dp)"))
     }
@@ -50,9 +51,11 @@ class TopLevelHeaderDockTest {
         assertTrue(conversations.contains("TopLevelDockSearchField("))
         assertTrue(conversations.contains("R.string.conversations_messages"))
         assertTrue(conversations.contains("R.string.conversations_archived"))
+        assertTrue(conversations.contains("contentWindowInsets = WindowInsets(0, 0, 0, 0)"))
         assertTrue(settings.contains("TopLevelHeaderDock("))
         assertTrue(settings.contains("TopLevelDockSearchField("))
         assertTrue(settings.contains("R.string.navigation_settings"))
+        assertTrue(settings.contains("contentWindowInsets = WindowInsets(0, 0, 0, 0)"))
         assertTrue(settings.contains("LocalSettingsRowSearchQuery provides settingsQuery"))
         assertTrue(settings.contains("SettingsSearch.matches(rowSearchQuery, title)"))
     }

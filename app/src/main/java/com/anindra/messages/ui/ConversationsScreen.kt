@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -66,8 +67,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialShapes
@@ -532,6 +531,7 @@ fun ConversationsScreen(
         Scaffold(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (showNavigationBar) {
@@ -1850,26 +1850,24 @@ internal fun InboxCategoryChip(
     }
 }
 
-/** Material 3 filter chips: one row, single select, 32dp tall. */
+/** Search scopes use the same expressive connected buttons as inbox categories. */
 @Composable
 internal fun SearchScopeChips(selected: SearchScope, onSelect: (SearchScope) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
+            .selectableGroup()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)
     ) {
-        SearchScope.entries.forEach { scope ->
-            FilterChip(
+        SearchScope.entries.forEachIndexed { index, scope ->
+            InboxCategoryChip(
+                label = stringResource(scope.labelRes),
                 selected = scope == selected,
-                onClick = { onSelect(scope) },
-                label = { Text(stringResource(scope.labelRes)) },
-                shape = RoundedCornerShape(8.dp),
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                index = index,
+                count = SearchScope.entries.size,
+                onClick = { onSelect(scope) }
             )
         }
     }

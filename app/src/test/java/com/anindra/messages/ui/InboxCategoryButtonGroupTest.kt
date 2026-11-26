@@ -33,6 +33,8 @@ class InboxCategoryButtonGroupTest {
             .substringBefore("internal val InboxCategory.labelRes")
         val button = conversations.substringAfter("internal fun InboxCategoryChip(")
             .substringBefore("internal fun SearchScopeChips(")
+        val searchScopes = conversations.substringAfter("internal fun SearchScopeChips(")
+            .substringBefore("internal fun StarredHitRow(")
 
         assertTrue(group.contains("Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)"))
         assertTrue(group.contains(".selectableGroup()"))
@@ -48,6 +50,12 @@ class InboxCategoryButtonGroupTest {
         assertFalse(button.contains("FilterChip("))
         assertFalse(button.contains("BorderStroke("))
         assertFalse(button.contains(".weight("))
+
+        assertTrue(searchScopes.contains("Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)"))
+        assertTrue(searchScopes.contains(".selectableGroup()"))
+        assertTrue(searchScopes.contains("SearchScope.entries.forEachIndexed"))
+        assertTrue(searchScopes.contains("InboxCategoryChip("))
+        assertFalse(searchScopes.contains("FilterChip("))
     }
 
     @Test
