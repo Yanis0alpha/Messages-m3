@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -79,7 +80,10 @@ internal fun ConversationChatSheet(
             scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f),
             tonalElevation = 6.dp,
             dragHandle = null,
-            contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
+            // The sheet's Android window uses adjustNothing, so Material 3
+            // must reserve the IME itself. IME is zero while closed, keeping
+            // the sheet flush with the screen without adding a permanent gap.
+            contentWindowInsets = { WindowInsets.ime }
         ) {
             Column(
                 Modifier

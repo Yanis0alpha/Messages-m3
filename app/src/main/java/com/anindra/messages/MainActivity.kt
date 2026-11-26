@@ -2083,6 +2083,7 @@ open class MainActivity : FragmentActivity() {
                         initialMedia = pendingShareMedia,
                         initialStagedMedia = stagedMediaProbe,
                         showBackButton = !chatUsesSheet,
+                        imeInsetsHandledByParent = chatUsesSheet,
                         backHandled = bubbleBackHandled,
                         onOpenConversationList = bubbleArrowOpensList,
                         onBack = chatBack,

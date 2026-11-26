@@ -31,9 +31,20 @@ class ConversationChatSheetTest {
         assertTrue(sheet.contains("sheetState.hide()"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
         assertTrue(sheet.contains("RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)"))
-        assertTrue(sheet.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
+        assertTrue(sheet.contains("contentWindowInsets = { WindowInsets.ime }"))
+        assertFalse(sheet.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
         assertTrue(sheet.contains("bottomGap=\${windowHeightPx - bottom}"))
         assertFalse(sheet.contains("modifier = Modifier.fillMaxHeight"))
+    }
+
+    @Test
+    fun compactSheetOwnsTheKeyboardInsetExactlyOnce() {
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
+        assertTrue(activity.contains("imeInsetsHandledByParent = chatUsesSheet"))
+        assertTrue(chat.contains("if (imeInsetsHandledByParent)"))
+        assertTrue(chat.contains("0.dp"))
+        assertTrue(chat.contains("composerBottomInset = keyboardInset"))
     }
 
     @Test
