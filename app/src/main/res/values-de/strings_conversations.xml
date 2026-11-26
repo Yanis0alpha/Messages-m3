@@ -7,6 +7,7 @@
     <string name="conversations_press_back_exit">Noch einmal Zurück drücken zum Beenden</string>
     <!-- New chat -->
     <string name="new_chat_title">Neue Unterhaltung</string>
+    <string name="conversation_sheet_nothing_open">Nichts wurde geöffnet</string>
     <string name="new_chat_hint">Name oder Telefonnummer eingeben</string>
     <string name="new_chat_only_phone">Es können nur Telefonnummern angerufen werden</string>
     <string name="new_chat_send_to">An „%s“ senden</string>

@@ -7,6 +7,7 @@
     <string name="conversations_press_back_exit">再按一次返回以退出</string>
 
     <string name="new_chat_title">新对话</string>
+    <string name="conversation_sheet_nothing_open">未打开任何内容</string>
     <string name="new_chat_hint">输入姓名或电话号码</string>
     <string name="new_chat_only_phone">只能向电话号码发送消息</string>
     <string name="new_chat_send_to">发送至「%s」</string>

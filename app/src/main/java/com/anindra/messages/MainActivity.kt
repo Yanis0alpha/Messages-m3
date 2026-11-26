@@ -83,9 +83,11 @@ import com.anindra.messages.sms.NotificationHelper
 import com.anindra.messages.data.ForwardPlan
 import com.anindra.messages.sms.SmsSender
 import com.anindra.messages.share.ShareText
+import com.anindra.messages.ui.BackdropCaptureGuard
 import com.anindra.messages.ui.ChatScreen
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
+import com.anindra.messages.ui.PersistentConversationSheet
 import com.anindra.messages.ui.AddPeopleScreen
 import com.anindra.messages.ui.ContactDetailsScreen
 import com.anindra.messages.ui.NotificationSettingsScreen
@@ -99,6 +101,7 @@ import com.anindra.messages.ui.SettingsScreen
 import com.anindra.messages.ui.MessagesNavigationBar
 import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
 import com.anindra.messages.ui.TopLevelDestination
+import com.anindra.messages.ui.TopLevelNavigationBarClearance
 import com.anindra.messages.ui.AdvancedSettingsScreen
 import com.anindra.messages.ui.AccessibilityScreen
 import com.anindra.messages.ui.MmsSupportScreen
@@ -2062,8 +2065,12 @@ open class MainActivity : FragmentActivity() {
                 val twoPaneLayout =
                     windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
                 val listWeight = 0.4f
+                var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
 
                 val navigateTopLevel: (TopLevelDestination) -> Unit = { destination ->
+                    if (navRoute == "chat") {
+                        vm.saveDraftAndMaybeTrash(chatId, chatDraftSnapshot.trim())
+                    }
                     when (destination) {
                         TopLevelDestination.MESSAGES,
                         TopLevelDestination.ARCHIVED -> {
@@ -2083,7 +2090,6 @@ open class MainActivity : FragmentActivity() {
                         (chatUsesSheet && navRoute == "chat") ||
                         (newChatUsesSheet && navRoute == "new")
                 )
-                var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
                 val leaveChat: () -> Unit = {
                     pendingShareBody = ""
                     pendingShareMedia = emptyList()
@@ -2107,8 +2113,13 @@ open class MainActivity : FragmentActivity() {
                         initialMedia = pendingShareMedia,
                         initialStagedMedia = stagedMediaProbe,
                         showBackButton = !chatUsesSheet,
-                        imeInsetsHandledByParent = chatUsesSheet,
+                        imeInsetsHandledByParent = chatUsesSheet && !useNewUi,
                         translucentBackground = chatUsesSheet,
+                        bottomOverlayClearance = if (chatUsesSheet && useNewUi) {
+                            TopLevelNavigationBarClearance
+                        } else {
+                            0.dp
+                        },
                         backHandled = bubbleBackHandled,
                         onOpenConversationList = bubbleArrowOpensList,
                         onBack = chatBack,
@@ -2419,6 +2430,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                 CompositionLocalProvider(
                     LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha
                 ) {
+                    val sharedCaptureGuard = remember { BackdropCaptureGuard() }
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
                         if (twoPaneLayout) {
                             androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
@@ -2436,7 +2448,15 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 routePane(Modifier.fillMaxSize())
                             }
                         }
-                        if (chatUsesSheet && navRoute == "chat") {
+                        if (useNewUi && chatUsesSheet && navRoute in setOf("list", "chat", "settings")) {
+                            PersistentConversationSheet(
+                                conversationOpen = navRoute == "chat",
+                                onCollapsed = leaveChatByGesture,
+                                captureGuard = sharedCaptureGuard
+                            ) {
+                                chatContent(leaveChat)
+                            }
+                        } else if (!useNewUi && chatUsesSheet && navRoute == "chat") {
                             ConversationChatSheet(
                                 onDismissed = leaveChat,
                                 onGestureDismiss = leaveChatByGesture
@@ -2460,7 +2480,8 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                     topLevelDestination
                                 },
                                 onDestinationSelected = navigateTopLevel,
-                                modifier = Modifier.align(Alignment.BottomCenter)
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                                sharedCaptureGuard = sharedCaptureGuard
                             )
                         }
                     }

@@ -101,9 +101,10 @@ class ConversationChatSheetTest {
     fun compactSheetOwnsTheKeyboardInsetExactlyOnce() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
-        assertTrue(activity.contains("imeInsetsHandledByParent = chatUsesSheet"))
+        assertTrue(activity.contains("imeInsetsHandledByParent = chatUsesSheet && !useNewUi"))
+        assertTrue(activity.contains("bottomOverlayClearance = if (chatUsesSheet && useNewUi)"))
         assertTrue(chat.contains("if (imeInsetsHandledByParent)"))
-        assertTrue(chat.contains("0.dp"))
+        assertTrue(chat.contains("val bottomOverlayInset = if (imeBottom > navBottom) 0.dp"))
         assertTrue(chat.contains("composerBottomInset = keyboardInset"))
     }
 
@@ -115,6 +116,9 @@ class ConversationChatSheetTest {
         assertTrue(activity.contains("onDismissed = leaveChat"))
         assertTrue(activity.contains("onGestureDismiss = leaveChatByGesture"))
         assertTrue(activity.contains("chatContent(requestDismiss)"))
+        assertTrue(activity.contains("PersistentConversationSheet("))
+        assertTrue(activity.contains("conversationOpen = navRoute == \"chat\""))
+        assertTrue(activity.contains("onCollapsed = leaveChatByGesture"))
         assertTrue(activity.contains("val showTopLevelNavigation = useNewUi"))
         assertTrue(activity.contains("(chatUsesSheet && navRoute == \"chat\")"))
         assertTrue(activity.contains("showNavigationBar = showTopLevelNavigation"))

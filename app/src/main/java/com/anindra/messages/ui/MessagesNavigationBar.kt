@@ -61,11 +61,13 @@ private data class TopLevelNavigationItem(
 internal fun MessagesNavigationBar(
     selectedDestination: TopLevelDestination,
     onDestinationSelected: (TopLevelDestination) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedCaptureGuard: BackdropCaptureGuard? = null
 ) {
     val backgroundRoot = LocalView.current.rootView
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
-    val captureGuard = remember { BackdropCaptureGuard() }
+    val localCaptureGuard = remember { BackdropCaptureGuard() }
+    val captureGuard = sharedCaptureGuard ?: localCaptureGuard
     var barPosition by remember { mutableStateOf(Offset.Zero) }
     val barShape = RoundedCornerShape(32.dp)
     val items = listOf(

@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -62,6 +63,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
@@ -69,6 +71,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -86,6 +89,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -106,6 +110,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -520,26 +525,27 @@ fun ConversationsScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (showNavigationBar) {
-                Spacer(
-                    Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .height(TopLevelNavigationBarClearance)
-                )
+        HomeShapeBackdrop()
+        Scaffold(
+            containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            bottomBar = {
+                if (showNavigationBar) {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .height(TopLevelNavigationBarClearance)
+                    )
+                }
+            },
+            floatingActionButton = {
+                if (!showArchived) {
+                    StartChatFab(expanded = fabExpanded, onClick = onNewChat)
+                }
             }
-        },
-        floatingActionButton = {
-            if (!showArchived) {
-                StartChatFab(expanded = fabExpanded, onClick = onNewChat)
-            }
-        }
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().nestedScroll(pullToReveal)) {
+        ) { padding ->
+            Column(Modifier.padding(padding).fillMaxSize().nestedScroll(pullToReveal)) {
 
             if (selectionActive) {
                 ConversationSelectionBar(
@@ -1367,6 +1373,62 @@ fun SwipeAction.a11yLabelRes(unread: Boolean): Int = when (this) {
     else -> labelRes()
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun HomeShapeBackdrop() {
+    val colors = MaterialTheme.colorScheme
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 58.dp, y = (-72).dp)
+                .size(196.dp)
+                .rotate(14f)
+                .background(
+                    colors.primaryContainer.copy(alpha = 0.24f),
+                    MaterialShapes.Cookie12Sided.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = (-62).dp, y = (-54).dp)
+                .size(152.dp)
+                .rotate(-18f)
+                .background(
+                    colors.tertiaryContainer.copy(alpha = 0.18f),
+                    MaterialShapes.Clover8Leaf.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = 44.dp, y = 112.dp)
+                .size(124.dp)
+                .rotate(9f)
+                .background(
+                    colors.secondaryContainer.copy(alpha = 0.18f),
+                    MaterialShapes.Sunny.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.BottomStart)
+                .offset(x = (-48).dp, y = (-96).dp)
+                .size(168.dp)
+                .rotate(24f)
+                .background(
+                    colors.primaryContainer.copy(alpha = 0.16f),
+                    MaterialShapes.Gem.toShape()
+                )
+        )
+    }
+}
+
 internal data class RowSettings(
     val pinnedEnabled: Boolean,
     /** Legacy rows gate on these; the redesigned list treats them as always on. */
@@ -1559,7 +1621,11 @@ internal fun SheetActionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(segmentedListShape(position))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+                    alpha = LocalTranslucentSurfaceAlpha.current
+                )
+            )
             .clickable(onClick = onClick)
             .padding(horizontal = 24.dp, vertical = 14.dp)
     ) {

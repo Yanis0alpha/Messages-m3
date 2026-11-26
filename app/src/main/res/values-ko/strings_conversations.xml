@@ -8,6 +8,7 @@
 
     <!-- New chat -->
     <string name="new_chat_title">새 대화</string>
+    <string name="conversation_sheet_nothing_open">열린 항목이 없습니다</string>
     <string name="new_chat_hint">이름 또는 전화번호 입력</string>
     <string name="new_chat_only_phone">전화번호로만 메시지 전송이 가능합니다</string>
     <string name="new_chat_send_to">\"%s\"(으)로 보내기</string>

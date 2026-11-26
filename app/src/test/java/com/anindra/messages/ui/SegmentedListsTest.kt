@@ -58,7 +58,8 @@ class SegmentedListsTest {
         assertTrue(sheet.contains("sheetActions.forEachIndexed"))
         assertTrue(sheet.contains("segmentedListPosition(index, sheetActions.size)"))
         assertTrue(conversations.contains("fun SheetActionRow("))
-        assertTrue(conversations.contains(".background(MaterialTheme.colorScheme.surfaceContainerHigh)"))
+        assertTrue(conversations.contains("MaterialTheme.colorScheme.surfaceContainerHigh.copy("))
+        assertTrue(conversations.contains("alpha = LocalTranslucentSurfaceAlpha.current"))
         assertTrue(conversations.contains("kind=action position=\$position"))
     }
 }

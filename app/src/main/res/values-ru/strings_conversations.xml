@@ -8,6 +8,7 @@
 
     <!-- New chat -->
     <string name="new_chat_title">Новая переписка</string>
+    <string name="conversation_sheet_nothing_open">Ничего не открыто</string>
     <string name="new_chat_hint">Введите имя или номер телефона</string>
     <string name="new_chat_only_phone">Сообщения можно отправлять только на номера телефонов</string>
     <string name="new_chat_send_to">Отправить «%s»</string>

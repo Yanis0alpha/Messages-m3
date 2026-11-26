@@ -833,6 +833,8 @@ fun ChatScreen(
     imeInsetsHandledByParent: Boolean = false,
     /** Let the compact sheet's glass container show through the chat canvas. */
     translucentBackground: Boolean = false,
+    /** Keeps the composer above a permanent overlay while the keyboard is closed. */
+    bottomOverlayClearance: Dp = 0.dp,
     /**
      * Whether Back leaves the chat. A bubble whose "Close bubble with Back"
      * setting is off leaves Back to the platform, which collapses the expanded
@@ -1037,6 +1039,7 @@ fun ChatScreen(
     } else {
         (imeBottom - navBottom).coerceAtLeast(0.dp)
     }
+    val bottomOverlayInset = if (imeBottom > navBottom) 0.dp else bottomOverlayClearance
     // Picked media waits here until the user sends it, so a picture can be
     // explained or dropped before it leaves — it is no longer sent on pick.
     val pendingMedia = remember { mutableStateListOf<Uri>() }
@@ -1810,7 +1813,9 @@ fun ChatScreen(
         },
         bottomBar = {
             Column(
-                Modifier.navigationBarsPadding()
+                Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = bottomOverlayInset)
             ) {
                 AnimatedVisibility(
                     visible = showEmoji && !selectionActive,

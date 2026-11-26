@@ -8,6 +8,7 @@
 
     <!-- New chat -->
     <string name="new_chat_title">گفتگوی جدید</string>
+    <string name="conversation_sheet_nothing_open">چیزی باز نشده است</string>
     <string name="new_chat_hint">نام یا شماره تلفن را وارد کنید</string>
     <string name="new_chat_only_phone">فقط به شماره‌های تلفن می‌توان پیام فرستاد</string>
     <string name="new_chat_send_to">ارسال به «%s»</string>

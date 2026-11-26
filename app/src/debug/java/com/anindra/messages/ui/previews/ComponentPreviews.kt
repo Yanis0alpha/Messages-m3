@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,6 +46,7 @@ import com.anindra.messages.ui.ChatBubble
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.DialogText
 import com.anindra.messages.ui.DynamicBackdropBlur
+import com.anindra.messages.ui.HomeShapeBackdrop
 import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
 import com.anindra.messages.ui.ReactionBar
 import com.anindra.messages.ui.SuggestionChips
@@ -57,6 +59,8 @@ import com.anindra.messages.ui.MessagesNavigationBar
 import com.anindra.messages.ui.OwnerAvatar
 import com.anindra.messages.ui.ScheduleDialog
 import com.anindra.messages.ui.PersonAvatar
+import com.anindra.messages.ui.PersistentConversationEmptyState
+import com.anindra.messages.ui.PersistentConversationSheet
 import com.anindra.messages.ui.ProvideShimmer
 import com.anindra.messages.ui.RowPosition
 import com.anindra.messages.ui.SettingsRow
@@ -122,6 +126,14 @@ private fun MessagesNavigationBarPreview() {
 }
 
 @PreviewLightDark
+@Preview(name = "Home Material shapes", showBackground = true, widthDp = 380, heightDp = 760)
+@Composable
+private fun HomeShapeBackdropPreview() {
+    MessagesTheme(mode = "system") {
+        HomeShapeBackdrop()
+    }
+}
+
 @Preview(name = "Dynamic glass", showBackground = true, widthDp = 380, heightDp = 180)
 @Composable
 private fun DynamicBackdropBlurPreview() {
@@ -167,6 +179,40 @@ private fun DynamicBackdropBlurPreview() {
             }
         }
     }
+}
+
+@PreviewLightDark
+@Preview(name = "Persistent conversation peek", showBackground = true, widthDp = 380, heightDp = 800)
+@Composable
+private fun PersistentConversationSheetPreview() {
+    MessagesTheme(mode = "system") {
+        val captureGuard = remember { BackdropCaptureGuard() }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            HomeShapeBackdrop()
+            PersistentConversationSheet(
+                conversationOpen = false,
+                onCollapsed = {},
+                captureGuard = captureGuard
+            ) { }
+            MessagesNavigationBar(
+                selectedDestination = TopLevelDestination.MESSAGES,
+                onDestinationSelected = {},
+                modifier = Modifier.align(Alignment.BottomCenter),
+                sharedCaptureGuard = captureGuard
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Persistent conversation empty state", showBackground = true, widthDp = 380)
+@Composable
+private fun PersistentConversationEmptyStatePreview() {
+    Stage { PersistentConversationEmptyState() }
 }
 
 @PreviewLightDark

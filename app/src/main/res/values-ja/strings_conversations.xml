@@ -8,6 +8,7 @@
 
     <!-- New chat -->
     <string name="new_chat_title">新しい会話</string>
+    <string name="conversation_sheet_nothing_open">何も開かれていません</string>
     <string name="new_chat_hint">名前または電話番号を入力</string>
     <string name="new_chat_only_phone">メッセージを送信できるのは電話番号のみです</string>
     <string name="new_chat_send_to">「%s」に送信</string>
