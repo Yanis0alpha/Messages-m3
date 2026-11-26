@@ -1,7 +1,12 @@
 package com.anindra.messages.ui
 
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Build
-import android.view.WindowManager
+import android.view.View
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,19 +23,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.viewinterop.AndroidView
+import com.anindra.messages.R
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
@@ -39,6 +53,57 @@ internal object ChatSheetLayout {
     const val SCRIM_ALPHA = 0.18f
     val DRAG_HANDLE_HEIGHT = 48.dp
     val BACKGROUND_BLUR_RADIUS = 32.dp
+}
+
+/** Draws the activity behind the dialog into only this view's moving bounds. */
+private class SheetBackdropBlurView(
+    context: Context,
+    private val backgroundRoot: View,
+    blurRadiusPx: Float
+) : View(context) {
+    private var sampledX = Float.NaN
+    private var sampledY = Float.NaN
+    private val rootLocation = IntArray(2)
+    private val ownLocation = IntArray(2)
+
+    init {
+        setWillNotDraw(false)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            setRenderEffect(
+                RenderEffect.createBlurEffect(
+                    blurRadiusPx,
+                    blurRadiusPx,
+                    Shader.TileMode.CLAMP
+                )
+            )
+        }
+    }
+
+    fun followSheet(position: Offset) {
+        if (sampledX != position.x || sampledY != position.y) {
+            sampledX = position.x
+            sampledY = position.y
+            invalidate()
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            !backgroundRoot.isAttachedToWindow
+        ) {
+            return
+        }
+        backgroundRoot.getLocationOnScreen(rootLocation)
+        getLocationOnScreen(ownLocation)
+        val checkpoint = canvas.save()
+        canvas.translate(
+            (rootLocation[0] - ownLocation[0]).toFloat(),
+            (rootLocation[1] - ownLocation[1]).toFloat()
+        )
+        backgroundRoot.draw(canvas)
+        canvas.restoreToCount(checkpoint)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +117,13 @@ internal fun ConversationChatSheet(
     val scope = rememberCoroutineScope()
     var dismissing by remember { mutableStateOf(false) }
     var dismissed by remember { mutableStateOf(false) }
+    // Captured before ModalBottomSheet enters its dialog window: this is the
+    // inbox/navigation tree that the glass samples, never the sheet itself.
+    val backgroundRoot = LocalView.current.rootView
+    val blurRadiusPx = with(LocalDensity.current) {
+        ChatSheetLayout.BACKGROUND_BLUR_RADIUS.toPx()
+    }
+    var sheetPosition by remember { mutableStateOf(Offset.Zero) }
 
     fun finishDismiss(action: () -> Unit) {
         if (!dismissed) {
@@ -69,64 +141,38 @@ internal fun ConversationChatSheet(
             }
         }
     }
+    val closeLabel = stringResource(R.string.common_close)
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val sheetHeight = maxHeight * ChatSheetLayout.HEIGHT_FRACTION
-        // Material's official handle occupies 48 dp including its vertical
-        // padding. Subtract it so the complete sheet remains exactly 90% high.
-        val sheetContentHeight = sheetHeight - ChatSheetLayout.DRAG_HANDLE_HEIGHT
         val windowHeightPx = with(LocalDensity.current) { maxHeight.roundToPx() }
+        val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         ModalBottomSheet(
             onDismissRequest = { finishDismiss(onGestureDismiss) },
             sheetState = sheetState,
-            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-            containerColor = MaterialTheme.colorScheme.surface.copy(
-                alpha = ChatSheetLayout.CONTAINER_ALPHA
-            ),
+            shape = sheetShape,
+            // The moving child below draws the clipped glass. Keeping the
+            // window surface transparent prevents blur outside that child.
+            containerColor = Color.Transparent,
             scrimColor = MaterialTheme.colorScheme.scrim.copy(
                 alpha = ChatSheetLayout.SCRIM_ALPHA
             ),
             tonalElevation = 6.dp,
-            dragHandle = { BottomSheetDefaults.DragHandle() },
+            dragHandle = null,
             // The sheet's Android window uses adjustNothing, so Material 3
             // must reserve the IME itself. IME is zero while closed, keeping
             // the sheet flush with the screen without adding a permanent gap.
             contentWindowInsets = { WindowInsets.ime }
         ) {
-            // Material's sheet lives in its own transparent Android window.
-            // Apply the effect here, inside that dialog composition, so the
-            // LocalView resolves to the sheet window rather than the activity.
-            val dialogView = LocalView.current
-            val blurRadiusPx = with(LocalDensity.current) {
-                ChatSheetLayout.BACKGROUND_BLUR_RADIUS.roundToPx()
-            }
-            DisposableEffect(dialogView, blurRadiusPx) {
-                val provider = (dialogView as? DialogWindowProvider)
-                    ?: (dialogView.parent as? DialogWindowProvider)
-                val window = provider?.window
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
-                    window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    window.attributes = window.attributes.apply {
-                        blurBehindRadius = blurRadiusPx
-                    }
-                    window.setBackgroundBlurRadius(blurRadiusPx)
-                }
-                onDispose {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
-                        window.setBackgroundBlurRadius(0)
-                        window.attributes = window.attributes.apply {
-                            blurBehindRadius = 0
-                        }
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    }
-                }
-            }
-            Column(
+            Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(sheetContentHeight)
+                    .height(sheetHeight)
+                    .clip(sheetShape)
                     .onGloballyPositioned { coordinates ->
-                        val top = coordinates.positionInWindow().y.roundToInt()
+                        val current = coordinates.positionInWindow()
+                        if (sheetPosition != current) sheetPosition = current
+                        val top = current.y.roundToInt()
                         val bottom = top + coordinates.size.height
                         android.util.Log.d(
                             "ChatSheetBounds",
@@ -134,11 +180,46 @@ internal fun ConversationChatSheet(
                         )
                     }
             ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    AndroidView(
+                        factory = { context ->
+                            SheetBackdropBlurView(context, backgroundRoot, blurRadiusPx)
+                        },
+                        update = { blurView -> blurView.followSheet(sheetPosition) },
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    propagateMinConstraints = true
-                ) {
-                    content(requestDismiss)
+                    Modifier
+                        .matchParentSize()
+                        .background(
+                            MaterialTheme.colorScheme.surface.copy(
+                                alpha = ChatSheetLayout.CONTAINER_ALPHA
+                            )
+                        )
+                )
+                Column(Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(ChatSheetLayout.DRAG_HANDLE_HEIGHT)
+                            .semantics {
+                                contentDescription = closeLabel
+                                onClick {
+                                    requestDismiss()
+                                    true
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BottomSheetDefaults.DragHandle()
+                    }
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        propagateMinConstraints = true
+                    ) {
+                        content(requestDismiss)
+                    }
                 }
             }
         }

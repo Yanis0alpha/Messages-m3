@@ -27,15 +27,11 @@ class ConversationChatSheetTest {
         assertTrue(sheet.contains("skipPartiallyExpanded = true"))
         assertTrue(sheet.contains("BoxWithConstraints(Modifier.fillMaxSize())"))
         assertTrue(sheet.contains("val sheetHeight = maxHeight * ChatSheetLayout.HEIGHT_FRACTION"))
-        assertTrue(
-            sheet.contains(
-                "val sheetContentHeight = sheetHeight - ChatSheetLayout.DRAG_HANDLE_HEIGHT"
-            )
-        )
-        assertTrue(sheet.contains(".height(sheetContentHeight)"))
+        assertTrue(sheet.contains(".height(sheetHeight)"))
         assertTrue(sheet.contains("sheetState.hide()"))
-        assertTrue(sheet.contains("dragHandle = { BottomSheetDefaults.DragHandle() }"))
-        assertFalse(sheet.contains("dragHandle = null"))
+        assertTrue(sheet.contains("dragHandle = null"))
+        assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
+        assertTrue(sheet.contains(".height(ChatSheetLayout.DRAG_HANDLE_HEIGHT)"))
         assertTrue(sheet.contains("RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)"))
         assertTrue(sheet.contains("contentWindowInsets = { WindowInsets.ime }"))
         assertFalse(sheet.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
@@ -44,14 +40,23 @@ class ConversationChatSheetTest {
     }
 
     @Test
-    fun sheetUsesTranslucentMaterialGlass() {
+    fun sheetUsesDynamicClippedMaterialGlass() {
         val sheet = source("java/com/anindra/messages/ui/ConversationChatSheet.kt")
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         assertTrue(sheet.contains("CONTAINER_ALPHA = 0.88f"))
         assertTrue(sheet.contains("SCRIM_ALPHA = 0.18f"))
-        assertTrue(sheet.contains("FLAG_BLUR_BEHIND"))
-        assertTrue(sheet.contains("setBackgroundBlurRadius(blurRadiusPx)"))
+        assertTrue(sheet.contains("RenderEffect.createBlurEffect("))
+        assertTrue(sheet.contains("backgroundRoot.draw(canvas)"))
+        assertTrue(sheet.contains("AndroidView("))
+        assertTrue(sheet.contains("blurView.followSheet(sheetPosition)"))
+        assertTrue(sheet.contains("getLocationOnScreen(ownLocation)"))
+        assertTrue(sheet.contains(".height(sheetHeight)"))
+        assertTrue(sheet.contains(".clip(sheetShape)"))
+        assertTrue(sheet.contains("coordinates.positionInWindow()"))
+        assertTrue(sheet.contains("containerColor = Color.Transparent"))
+        assertFalse(sheet.contains("FLAG_BLUR_BEHIND"))
+        assertFalse(sheet.contains("setBackgroundBlurRadius"))
         assertTrue(sheet.contains("alpha = ChatSheetLayout.CONTAINER_ALPHA"))
         assertTrue(activity.contains("translucentBackground = chatUsesSheet"))
         assertTrue(chat.contains("if (translucentBackground)"))
