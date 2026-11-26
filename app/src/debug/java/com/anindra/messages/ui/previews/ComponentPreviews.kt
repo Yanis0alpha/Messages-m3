@@ -31,8 +31,8 @@ import com.anindra.messages.data.SimCard
 import com.anindra.messages.data.SwipeAction
 import com.anindra.messages.data.DatabaseCompatibility
 import com.anindra.messages.ui.AttachAction
-import com.anindra.messages.ui.AttachTile
-import com.anindra.messages.ui.AttachTray
+import com.anindra.messages.ui.AttachmentCarousel
+import com.anindra.messages.ui.AttachmentCarouselItem
 import com.anindra.messages.ui.BubblePosition
 import com.anindra.messages.ui.ChatBubble
 import com.anindra.messages.ui.ConversationChatSheet
@@ -686,18 +686,16 @@ private fun InputBarEmptyPreview() {
 }
 
 @PreviewLightDark
-@Preview(name = "Attach tray", showBackground = true, widthDp = 412, heightDp = 380)
+@Preview(name = "Attachment carousel above composer", showBackground = true, widthDp = 412)
 @Composable
-private fun AttachTrayPreview() {
+private fun AttachmentCarouselPreview() {
     MessagesTheme(mode = "system") {
         Column(
             Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.Bottom
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            AttachTray(
+            AttachmentCarousel(
                 onCamera = {},
                 cameraLabel = "Camera",
                 cameraIcon = Icons.Rounded.CameraAlt,
@@ -707,6 +705,15 @@ private fun AttachTrayPreview() {
                     AttachAction("Location", Icons.Rounded.LocationOn) {},
                     AttachAction("Contact", Icons.Rounded.Person) {}
                 )
+            )
+            InputBar(
+                draft = "",
+                placeholder = "Text message",
+                onDraftChange = {},
+                onSend = {},
+                onEmojiToggle = {},
+                onAttach = {},
+                attachOpen = true
             )
         }
     }

@@ -8,8 +8,8 @@ import java.io.File
  * Issue #481: an audio file can be attached, not only a voice note.
  *
  * The transport already handled `audio` — a voice note is stored that way — so
- * what was missing was the way in: an Audio tile in the attach tray and a picker
- * that can reach music and recordings. The photo picker cannot, so the entry has
+ * what was missing was the way in: an Audio item in the attachment carousel and
+ * a picker that can reach music and recordings. The photo picker cannot, so the entry has
  * to go through the document picker.
  */
 class AudioAttachmentTest {
@@ -25,15 +25,15 @@ class AudioAttachmentTest {
     }
 
     @Test
-    fun theAttachTrayOffersAudio() {
-        val tray = chat.substringAfter("AttachTray(")
+    fun theAttachmentCarouselOffersAudio() {
+        val carousel = chat.substringAfter("AttachmentCarousel(")
         assertTrue(
-            "the tray must offer an Audio tile",
-            tray.contains("R.string.chat_media_audio")
+            "the carousel must offer an Audio item",
+            carousel.contains("R.string.chat_media_audio")
         )
         assertTrue(
-            "and the tile must be its own action with its own icon",
-            tray.contains("Icons.Rounded.Audiotrack")
+            "and the item must be its own action with its own icon",
+            carousel.contains("Icons.Rounded.Audiotrack")
         )
     }
 
@@ -52,6 +52,6 @@ class AudioAttachmentTest {
     @Test
     fun thePickedFileJoinsTheComposerTray() {
         val launcher = chat.substringAfter("val audioLauncher").substringBefore("fun leaveChat")
-        assertTrue("the uri is added to the pending media tray", launcher.contains("pendingMedia.add(uri)"))
+        assertTrue("the uri is added to pending media", launcher.contains("pendingMedia.add(uri)"))
     }
 }

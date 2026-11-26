@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The tray opens other apps: the camera, the photo picker, the document picker,
+ * The attachment carousel opens other apps: camera, photo picker, document picker,
  * the contact picker. A device without one of those throws
  * `ActivityNotFoundException` from `launch()` itself, and an unguarded launch
  * crashed the chat the moment the Camera tile was tapped on an AVD whose camera

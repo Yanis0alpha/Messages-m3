@@ -39,7 +39,7 @@ class MmsDisabledComposerTest {
     fun theComposerLosesAttachAndTheMicrophone() {
         assertTrue(chat.contains("attachEnabled = vm.settings.mmsEnabled"))
         assertTrue(
-            "a voice note is an MMS attachment, so the microphone goes with the tray",
+            "a voice note is an MMS attachment, so the microphone goes with the carousel",
             chat.contains("voiceEnabled = hasMicrophone && vm.settings.mmsEnabled")
         )
     }
@@ -53,7 +53,8 @@ class MmsDisabledComposerTest {
         )
         assertTrue(
             "and it is drawn in the slot the plus had, not a second one",
-            chat.contains("if (!attachEnabled) {") && chat.contains("} else IconButton(onClick = onAttach) {")
+            chat.contains("if (!attachEnabled) {") &&
+                chat.contains("shape = MaterialShapes.Cookie6Sided.toShape()")
         )
         assertTrue(
             "the trailing emoji button must not double up",
