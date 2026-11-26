@@ -38,6 +38,7 @@ import com.anindra.messages.ui.ChatSearchBar
 import com.anindra.messages.ui.ChatTopBar
 import com.anindra.messages.ui.ConversationDetailsDialog
 import com.anindra.messages.ui.DetailRow
+import com.anindra.messages.ui.FloatingChatHeader
 import com.anindra.messages.ui.LinkWarningDialog
 import com.anindra.messages.ui.MessageSelectionToolbar
 import com.anindra.messages.ui.MessageRow
@@ -60,33 +61,43 @@ private fun ChatTopBarPreview() {
     // The bar's states differ mostly in which trailing affordances and menu
     // entries appear, so they are previewed side by side rather than one at a
     // time: a missing item is only visible relative to the others.
-    Column {
-        ChatTopBar(
-            convo = sampleConversation(1, "Priya Raman", "last message"),
-            workProfile = false,
-            sims = listOf(sampleSim()),
-            currentSimId = 1,
-            menuOpen = false,
-            numberIsBlocked = false,
-            blockingEnabled = true,
-            sendCountdown = 0,
-            onBack = {}, onOpenDetails = {}, onMenuToggle = {}, onMenuDismiss = {},
-            onSimSelect = { _, _ -> }, onArchive = {}, onDelete = {}, onBlock = {},
-            onUnblock = {}, onAddPeople = {}, onSearch = {}
-        )
-        ChatTopBar(
-            convo = sampleConversation(2, "+15551237777", "last message", groupTitle = "Ana, Ben"),
-            workProfile = true,
-            sims = listOf(sampleSim(1, 0, "Jio"), sampleSim(2, 1, "Airtel")),
-            currentSimId = 2,
-            menuOpen = true,
-            numberIsBlocked = true,
-            blockingEnabled = true,
-            sendCountdown = 12,
-            onBack = {}, onOpenDetails = {}, onMenuToggle = {}, onMenuDismiss = {},
-            onSimSelect = { _, _ -> }, onArchive = {}, onDelete = {}, onBlock = {},
-            onUnblock = {}, onAddPeople = {}, onSearch = {}
-        )
+    Column(Modifier.background(MaterialTheme.colorScheme.background)) {
+        FloatingChatHeader {
+            ChatTopBar(
+                convo = sampleConversation(1, "Priya Raman", "last message"),
+                workProfile = false,
+                sims = listOf(sampleSim()),
+                currentSimId = 1,
+                menuOpen = false,
+                numberIsBlocked = false,
+                blockingEnabled = true,
+                sendCountdown = 0,
+                showBackButton = false,
+                onBack = {}, onOpenDetails = {}, onMenuToggle = {}, onMenuDismiss = {},
+                onSimSelect = { _, _ -> }, onArchive = {}, onDelete = {}, onBlock = {},
+                onUnblock = {}, onAddPeople = {}, onSearch = {}
+            )
+        }
+        FloatingChatHeader {
+            ChatTopBar(
+                convo = sampleConversation(
+                    2,
+                    "+15551237777",
+                    "last message",
+                    groupTitle = "Ana, Ben"
+                ),
+                workProfile = true,
+                sims = listOf(sampleSim(1, 0, "Jio"), sampleSim(2, 1, "Airtel")),
+                currentSimId = 2,
+                menuOpen = true,
+                numberIsBlocked = true,
+                blockingEnabled = true,
+                sendCountdown = 12,
+                onBack = {}, onOpenDetails = {}, onMenuToggle = {}, onMenuDismiss = {},
+                onSimSelect = { _, _ -> }, onArchive = {}, onDelete = {}, onBlock = {},
+                onUnblock = {}, onAddPeople = {}, onSearch = {}
+            )
+        }
     }
 }
 

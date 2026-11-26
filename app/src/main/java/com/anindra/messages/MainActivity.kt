@@ -2082,6 +2082,7 @@ open class MainActivity : FragmentActivity() {
                         initialDraft = pendingShareBody,
                         initialMedia = pendingShareMedia,
                         initialStagedMedia = stagedMediaProbe,
+                        showBackButton = !chatUsesSheet,
                         backHandled = bubbleBackHandled,
                         onOpenConversationList = bubbleArrowOpensList,
                         onBack = chatBack,

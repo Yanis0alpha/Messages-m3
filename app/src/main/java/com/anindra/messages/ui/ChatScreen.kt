@@ -825,6 +825,8 @@ fun ChatScreen(
     initialMedia: List<android.net.Uri> = emptyList(),
     initialStagedMedia: List<android.net.Uri> = emptyList(),
     onBack: () -> Unit,
+    /** The sheet already supplies drag and system-Back dismissal. */
+    showBackButton: Boolean = true,
     /**
      * Whether Back leaves the chat. A bubble whose "Close bubble with Back"
      * setting is off leaves Back to the platform, which collapses the expanded
@@ -1720,6 +1722,7 @@ fun ChatScreen(
                 searchOpen -> "search"
                 else -> "normal"
             }
+            FloatingChatHeader {
             AnimatedContent(
                 targetState = topBarMode,
                 transitionSpec = {
@@ -1792,6 +1795,7 @@ fun ChatScreen(
                 numberIsBlocked = numberIsBlocked,
                 blockingEnabled = vm.settings.blockingEnabled,
                 sendCountdown = sendCountdown,
+                showBackButton = showBackButton,
                 onBack = ::openConversationList,
                 onOpenDetails = onOpenDetails,
                 onMenuToggle = { menuOpen = true },
@@ -1837,6 +1841,7 @@ fun ChatScreen(
                 onAddPeople = onAddPeople,
                 onSearch = { searchOpen = true; chatQuery = "" }
             )
+            }
             }
             }
             }
@@ -2532,6 +2537,31 @@ fun ChatScreen(
     }
 }
 
+@Composable
+internal fun FloatingChatHeader(
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .onGloballyPositioned { coordinates ->
+                val left = coordinates.positionInRoot().x.roundToInt()
+                val right = left + coordinates.size.width
+                android.util.Log.d(
+                    "FloatingChatChrome",
+                    "header left=$left right=$right"
+                )
+            },
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.chatBar,
+        tonalElevation = 3.dp,
+        shadowElevation = 4.dp
+    ) {
+        content()
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MessageSelectionToolbar(
@@ -2738,6 +2768,7 @@ internal fun ChatTopBar(
     numberIsBlocked: Boolean,
     blockingEnabled: Boolean,
     sendCountdown: Int,
+    showBackButton: Boolean = true,
     onBack: () -> Unit,
     onOpenDetails: () -> Unit,
     onMenuToggle: () -> Unit,
@@ -2756,8 +2787,10 @@ internal fun ChatTopBar(
             containerColor = MaterialTheme.colorScheme.chatBar
         ),
         navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
+            if (showBackButton) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
+                }
             }
         },
         title = {
@@ -3985,10 +4018,27 @@ internal fun InputBar(
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
         }
-        Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .onGloballyPositioned { coordinates ->
+                    val left = coordinates.positionInRoot().x.roundToInt()
+                    val right = left + coordinates.size.width
+                    android.util.Log.d(
+                        "FloatingChatChrome",
+                        "composer left=$left right=$right"
+                    )
+                },
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 3.dp,
+            shadowElevation = 4.dp
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
         // Typing a Persian/Arabic word should flip the field, so the caret and
         // every following line sit on the right (#362). First strong character
         // only: a message's own direction is decided differently (see
@@ -4535,6 +4585,7 @@ internal fun InputBar(
                 }
             }
         }
+            }
         }
     }
 }
