@@ -45,8 +45,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -71,7 +69,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -86,9 +83,7 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.toShape
@@ -109,8 +104,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.zIndex
@@ -131,6 +124,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -222,6 +216,7 @@ fun ConversationsScreen(
     val showArchived = selectedDestination == TopLevelDestination.ARCHIVED
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     val backdropRoot = LocalView.current.rootView
     val translucentSurfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var actionSheetPosition by remember { mutableStateOf(Offset.Zero) }
@@ -325,6 +320,8 @@ fun ConversationsScreen(
     BackHandler(enabled = backHandled && !selectionActive && searching) {
         searching = false
         query = ""
+        searchScope = SearchScope.All
+        focusManager.clearFocus()
     }
     BackHandler(enabled = backHandled && !selectionActive && !searching && showArchived) {
         onDestinationSelected(TopLevelDestination.MESSAGES)
@@ -560,75 +557,45 @@ fun ConversationsScreen(
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize().nestedScroll(pullToReveal)) {
 
-            if (selectionActive) {
-                ConversationSelectionBar(
-                    selectedCount = selectedIds.size,
-                    archivingEnabled = rowSettings.archivingEnabled,
-                    onClear = { selectedIds = emptySet() },
-                    onDelete = { trashSelection() },
-                    onArchive = { archiveSelection() },
-                    onSelectAll = {
-                        selectedIds = ConversationSelection.selectAll(displayed.map { it.id })
+            TopLevelHeaderDock(
+                title = stringResource(
+                    if (showArchived) {
+                        R.string.conversations_archived
+                    } else {
+                        R.string.conversations_messages
                     }
                 )
-            } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ConversationHeader.HEIGHT)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (searching) {
-                    IconButton(onClick = { searching = false; query = "" }) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            stringResource(R.string.icon_close_search),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                    val focusRequester = remember { FocusRequester() }
-                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-                    TextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        placeholder = { Text(stringResource(R.string.conversations_search)) },
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.primary,
-                            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        modifier = Modifier.weight(1f).focusRequester(focusRequester)
+                if (selectionActive) {
+                    ConversationSelectionBar(
+                        selectedCount = selectedIds.size,
+                        archivingEnabled = rowSettings.archivingEnabled,
+                        onClear = { selectedIds = emptySet() },
+                        onDelete = { trashSelection() },
+                        onArchive = { archiveSelection() },
+                        onSelectAll = {
+                            selectedIds = ConversationSelection.selectAll(displayed.map { it.id })
+                        }
                     )
                 } else {
-                    Text(
-                        stringResource(
-                            if (showArchived) {
-                                R.string.conversations_archived
-                            } else {
-                                R.string.conversations_messages
-                            }
-                        ),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.weight(1f)
+                    TopLevelDockSearchField(
+                        query = query,
+                        onQueryChange = {
+                            query = it
+                            searching = true
+                        },
+                        placeholder = stringResource(R.string.conversations_search),
+                        onFocusChanged = { focused ->
+                            if (focused) searching = true
+                        },
+                        onClear = {
+                            query = ""
+                            searching = false
+                            searchScope = SearchScope.All
+                            focusManager.clearFocus()
+                        }
                     )
-                    IconButton(onClick = { searching = true }) {
-                        Icon(
-                            Icons.Outlined.Search,
-                            stringResource(R.string.icon_search),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
                 }
-            }
             }
 
             // Part of the same frame as the header swap on purpose: growing it

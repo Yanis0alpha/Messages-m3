@@ -31,7 +31,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Folder
@@ -45,7 +44,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -55,8 +53,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
@@ -70,6 +66,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,6 +74,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -98,6 +96,8 @@ import com.anindra.messages.ui.theme.LocalLargeTouchTargets
 
 private enum class PinDialogMode { SET, ENTER }
 
+private val LocalSettingsRowSearchQuery = staticCompositionLocalOf { "" }
+
 /** Which backup format the picked file belongs to. */
 private enum class ImportSource { OWN_BACKUP, SMS_IE, QUIK }
 
@@ -115,7 +115,18 @@ fun SettingsScreen(
     scrollState: ScrollState = rememberScrollState(),
     bottomOverlayClearance: Dp = TopLevelNavigationBarClearance
 ) {
-    BackHandler(onBack = onBack)
+    var settingsQuery by remember { mutableStateOf("") }
+    var settingsSearchFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    BackHandler {
+        if (settingsSearchFocused || settingsQuery.isNotBlank()) {
+            settingsQuery = ""
+            settingsSearchFocused = false
+            focusManager.clearFocus()
+        } else {
+            onBack()
+        }
+    }
 
     val context = LocalContext.current
     // The version the About row shows comes from the same lookup the crash
@@ -252,6 +263,28 @@ fun SettingsScreen(
         }
     }
 
+    val searchableSettingTitles = listOf(
+        R.string.settings_notif_title,
+        R.string.settings_mark_read_title,
+        R.string.settings_bubbles_title,
+        R.string.settings_theme_title,
+        R.string.settings_translucent_surface_opacity_title,
+        R.string.settings_pin_sim_card,
+        R.string.settings_inbox_title,
+        R.string.settings_scheduled_title,
+        R.string.settings_privacy_title,
+        R.string.settings_applock_title,
+        R.string.settings_trash_title,
+        R.string.conversations_spam_blocked,
+        R.string.settings_backup_title,
+        R.string.settings_import_title,
+        R.string.settings_advanced_title,
+        R.string.settings_about_title
+    )
+    val hasSettingsMatches = searchableSettingTitles.any { titleRes ->
+        SettingsSearch.matches(settingsQuery, context.getString(titleRes))
+    }
+
     Scaffold(
         // Google Messages paints the settings sheet a step lighter than the rest
         // of the app and insets the rows into it: page #1E1F20, row #131314.
@@ -260,21 +293,17 @@ fun SettingsScreen(
         // above this screen by MainActivity, so settings rows can scroll behind
         // it and remain visible through its backdrop blur.
         topBar = {
-            TopAppBar(
-                // GM paints the app bar with the sheet, not with the page: the
-                // title band is #1E1F20 like the gaps, and only the rows are
-                // inset at #131314. Left at the default role it was the one
-                // black band that made the screen read darker than GM.
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                title = { Text(stringResource(R.string.settings_general)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
-                    }
-                }
-            )
+            TopLevelHeaderDock(
+                title = stringResource(R.string.navigation_settings)
+            ) {
+                TopLevelDockSearchField(
+                    query = settingsQuery,
+                    onQueryChange = { settingsQuery = it },
+                    placeholder = stringResource(R.string.settings_search_hint),
+                    onFocusChanged = { settingsSearchFocused = it },
+                    onClear = { settingsQuery = "" }
+                )
+            }
         }
     ) { padding ->
         val pageColor = MaterialTheme.colorScheme.surfaceContainer
@@ -344,7 +373,11 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(SettingsLayout.TOP_GAP))
 
-            SettingsGroup {
+            CompositionLocalProvider(
+                LocalSettingsRowSearchQuery provides settingsQuery
+            ) {
+                if (hasSettingsMatches) {
+                    SettingsGroup {
                 SettingsRow(
                     position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_notif_title),
@@ -508,6 +541,15 @@ fun SettingsScreen(
                     ),
                     onClick = onOpenAbout
                 )
+                    }
+                } else {
+                    Text(
+                        text = stringResource(R.string.settings_search_none),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
 
             // Rows are allowed to pass behind the floating glass navigation.
@@ -1175,15 +1217,18 @@ fun SettingsRow(
     trailing: (@Composable () -> Unit)? = null,
     preview: (@Composable () -> Unit)? = null
 ) {
+    val rowSearchQuery = LocalSettingsRowSearchQuery.current
+    if (!SettingsSearch.matches(rowSearchQuery, title)) return
+    val effectivePosition = if (rowSearchQuery.isBlank()) position else RowPosition.SINGLE
     val contentAlpha = if (enabled) 1f else 0.38f
-    val corners = rowCorners(position)
+    val corners = rowCorners(effectivePosition)
     // Corner radii are pixels with no text equivalent, so publish them the way
     // the chat bubbles do (BubbleShape): a regression script can then assert a
     // row's rounding from logcat instead of a screenshot.
-    LaunchedEffect(title, position) {
+    LaunchedEffect(title, effectivePosition) {
         android.util.Log.d(
             "SettingsRowShape",
-            "title=$title position=$position " +
+            "title=$title position=$effectivePosition " +
                 "topStart=${corners.topStart.value} topEnd=${corners.topEnd.value} " +
                 "bottomStart=${corners.bottomStart.value} bottomEnd=${corners.bottomEnd.value}"
         )

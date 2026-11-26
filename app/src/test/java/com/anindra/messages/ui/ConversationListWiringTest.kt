@@ -91,19 +91,25 @@ class ConversationListWiringTest {
 
     @Test
     fun startingASelectionDoesNotMoveTheList() {
-        // The title row and the selection bar must be the same height, or every
-        // row jumps when the bar replaces the title (it did).
         val bar = read("java/com/anindra/messages/ui/ConversationSelectionBar.kt")
         assertTrue(
-            "the selection bar must use the shared header height",
+            "the selection bar must retain its stable control height",
             bar.contains(".height(ConversationHeader.HEIGHT)")
         )
-        screens.forEach { path ->
-            assertTrue(
-                "$path: the title row must use the shared header height",
-                read(path).contains(".height(ConversationHeader.HEIGHT)")
-            )
-        }
+
+        val modern = read("java/com/anindra/messages/ui/ConversationsScreen.kt")
+        val dock = modern.substringAfter("TopLevelHeaderDock(")
+            .substringBefore("// Part of the same frame as the header swap")
+        assertTrue("the fixed-height dock must stay composed during selection", dock.isNotBlank())
+        assertTrue(dock.contains("if (selectionActive)"))
+        assertTrue(dock.contains("ConversationSelectionBar("))
+        assertTrue(dock.contains("TopLevelDockSearchField("))
+
+        val legacy = read("java/com/anindra/messages/ui/legacy/LegacyConversationsScreen.kt")
+        assertTrue(
+            "the legacy title row must still match the selection bar",
+            legacy.contains(".height(ConversationHeader.HEIGHT)")
+        )
     }
 
     @Test
