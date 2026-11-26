@@ -27,6 +27,14 @@ class FloatingChatChromeTest {
         File(root, "gradle/libs.versions.toml").readText()
     }
 
+    private val appBuild: String by lazy {
+        File(root, "app/build.gradle.kts").readText()
+    }
+
+    private val mmsBuild: String by lazy {
+        File(root, "mms/build.gradle.kts").readText()
+    }
+
     @Test
     fun discussionHeaderUsesARoundedContainerAndLeftParticipantPill() {
         val overlay = chat.substringAfter("internal fun FloatingChatHeader(")
@@ -77,6 +85,13 @@ class FloatingChatChromeTest {
                     "name = \"material3\", version.ref = \"material3\" }"
             )
         )
+    }
+
+    @Test
+    fun material3SplitButtonCompilesAgainstItsRequiredAndroidApi() {
+        assertTrue(appBuild.contains("compileSdk = 37"))
+        assertTrue(mmsBuild.contains("compileSdk = 37"))
+        assertTrue(appBuild.contains("targetSdk = 36"))
     }
 
     @Test
