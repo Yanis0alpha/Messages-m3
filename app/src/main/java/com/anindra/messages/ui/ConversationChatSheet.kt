@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,6 +69,7 @@ internal fun ConversationChatSheet(
     val closeLabel = stringResource(R.string.common_close)
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
+        val sheetHeight = maxHeight * ChatSheetLayout.HEIGHT_FRACTION
         val windowHeightPx = with(LocalDensity.current) { maxHeight.roundToPx() }
         ModalBottomSheet(
             onDismissRequest = { finishDismiss(onGestureDismiss) },
@@ -84,7 +84,7 @@ internal fun ConversationChatSheet(
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .height(maxHeight * ChatSheetLayout.HEIGHT_FRACTION)
+                    .height(sheetHeight)
                     .onGloballyPositioned { coordinates ->
                         val top = coordinates.positionInWindow().y.roundToInt()
                         val bottom = top + coordinates.size.height
