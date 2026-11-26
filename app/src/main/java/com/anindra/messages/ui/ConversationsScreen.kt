@@ -13,10 +13,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
@@ -67,6 +67,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -76,8 +77,6 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -1792,7 +1791,21 @@ internal enum class SearchScope(val labelRes: Int) {
     Starred(R.string.search_scope_starred)
 }
 
-/** A compact connected Material 3 group; labels keep their natural widths. */
+/** Material 3 connected button-group tokens for the compact inbox filters. */
+internal object InboxCategoryButtonGroupLayout {
+    val HEIGHT = 40.dp
+    val MIN_WIDTH = 48.dp
+    val GAP = 2.dp
+    val OUTER_CORNER = 20.dp
+    val INNER_CORNER = 8.dp
+
+    fun startCorner(index: Int, count: Int, selected: Boolean): Dp =
+        if (selected || count == 1 || index == 0) OUTER_CORNER else INNER_CORNER
+
+    fun endCorner(index: Int, count: Int, selected: Boolean): Dp =
+        if (selected || count == 1 || index == count - 1) OUTER_CORNER else INNER_CORNER
+}
+
 @Composable
 internal fun InboxCategoryChips(
     selected: InboxCategory?,
@@ -1804,18 +1817,24 @@ internal fun InboxCategoryChips(
             add(category to stringResource(category.labelRes))
         }
     }
-    SingleChoiceSegmentedButtonRow(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .selectableGroup()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(InboxCategoryButtonGroupLayout.GAP)
     ) {
         options.forEachIndexed { index, (category, label) ->
+            val isSelected = selected == category
             InboxCategoryChip(
                 label = label,
-                selected = selected == category,
-                shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                onClick = { onSelect(category) }
+                selected = isSelected,
+                index = index,
+                count = options.size,
+                onClick = {
+                    onSelect(if (isSelected && category != null) null else category)
+                }
             )
         }
     }
@@ -1833,25 +1852,42 @@ internal val InboxCategory.labelRes: Int
 internal fun InboxCategoryChip(
     label: String,
     selected: Boolean,
-    shape: Shape = RoundedCornerShape(20.dp),
+    index: Int = 0,
+    count: Int = 1,
     onClick: () -> Unit
 ) {
+    val reduceMotion = LocalReduceMotion.current
+    val startCorner by animateDpAsState(
+        targetValue = InboxCategoryButtonGroupLayout.startCorner(index, count, selected),
+        animationSpec = motionSpring(reduceMotion),
+        label = "inboxCategoryStartCorner"
+    )
+    val endCorner by animateDpAsState(
+        targetValue = InboxCategoryButtonGroupLayout.endCorner(index, count, selected),
+        animationSpec = motionSpring(reduceMotion),
+        label = "inboxCategoryEndCorner"
+    )
     val colors = MaterialTheme.colorScheme
     Surface(
         selected = selected,
         onClick = onClick,
         modifier = Modifier
-            .height(40.dp)
+            .height(InboxCategoryButtonGroupLayout.HEIGHT)
+            .widthIn(min = InboxCategoryButtonGroupLayout.MIN_WIDTH)
             .zIndex(if (selected) 1f else 0f)
             .semantics { role = Role.RadioButton },
-        shape = shape,
+        shape = RoundedCornerShape(
+            topStart = startCorner,
+            topEnd = endCorner,
+            bottomEnd = endCorner,
+            bottomStart = startCorner
+        ),
         color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
         contentColor = if (selected) {
             colors.onSecondaryContainer
         } else {
             colors.onSurfaceVariant
-        },
-        border = BorderStroke(1.dp, colors.outlineVariant)
+        }
     ) {
         Box(
             modifier = Modifier.padding(horizontal = 16.dp),

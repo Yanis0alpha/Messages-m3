@@ -28,6 +28,9 @@ class PersistentConversationSheetTest {
         assertTrue(sheet.contains("sheetState.partialExpand()"))
         assertTrue(sheet.contains("sheetDragHandle = null"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
+        assertTrue(
+            sheet.contains("MaterialTheme.colorScheme.background.copy(alpha = surfaceAlpha)")
+        )
     }
 
     @Test
