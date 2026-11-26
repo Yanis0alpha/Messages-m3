@@ -80,4 +80,5 @@
     <string name="contact_create_group">グループを作成</string>
     <string name="contact_group_name_optional">任意（自動命名されます）</string>
     <string name="action_add">追加</string>
+    <string name="navigation_settings">設定</string>
 </resources>

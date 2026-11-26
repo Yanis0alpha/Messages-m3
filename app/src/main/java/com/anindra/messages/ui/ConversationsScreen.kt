@@ -161,7 +161,9 @@ fun ConversationsScreen(
     vm: AppViewModel,
     onOpenConversation: (Long, String) -> Unit,
     onNewChat: () -> Unit,
-    onOpenSettings: () -> Unit,
+    selectedDestination: TopLevelDestination,
+    onDestinationSelected: (TopLevelDestination) -> Unit,
+    showNavigationBar: Boolean = true,
     /**
      * The list is composed behind the chat even while the chat is showing, so
      * its Back handler would otherwise answer a bubble's Back (and swallow it)
@@ -201,7 +203,7 @@ fun ConversationsScreen(
     var searching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var searchScope by remember { mutableStateOf(SearchScope.All) }
-    var showArchived by remember { mutableStateOf(false) }
+    val showArchived = selectedDestination == TopLevelDestination.ARCHIVED
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val syncDone by vm.initialSyncDone.collectAsState()
@@ -306,7 +308,7 @@ fun ConversationsScreen(
         query = ""
     }
     BackHandler(enabled = backHandled && !selectionActive && !searching && showArchived) {
-        showArchived = false
+        onDestinationSelected(TopLevelDestination.MESSAGES)
     }
     // One Back from the inbox closes the app: no "press again to exit", which
     // only ever made the first press look like it did nothing.
@@ -388,7 +390,6 @@ fun ConversationsScreen(
         showUndo(context.getString(R.string.convo_blocked)) { vm.unblockNumber(convo.address) }
     }
 
-    val showArchiving = vm.settings.archivingEnabled
     val unreadAtTop = vm.settings.unreadAtTopEnabled
 
     val resolved = rememberSearchQueryFilters(query, vm.settings.calendarSystem)
@@ -514,6 +515,16 @@ fun ConversationsScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            if (showNavigationBar) {
+                Spacer(
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .height(TopLevelNavigationBarClearance)
+                )
+            }
+        },
         floatingActionButton = {
             if (!showArchived) {
                 StartChatFab(expanded = fabExpanded, onClick = onNewChat)
@@ -561,36 +572,19 @@ fun ConversationsScreen(
                         modifier = Modifier.weight(1f).focusRequester(focusRequester)
                     )
                 } else {
-                    if (showArchived) {
-                        IconButton(onClick = { showArchived = false }) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back_to_inbox))
-                        }
-                        Text(
-                            stringResource(R.string.conversations_archived),
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Text(
-                            stringResource(R.string.conversations_messages),
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (showArchiving) {
-                            IconButton(onClick = { showArchived = true }) {
-                                Icon(Icons.Rounded.Archive, stringResource(R.string.conversations_archived))
+                    Text(
+                        stringResource(
+                            if (showArchived) {
+                                R.string.conversations_archived
+                            } else {
+                                R.string.conversations_messages
                             }
-                        }
-                        IconButton(onClick = { searching = true }) {
-                            Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
-                        }
-                        IconButton(onClick = onOpenSettings) {
-                            OwnerAvatar(
-                                size = 32.dp,
-                                backgroundColor = MaterialTheme.colorScheme.primary,
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
+                        ),
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { searching = true }) {
+                        Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
                     }
                 }
             }
@@ -809,7 +803,7 @@ fun ConversationsScreen(
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .navigationBarsPadding()
-            .padding(bottom = 24.dp)
+            .padding(bottom = TopLevelNavigationBarClearance)
     ) {
         BackToTopFab(onClick = { scope.launch { listState.animateScrollToItem(0) } })
     }

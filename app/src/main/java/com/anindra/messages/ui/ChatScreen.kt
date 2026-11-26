@@ -158,6 +158,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -1632,11 +1633,13 @@ fun ChatScreen(
         )
         draftLoaded = false
     }
+    val latestDraft = rememberUpdatedState(draft)
     DisposableEffect(conversationId) {
         onDispose {
             // Closes the exit-animation window the script measures: this must happen
             // after the transition, never in the same frame as the route change.
             android.util.Log.d("NavTransition", "chat closed")
+            vm.saveDraftAndMaybeTrash(conversationId, latestDraft.value.trim())
             vm.setViewedConversation(0L)
         }
     }

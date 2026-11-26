@@ -5,10 +5,9 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The avatar in the app's own header (and the empty state) should be the user's
- * device profile picture when they have set one, falling back to the themed
- * silhouette otherwise — the screenshot in the report showed the silhouette even
- * though the device had a profile photo.
+ * The empty-state avatar should be the user's device profile picture when they
+ * have set one, falling back to the themed silhouette otherwise — the screenshot
+ * in the report showed the silhouette even though the device had a profile photo.
  */
 class OwnerAvatarTest {
 
@@ -45,13 +44,9 @@ class OwnerAvatarTest {
     }
 
     @Test
-    fun bothOwnerAvatarsUseIt() {
+    fun emptyStateUsesIt() {
         assertTrue(
-            "the header avatar",
-            list.contains("OwnerAvatar(\n                                size = 32.dp,")
-        )
-        assertTrue(
-            "and the empty-state avatar",
+            "the empty-state avatar",
             list.contains("OwnerAvatar(\n                        size = 72.dp,")
         )
     }

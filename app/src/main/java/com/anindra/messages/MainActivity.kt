@@ -82,6 +82,7 @@ import com.anindra.messages.data.ForwardPlan
 import com.anindra.messages.sms.SmsSender
 import com.anindra.messages.share.ShareText
 import com.anindra.messages.ui.ChatScreen
+import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
 import com.anindra.messages.ui.AddPeopleScreen
 import com.anindra.messages.ui.ContactDetailsScreen
@@ -93,6 +94,8 @@ import com.anindra.messages.ui.ScheduledMessagesScreen
 import com.anindra.messages.ui.NewChatScreen
 import com.anindra.messages.ui.AboutScreen
 import com.anindra.messages.ui.SettingsScreen
+import com.anindra.messages.ui.MessagesNavigationBar
+import com.anindra.messages.ui.TopLevelDestination
 import com.anindra.messages.ui.AdvancedSettingsScreen
 import com.anindra.messages.ui.AccessibilityScreen
 import com.anindra.messages.ui.MmsSupportScreen
@@ -1538,6 +1541,7 @@ open class MainActivity : FragmentActivity() {
         }
 
     private var navRoute by androidx.compose.runtime.mutableStateOf("list")
+    private var topLevelDestination by androidx.compose.runtime.mutableStateOf(TopLevelDestination.MESSAGES)
     private var pendingOpenAddress by androidx.compose.runtime.mutableStateOf<String?>(null)
     private var pendingOpenConversationId by androidx.compose.runtime.mutableStateOf<Long?>(null)
     private var pendingShareBody by androidx.compose.runtime.mutableStateOf("")
@@ -2044,6 +2048,54 @@ open class MainActivity : FragmentActivity() {
                     windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
                 val listWeight = 0.4f
 
+                val navigateTopLevel: (TopLevelDestination) -> Unit = { destination ->
+                    when (destination) {
+                        TopLevelDestination.MESSAGES,
+                        TopLevelDestination.ARCHIVED -> {
+                            topLevelDestination = destination
+                            navRoute = "list"
+                        }
+                        TopLevelDestination.SETTINGS -> navRoute = "settings"
+                    }
+                }
+                val chatUsesSheet = !twoPaneLayout && !bubbleMode
+                val leaveChat: () -> Unit = {
+                    pendingShareBody = ""
+                    pendingShareMedia = emptyList()
+                    stagedMediaProbe = emptyList()
+                    when (bubbleBackAction(bubbleMode, vm.settings.bubbleBackCloses)) {
+                        BubbleBack.FINISH -> finish()
+                        BubbleBack.SHOW_LIST -> navRoute = "list"
+                        BubbleBack.STAY -> Unit
+                    }
+                }
+                val chatContent: @Composable (() -> Unit) -> Unit = { chatBack ->
+                    ChatScreen(
+                        vm = vm,
+                        conversationId = chatId,
+                        searchQuery = chatSearchQuery,
+                        initialDraft = pendingShareBody,
+                        initialMedia = pendingShareMedia,
+                        initialStagedMedia = stagedMediaProbe,
+                        backHandled = bubbleBackHandled,
+                        onOpenConversationList = bubbleArrowOpensList,
+                        onBack = chatBack,
+                        onOpenDetails = {
+                            detailsId = chatId
+                            chatSearchQuery = null
+                            navRoute = "details"
+                        },
+                        onAddPeople = {
+                            detailsId = chatId
+                            addPeopleReturn = "chat"
+                            navRoute = "add-people"
+                        },
+                        onInitialDraftConsumed = { pendingShareBody = "" },
+                        onInitialMediaConsumed = { pendingShareMedia = emptyList() },
+                        onInitialStagedMediaConsumed = { stagedMediaProbe = emptyList() }
+                    )
+                }
+
                 val conversationList: @Composable () -> Unit = {
                     if (useNewUi) ConversationsScreen(
                         vm = vm,
@@ -2056,7 +2108,9 @@ open class MainActivity : FragmentActivity() {
                             navRoute = "chat"
                         },
                         onNewChat = { navRoute = "new" },
-                        onOpenSettings = { navRoute = "settings" },
+                        selectedDestination = topLevelDestination,
+                        onDestinationSelected = navigateTopLevel,
+                        showNavigationBar = navRoute == "list" || navRoute == "settings",
                         backHandled = bubbleBackHandled,
                     ) else com.anindra.messages.ui.legacy.ConversationsScreen(
                         vm = vm,
@@ -2089,6 +2143,10 @@ open class MainActivity : FragmentActivity() {
                                 val from = routeDepth[initialState] ?: 0
                                 val to = routeDepth[targetState] ?: 0
                                 when {
+                                    chatUsesSheet &&
+                                        (initialState == "chat" || targetState == "chat") ->
+                                        androidx.compose.animation.EnterTransition.None togetherWith
+                                            androidx.compose.animation.ExitTransition.None
                                     // Opening a chat covers the list from below, the
                                     // way Google Messages does it: the list stays
                                     // put and the chat rises over it, rather than
@@ -2145,6 +2203,8 @@ open class MainActivity : FragmentActivity() {
                             } else {
                                 androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
                             }
+                        } else if (target == "chat" && chatUsesSheet) {
+                            androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
                         } else {
                             androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                                 when (target) {
@@ -2301,71 +2361,46 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                             }
                                         }
                                     )
-                                    else -> ChatScreen(
-                                        vm = vm,
-                                        conversationId = chatId,
-                                        searchQuery = chatSearchQuery,
-                                        initialDraft = pendingShareBody,
-                                        initialMedia = pendingShareMedia,
-                                        initialStagedMedia = stagedMediaProbe,
-                                        backHandled = bubbleBackHandled,
-                                        onOpenConversationList = bubbleArrowOpensList,
-                                        onBack = {
-                                            pendingShareBody = ""
-                                            pendingShareMedia = emptyList()
-                                            stagedMediaProbe = emptyList()
-                                            // A bubble hosts one conversation, so
-                                            // Back stays on the chat unless the
-                                            // user asked for the plain "Back
-                                            // dismisses it" behaviour (#354
-                                            // follow-up).
-                                            when (bubbleBackAction(bubbleMode, vm.settings.bubbleBackCloses)) {
-                                                BubbleBack.FINISH -> finish()
-                                                BubbleBack.SHOW_LIST -> navRoute = "list"
-                                                BubbleBack.STAY -> Unit
-                                            }
-                                        },
-                                        // Leaving for contact details consumes the
-                                        // search handoff. ChatScreen lives inside
-                                        // AnimatedContent and is disposed on the
-                                        // route change, so coming back built a fresh
-                                        // one that re-read this same query and replayed
-                                        // the highlight on the message. Every other
-                                        // route out of a chat already clears it.
-                                        onOpenDetails = {
-                                            detailsId = chatId
-                                            chatSearchQuery = null
-                                            navRoute = "details"
-                                        },
-                                        onAddPeople = {
-                                            detailsId = chatId
-                                            addPeopleReturn = "chat"
-                                            navRoute = "add-people"
-                                        },
-                                        onInitialDraftConsumed = { pendingShareBody = "" },
-                                        onInitialMediaConsumed = { pendingShareMedia = emptyList() },
-                                        onInitialStagedMediaConsumed = { stagedMediaProbe = emptyList() }
-                                    )
+                                    "chat" -> chatContent(leaveChat)
+                                    else -> androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
                                 }
                             }
                         }
                     }
                 }
 
-                if (twoPaneLayout) {
-                    androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
-                        androidx.compose.foundation.layout.Box(
-                            Modifier.weight(listWeight).fillMaxSize()
-                        ) { conversationList() }
-                        androidx.compose.material3.VerticalDivider()
-                        androidx.compose.foundation.layout.Box(
-                            Modifier.weight(1f - listWeight).fillMaxSize()
-                        ) { routePane(Modifier.fillMaxSize()) }
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                    if (twoPaneLayout) {
+                        androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.weight(listWeight).fillMaxSize()
+                            ) { conversationList() }
+                            androidx.compose.material3.VerticalDivider()
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.weight(1f - listWeight).fillMaxSize()
+                            ) { routePane(Modifier.fillMaxSize()) }
+                        }
+                    } else {
+                        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                            conversationList()
+                            routePane(Modifier.fillMaxSize())
+                        }
                     }
-                } else {
-                    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-                        conversationList()
-                        routePane(Modifier.fillMaxSize())
+                    if (chatUsesSheet && navRoute == "chat") {
+                        ConversationChatSheet(onDismiss = leaveChat) { requestDismiss ->
+                            chatContent(requestDismiss)
+                        }
+                    }
+                    if (useNewUi && navRoute in setOf("list", "settings")) {
+                        MessagesNavigationBar(
+                            selectedDestination = if (navRoute == "settings") {
+                                TopLevelDestination.SETTINGS
+                            } else {
+                                topLevelDestination
+                            },
+                            onDestinationSelected = navigateTopLevel,
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
                     }
                 }
             }

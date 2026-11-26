@@ -35,6 +35,7 @@ import com.anindra.messages.ui.AttachTile
 import com.anindra.messages.ui.AttachTray
 import com.anindra.messages.ui.BubblePosition
 import com.anindra.messages.ui.ChatBubble
+import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.DialogText
 import com.anindra.messages.ui.ReactionBar
 import com.anindra.messages.ui.SuggestionChips
@@ -43,6 +44,7 @@ import com.anindra.messages.ui.NewerDataDialog
 import com.anindra.messages.ui.InputBar
 import com.anindra.messages.ui.LocationDialog
 import com.anindra.messages.ui.MessageDetailsDialog
+import com.anindra.messages.ui.MessagesNavigationBar
 import com.anindra.messages.ui.OwnerAvatar
 import com.anindra.messages.ui.ScheduleDialog
 import com.anindra.messages.ui.PersonAvatar
@@ -52,6 +54,7 @@ import com.anindra.messages.ui.SettingsRow
 import com.anindra.messages.ui.SkeletonConversationRow
 import com.anindra.messages.ui.SwipeActionPreview
 import com.anindra.messages.ui.SwipeDirection
+import com.anindra.messages.ui.TopLevelDestination
 import com.anindra.messages.ui.UnreadBadge
 import com.anindra.messages.ui.WorkProfileBadge
 import com.anindra.messages.ui.theme.A11yOptions
@@ -87,6 +90,55 @@ internal fun Stage(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             content()
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Floating navigation bar", showBackground = true, widthDp = 380)
+@Composable
+private fun MessagesNavigationBarPreview() {
+    MessagesTheme(mode = "system") {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            MessagesNavigationBar(
+                selectedDestination = TopLevelDestination.MESSAGES,
+                onDestinationSelected = {}
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Conversation sheet", showBackground = true, widthDp = 380, heightDp = 800)
+@Composable
+private fun ConversationChatSheetPreview() {
+    MessagesTheme(mode = "system") {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(800.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            ConversationChatSheet(onDismiss = {}) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(640.dp)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(24.dp)
+                ) {
+                    androidx.compose.material3.Text(
+                        "Conversation",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    androidx.compose.material3.Text("The message history and composer live inside this sheet.")
+                }
+            }
         }
     }
 }
