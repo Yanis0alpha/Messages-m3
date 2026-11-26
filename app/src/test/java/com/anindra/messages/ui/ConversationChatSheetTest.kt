@@ -98,15 +98,15 @@ class ConversationChatSheetTest {
     }
 
     @Test
-    fun compactSheetOwnsTheKeyboardInsetExactlyOnce() {
+    fun persistentComposerDoesNotReserveTheCoveredNavigation() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         assertTrue(activity.contains("imeInsetsHandledByParent = chatUsesSheet && !useNewUi"))
-        assertTrue(activity.contains("bottomOverlayClearance = if (chatUsesSheet && useNewUi)"))
-        assertTrue(activity.contains("topLevelControlsClearance"))
+        assertFalse(activity.contains("bottomOverlayClearance = if (chatUsesSheet && useNewUi)"))
+        assertFalse(chat.contains("bottomOverlayClearance"))
+        assertFalse(chat.contains("bottomOverlayInset"))
+        assertTrue(chat.contains("Column(Modifier.navigationBarsPadding())"))
         assertTrue(chat.contains("if (imeInsetsHandledByParent)"))
-        assertTrue(chat.contains("val bottomOverlayInset = if (imeBottom > navBottom)"))
-        assertTrue(chat.contains("(bottomOverlayClearance - navBottom).coerceAtLeast(0.dp)"))
         assertTrue(chat.contains("composerBottomInset = keyboardInset"))
     }
 

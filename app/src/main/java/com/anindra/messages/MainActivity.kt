@@ -2132,11 +2132,6 @@ open class MainActivity : FragmentActivity() {
                         showBackButton = !chatUsesSheet,
                         imeInsetsHandledByParent = chatUsesSheet && !useNewUi,
                         translucentBackground = chatUsesSheet,
-                        bottomOverlayClearance = if (chatUsesSheet && useNewUi) {
-                            topLevelControlsClearance
-                        } else {
-                            0.dp
-                        },
                         backHandled = bubbleBackHandled,
                         onOpenConversationList = bubbleArrowOpensList,
                         onBack = chatBack,
