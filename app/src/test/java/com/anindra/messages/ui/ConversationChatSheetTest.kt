@@ -66,6 +66,23 @@ class ConversationChatSheetTest {
     }
 
     @Test
+    fun sameWindowGlassNeverRedrawsARecordingRenderNode() {
+        val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
+        assertTrue(blur.contains("backgroundRoot.rootView === rootView"))
+        assertTrue(blur.contains("scheduleSameWindowCapture()"))
+        assertTrue(blur.contains("Bitmap.createBitmap("))
+        assertTrue(blur.contains("val captureCanvas = Canvas(next)"))
+        assertTrue(blur.contains("backgroundRoot.draw(captureCanvas)"))
+        assertTrue(blur.contains("snapshot?.let { canvas.drawBitmap"))
+        assertTrue(blur.contains("catch (_: IllegalStateException)"))
+        val onDraw = blur.substringAfter("override fun onDraw(canvas: Canvas)")
+        assertTrue(
+            onDraw.indexOf("if (sharesWindowWithBackdrop())") <
+                onDraw.indexOf("backgroundRoot.draw(canvas)")
+        )
+    }
+
+    @Test
     fun compactSheetOwnsTheKeyboardInsetExactlyOnce() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
