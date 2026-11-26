@@ -1,17 +1,11 @@
 package com.anindra.messages.ui
 
-import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.view.PixelCopy
 import android.view.View
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
@@ -21,12 +15,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
 
 /** Prevents a same-window backdrop capture from drawing the glass over itself. */
 internal class BackdropCaptureGuard {
@@ -43,8 +31,6 @@ private class DynamicBackdropBlurView(
     private var sampledY = Float.NaN
     private var snapshot: Bitmap? = null
     private var capturePosted = false
-    private val sourceWindow = context.findActivity()?.window
-    private val mainHandler = Handler(Looper.getMainLooper())
     private val rootLocation = IntArray(2)
     private val ownLocation = IntArray(2)
 
@@ -90,10 +76,11 @@ private class DynamicBackdropBlurView(
     }
 
     /**
-     * Redrawing a hardware-accelerated root from one of its own children while
-     * its RenderNode is recording crashes with "Recording currently in
-     * progress". PixelCopy reads the already-composited window instead. The
-     * software path is retained only as a guarded fallback for capture errors.
+     * Redrawing a hardware-accelerated root synchronously from one of its own
+     * children can recurse into a RenderNode that is still recording. Capture
+     * after that frame into a software bitmap instead. The guard removes the
+     * complete glass container from this nested draw, so the snapshot never
+     * feeds the navigation bar's previous opacity back into itself.
      */
     private fun scheduleSameWindowCapture() {
         if (!sharesWindowWithBackdrop() || capturePosted || width <= 0 || height <= 0) return
@@ -104,40 +91,13 @@ private class DynamicBackdropBlurView(
                 return@post
             }
 
-            val next = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val window = sourceWindow
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && window != null) {
-                getLocationInWindow(ownLocation)
-                val source = Rect(
-                    ownLocation[0],
-                    ownLocation[1],
-                    ownLocation[0] + width,
-                    ownLocation[1] + height
-                )
-                try {
-                    PixelCopy.request(
-                        window,
-                        source,
-                        next,
-                        { result ->
-                            if (result == PixelCopy.SUCCESS) {
-                                completeSameWindowCapture(next, captured = true)
-                            } else {
-                                captureSameWindowInSoftware(next)
-                            }
-                        },
-                        mainHandler
-                    )
-                } catch (_: IllegalArgumentException) {
-                    captureSameWindowInSoftware(next)
-                }
-            } else {
-                captureSameWindowInSoftware(next)
-            }
+            captureSameWindowWithoutGlass(
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            )
         }
     }
 
-    private fun captureSameWindowInSoftware(next: Bitmap) {
+    private fun captureSameWindowWithoutGlass(next: Bitmap) {
         val captureCanvas = Canvas(next)
         backgroundRoot.getLocationOnScreen(rootLocation)
         getLocationOnScreen(ownLocation)

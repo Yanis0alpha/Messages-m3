@@ -70,13 +70,26 @@ class ConversationChatSheetTest {
         val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
         assertTrue(blur.contains("backgroundRoot.rootView === rootView"))
         assertTrue(blur.contains("scheduleSameWindowCapture()"))
+        assertTrue(blur.contains("post {"))
         assertTrue(blur.contains("Bitmap.createBitmap("))
-        assertTrue(blur.contains("PixelCopy.request("))
-        assertTrue(blur.contains("result == PixelCopy.SUCCESS"))
+        assertFalse(blur.contains("PixelCopy.request("))
+        assertTrue(blur.contains("captureSameWindowWithoutGlass("))
         assertTrue(blur.contains("val captureCanvas = Canvas(next)"))
         assertTrue(blur.contains("backgroundRoot.draw(captureCanvas)"))
         assertTrue(blur.contains("snapshot?.let { canvas.drawBitmap"))
         assertTrue(blur.contains("catch (_: IllegalStateException)"))
+        val capture = blur.substringAfter("private fun captureSameWindowWithoutGlass")
+            .substringBefore("private fun completeSameWindowCapture")
+        assertTrue(capture.contains("captureGuard?.active = true"))
+        assertTrue(capture.contains("captureGuard?.active = false"))
+        assertTrue(
+            capture.indexOf("captureGuard?.active = true") <
+                capture.indexOf("backgroundRoot.draw(captureCanvas)")
+        )
+        assertTrue(
+            capture.indexOf("backgroundRoot.draw(captureCanvas)") <
+                capture.indexOf("captureGuard?.active = false")
+        )
         val onDraw = blur.substringAfter("override fun onDraw(canvas: Canvas)")
         assertTrue(
             onDraw.indexOf("if (sharesWindowWithBackdrop())") <
