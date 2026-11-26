@@ -109,16 +109,20 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SelectAll
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.SimCard
+import androidx.compose.material.icons.rounded.TextFields
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -2617,6 +2621,7 @@ internal fun MessageSelectionToolbar(
     onLockUnlock: () -> Unit
 ) {
     var overflow by remember { mutableStateOf(false) }
+    val backdropRoot = LocalView.current.rootView
     val actions = buildList {
         if (SelectionToolbar.showCopy(count)) {
             add(
@@ -2748,50 +2753,114 @@ internal fun MessageSelectionToolbar(
                         DropdownMenu(
                             expanded = overflow,
                             onDismissRequest = { overflow = false },
-                            containerColor = MaterialTheme.colorScheme.surface
+                            shape = RoundedCornerShape(0.dp),
+                            containerColor = Color.Transparent,
+                            tonalElevation = 0.dp,
+                            shadowElevation = 0.dp
                         ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_select_all)) },
-                                onClick = { overflow = false; onSelectAll() }
-                            )
-                            if (onSelectText != null) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.chat_select_text)) },
-                                    onClick = { overflow = false; onSelectText() }
-                                )
-                            }
-                            if (saveTarget != null) {
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            stringResource(
-                                                SelectionToolbar.saveLabelRes(saveTarget, saveCount)
-                                            )
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                var itemOrder = 0
+                                ChatFabMenuItem(
+                                    order = itemOrder++,
+                                    expanded = overflow,
+                                    backgroundRoot = backdropRoot,
+                                    text = stringResource(R.string.chat_select_all),
+                                    icon = {
+                                        Icon(
+                                            Icons.Rounded.SelectAll,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
                                         )
                                     },
-                                    onClick = { overflow = false; onSaveMedia() }
+                                    onClick = { overflow = false; onSelectAll() }
                                 )
-                            }
-                            if (SelectionToolbar.showSingleMessageActions(count)) {
-                                HorizontalDivider()
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.chat_share)) },
-                                    onClick = { overflow = false; onShare() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.chat_view_details)) },
-                                    onClick = { overflow = false; onViewDetails() }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            stringResource(
-                                                SelectionToolbar.lockLabelRes(allLocked)
+                                if (onSelectText != null) {
+                                    ChatFabMenuItem(
+                                        order = itemOrder++,
+                                        expanded = overflow,
+                                        backgroundRoot = backdropRoot,
+                                        text = stringResource(R.string.chat_select_text),
+                                        icon = {
+                                            Icon(
+                                                Icons.Rounded.TextFields,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp)
                                             )
-                                        )
-                                    },
-                                    onClick = { overflow = false; onLockUnlock() }
-                                )
+                                        },
+                                        onClick = { overflow = false; onSelectText() }
+                                    )
+                                }
+                                if (saveTarget != null) {
+                                    ChatFabMenuItem(
+                                        order = itemOrder++,
+                                        expanded = overflow,
+                                        backgroundRoot = backdropRoot,
+                                        text = stringResource(
+                                            SelectionToolbar.saveLabelRes(saveTarget, saveCount)
+                                        ),
+                                        icon = {
+                                            Icon(
+                                                Icons.Rounded.Download,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        },
+                                        onClick = { overflow = false; onSaveMedia() }
+                                    )
+                                }
+                                if (SelectionToolbar.showSingleMessageActions(count)) {
+                                    ChatFabMenuItem(
+                                        order = itemOrder++,
+                                        expanded = overflow,
+                                        backgroundRoot = backdropRoot,
+                                        text = stringResource(R.string.chat_share),
+                                        icon = {
+                                            Icon(
+                                                Icons.Rounded.Share,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        },
+                                        onClick = { overflow = false; onShare() }
+                                    )
+                                    ChatFabMenuItem(
+                                        order = itemOrder++,
+                                        expanded = overflow,
+                                        backgroundRoot = backdropRoot,
+                                        text = stringResource(R.string.chat_view_details),
+                                        icon = {
+                                            Icon(
+                                                Icons.Rounded.Info,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        },
+                                        onClick = { overflow = false; onViewDetails() }
+                                    )
+                                    ChatFabMenuItem(
+                                        order = itemOrder++,
+                                        expanded = overflow,
+                                        backgroundRoot = backdropRoot,
+                                        text = stringResource(
+                                            SelectionToolbar.lockLabelRes(allLocked)
+                                        ),
+                                        icon = {
+                                            Icon(
+                                                if (allLocked) {
+                                                    Icons.Rounded.LockOpen
+                                                } else {
+                                                    Icons.Rounded.Lock
+                                                },
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        },
+                                        onClick = { overflow = false; onLockUnlock() }
+                                    )
+                                }
                             }
                         }
                     }
