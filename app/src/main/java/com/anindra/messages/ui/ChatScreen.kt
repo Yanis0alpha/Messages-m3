@@ -31,9 +31,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -176,6 +174,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -208,6 +207,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.positionInWindow
@@ -2914,23 +2914,36 @@ private fun ChatFabMenuItem(
         visible = true
     }
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(
-            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4)
-        ) + expandHorizontally(
-            expandFrom = Alignment.End,
-            animationSpec = motionSpring(reduceMotion)
-        ),
-        exit = fadeOut(
-            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4)
-        ) + shrinkHorizontally(
-            shrinkTowards = Alignment.End,
-            animationSpec = motionSpring(reduceMotion)
-        )
-    ) {
+    val widthProgress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = motionSpring(reduceMotion),
+        label = "chatFabMenuItemWidth$order"
+    )
+    val alphaProgress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4),
+        label = "chatFabMenuItemAlpha$order"
+    )
+
+    if (visible || widthProgress > 0f || alphaProgress > 0f) {
         Surface(
             onClick = onClick,
+            modifier = Modifier
+                .clipToBounds()
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    val width = constraints.constrainWidth(
+                        (
+                            placeable.width * maxOf(widthProgress, 0f)
+                        ).roundToInt()
+                    )
+                    layout(width, placeable.height) {
+                        // Keep the trailing edge fixed while the start edge
+                        // reveals from right to left, like an M3 FAB menu item.
+                        placeable.place(width - placeable.width, 0)
+                    }
+                }
+                .graphicsLayer { alpha = alphaProgress },
             shape = CircleShape,
             color = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
