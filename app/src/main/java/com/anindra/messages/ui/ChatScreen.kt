@@ -115,7 +115,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Schedule
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -132,6 +131,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.ui.window.Dialog
@@ -1799,7 +1800,7 @@ fun ChatScreen(
                 showBackButton = showBackButton,
                 onBack = ::openConversationList,
                 onOpenDetails = onOpenDetails,
-                onMenuToggle = { menuOpen = true },
+                onMenuToggle = { menuOpen = !menuOpen },
                 onMenuDismiss = { menuOpen = false },
                 onSimSelect = { simId, label ->
                     currentSimId = simId
@@ -2808,7 +2809,7 @@ internal fun ChatTopBar(
     onSearch: () -> Unit
 ) {
     val context = LocalContext.current
-    CenterAlignedTopAppBar(
+    TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent
         ),
@@ -2825,11 +2826,106 @@ internal fun ChatTopBar(
             }
         },
         title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clickable { onOpenDetails() }
-                    .onGloballyPositioned { coordinates ->
+            Surface(
+                onClick = onOpenDetails,
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.onGloballyPositioned { coordinates ->
+                    val position = coordinates.positionInRoot()
+                    val left = position.x.roundToInt()
+                    val top = position.y.roundToInt()
+                    val right = left + coordinates.size.width
+                    val bottom = top + coordinates.size.height
+                    android.util.Log.d(
+                        "FloatingChatChrome",
+                        "title left=$left top=$top right=$right bottom=$bottom"
+                    )
+                }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(
+                        start = 6.dp,
+                        top = 4.dp,
+                        end = 12.dp,
+                        bottom = 4.dp
+                    )
+                ) {
+                    PersonAvatar(
+                        convo?.groupTitle?.ifBlank { convo.address } ?: "?",
+                        size = 32.dp,
+                        photoModel = convo?.groupAvatar?.takeIf { it.isNotBlank() }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.widthIn(max = 148.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                convo?.let {
+                                    if (it.groupTitle.isNotBlank()) BidiText.groupTitle(it.groupTitle)
+                                    else if (it.name != it.address) it.name
+                                    else BidiText.ltr(it.display)
+                                } ?: "",
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.widthIn(
+                                    max = if (workProfile) 92.dp else 120.dp
+                                )
+                            )
+                            if (workProfile) {
+                                Spacer(Modifier.width(6.dp))
+                                WorkProfileBadge()
+                            }
+                        }
+                        if (convo?.draft?.isNotBlank() == true && sendCountdown == 0) {
+                            Text(
+                                stringResource(R.string.chat_draft_prefix),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        actions = {
+            Box {
+                SplitButtonLayout(
+                    leadingButton = {
+                        SplitButtonDefaults.TonalLeadingButton(
+                            onClick = {
+                                convo?.address?.let {
+                                    context.startActivity(
+                                        Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it"))
+                                    )
+                                }
+                            },
+                            modifier = Modifier.height(44.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.Call,
+                                stringResource(R.string.icon_call),
+                                modifier = Modifier.size(SplitButtonDefaults.LeadingIconSize)
+                            )
+                        }
+                    },
+                    trailingButton = {
+                        SplitButtonDefaults.TonalTrailingButton(
+                            checked = menuOpen,
+                            onCheckedChange = { onMenuToggle() },
+                            modifier = Modifier.height(44.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.MoreVert,
+                                stringResource(R.string.icon_more_options),
+                                modifier = Modifier.size(SplitButtonDefaults.TrailingIconSize)
+                            )
+                        }
+                    },
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
                         val position = coordinates.positionInRoot()
                         val left = position.x.roundToInt()
                         val top = position.y.roundToInt()
@@ -2837,60 +2933,10 @@ internal fun ChatTopBar(
                         val bottom = top + coordinates.size.height
                         android.util.Log.d(
                             "FloatingChatChrome",
-                            "title left=$left top=$top right=$right bottom=$bottom"
+                            "split left=$left top=$top right=$right bottom=$bottom"
                         )
                     }
-            ) {
-                PersonAvatar(
-                    convo?.groupTitle?.ifBlank { convo.address } ?: "?",
-                    size = 36.dp,
-                    photoModel = convo?.groupAvatar?.takeIf { it.isNotBlank() }
                 )
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.widthIn(max = 160.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            convo?.let {
-                                if (it.groupTitle.isNotBlank()) BidiText.groupTitle(it.groupTitle)
-                                else if (it.name != it.address) it.name
-                                else BidiText.ltr(it.display)
-                            } ?: "",
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            // A group title lists every member, so it is almost
-                            // always longer than the bar. Clipped at the comma it
-                            // read as a broken name; ellipsized it reads as more.
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(
-                                max = if (workProfile) 100.dp else 128.dp
-                            )
-                        )
-                        if (workProfile) {
-                            Spacer(Modifier.width(6.dp))
-                            WorkProfileBadge()
-                        }
-                    }
-                    if (convo?.draft?.isNotBlank() == true && sendCountdown == 0) {
-                        Text(
-                            stringResource(R.string.chat_draft_prefix),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        },
-        actions = {
-            IconButton(onClick = {
-                convo?.address?.let {
-                    context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it")))
-                }
-            }) { Icon(Icons.Rounded.Call, stringResource(R.string.icon_call)) }
-
-            Box {
-                IconButton(onClick = onMenuToggle) {
-                    Icon(Icons.Rounded.MoreVert, stringResource(R.string.icon_more_options))
-                }
                 DropdownMenu(
                     expanded = menuOpen,
                     onDismissRequest = onMenuDismiss,

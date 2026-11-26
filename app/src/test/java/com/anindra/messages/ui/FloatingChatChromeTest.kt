@@ -19,8 +19,16 @@ class FloatingChatChromeTest {
         File(root, "app/src/main/java/com/anindra/messages/MainActivity.kt").readText()
     }
 
+    private val previews: String by lazy {
+        File(root, "app/src/debug/java/com/anindra/messages/ui/previews/ChatPreviews.kt").readText()
+    }
+
+    private val versions: String by lazy {
+        File(root, "gradle/libs.versions.toml").readText()
+    }
+
     @Test
-    fun discussionHeaderIsCenteredInsideARoundedRectangle() {
+    fun discussionHeaderUsesARoundedContainerAndLeftParticipantPill() {
         val overlay = chat.substringAfter("internal fun FloatingChatHeader(")
             .substringBefore("internal fun MessageSelectionToolbar(")
         val toolbar = chat.substringAfter("internal fun ChatTopBar(")
@@ -30,14 +38,55 @@ class FloatingChatChromeTest {
         assertTrue(overlay.contains("shape = RoundedCornerShape(28.dp)"))
         assertTrue(overlay.contains("color = MaterialTheme.colorScheme.surfaceContainer"))
         assertTrue(overlay.contains("shadowElevation = 4.dp"))
-        assertTrue(toolbar.contains("CenterAlignedTopAppBar("))
+        assertTrue(toolbar.contains("TopAppBar("))
+        assertFalse(toolbar.contains("CenterAlignedTopAppBar("))
         assertTrue(toolbar.contains("containerColor = Color.Transparent"))
         assertTrue(toolbar.contains("windowInsets = if (showBackButton)"))
         assertTrue(toolbar.contains("WindowInsets(0, 0, 0, 0)"))
-        assertTrue(toolbar.contains("Column(modifier = Modifier.widthIn(max = 160.dp))"))
-        assertTrue(toolbar.contains("max = if (workProfile) 100.dp else 128.dp"))
+        assertTrue(toolbar.contains("shape = RoundedCornerShape(24.dp)"))
+        assertTrue(toolbar.contains("color = MaterialTheme.colorScheme.surfaceContainerHigh"))
+        assertTrue(toolbar.contains("size = 32.dp"))
+        assertTrue(toolbar.contains("Column(modifier = Modifier.widthIn(max = 148.dp))"))
         assertFalse(toolbar.contains("weight(1f, fill = false)"))
         assertTrue(toolbar.contains("\"title left=\$left top=\$top right=\$right bottom=\$bottom\""))
+    }
+
+    @Test
+    fun callAndOverflowFormASplitButtonWithTheExistingDropdown() {
+        val toolbar = chat.substringAfter("internal fun ChatTopBar(")
+            .substringBefore("internal fun ChatMessageList(")
+
+        val call = toolbar.indexOf("Icons.Rounded.Call")
+        val overflow = toolbar.indexOf("Icons.Rounded.MoreVert")
+        val menu = toolbar.indexOf("DropdownMenu(")
+        assertTrue(call >= 0 && call < overflow && overflow < menu)
+        assertTrue(toolbar.contains("SplitButtonLayout("))
+        assertTrue(toolbar.contains("SplitButtonDefaults.TonalLeadingButton("))
+        assertTrue(toolbar.contains("SplitButtonDefaults.TonalTrailingButton("))
+        assertTrue(toolbar.contains("checked = menuOpen"))
+        assertTrue(toolbar.contains("onCheckedChange = { onMenuToggle() }"))
+        assertTrue(toolbar.contains("SplitButtonDefaults.LeadingIconSize"))
+        assertTrue(toolbar.contains("SplitButtonDefaults.TrailingIconSize"))
+        assertTrue(toolbar.contains("expanded = menuOpen"))
+        assertTrue(chat.contains("onMenuToggle = { menuOpen = !menuOpen }"))
+        assertTrue(toolbar.contains("\"split left=\$left top=\$top right=\$right bottom=\$bottom\""))
+        assertTrue(versions.contains("material3 = \"1.5.0\""))
+        assertTrue(
+            versions.contains(
+                "androidx-material3 = { group = \"androidx.compose.material3\", " +
+                    "name = \"material3\", version.ref = \"material3\" }"
+            )
+        )
+    }
+
+    @Test
+    fun previewsCoverClosedAndOpenHeaderMenuStates() {
+        val preview = previews.substringAfter("private fun ChatTopBarPreview()")
+            .substringBefore("private fun ChatSearchBarPreview()")
+
+        assertTrue(preview.contains("menuOpen = false"))
+        assertTrue(preview.contains("menuOpen = true"))
+        assertTrue(preview.split("FloatingChatHeader {").size - 1 >= 2)
     }
 
     @Test
