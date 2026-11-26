@@ -29,7 +29,10 @@ class PersistentConversationSheetTest {
         assertTrue(sheet.contains("sheetDragHandle = null"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
         assertTrue(
-            sheet.contains("MaterialTheme.colorScheme.background.copy(alpha = surfaceAlpha)")
+            sheet.contains("MaterialTheme.colorScheme.surfaceContainerHigh.copy(")
+        )
+        assertTrue(
+            sheet.contains("alpha = surfaceAlpha")
         )
     }
 

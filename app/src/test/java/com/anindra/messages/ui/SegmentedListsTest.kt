@@ -28,8 +28,9 @@ class SegmentedListsTest {
 
         assertTrue(contacts.contains("itemsIndexed(filtered"))
         assertTrue(contacts.contains("segmentedListPosition(index, filtered.size)"))
-        assertTrue(contacts.contains(".clip(segmentedListShape(position))"))
-        assertTrue(contacts.contains("MaterialTheme.colorScheme.surfaceContainerLow"))
+        assertTrue(contacts.contains("shape = segmentedListShape(position)"))
+        assertTrue(contacts.contains("tint = MaterialTheme.colorScheme.surfaceContainerLow"))
+        assertTrue(contacts.contains("TranslucentBackdropSurface("))
         assertTrue(contacts.contains("kind=contact position=\$position"))
     }
 

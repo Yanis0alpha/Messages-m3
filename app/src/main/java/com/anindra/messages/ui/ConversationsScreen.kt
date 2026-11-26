@@ -1524,21 +1524,19 @@ internal fun ConversationRow(
     LaunchedEffect(convo.id, position) {
         android.util.Log.d("SegmentedList", "kind=conversation position=$position")
     }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(segmentedListShape(position))
+    val pinnedTint = when {
+        selected && selectionMode -> MaterialTheme.colorScheme.surfaceContainerHighest
+        convo.pinned && settings.pinnedEnabled -> MaterialTheme.colorScheme.surfaceContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerLow
+    }
+    TranslucentBackdropSurface(
+        shape = segmentedListShape(position),
+        tint = pinnedTint,
+        modifier = modifier.fillMaxWidth()
     ) {
-        val pinnedTint = when {
-            selected && selectionMode -> MaterialTheme.colorScheme.surfaceContainerHighest
-            convo.pinned && settings.pinnedEnabled ->
-                MaterialTheme.colorScheme.surfaceContainer
-            else -> MaterialTheme.colorScheme.surfaceContainerLow
-        }
-
         Row(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .clearAndSetSemantics {
                     contentDescription = a11yLabel
                     role = Role.Button
@@ -1556,7 +1554,6 @@ internal fun ConversationRow(
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
-                .background(pinnedTint)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1705,7 +1702,9 @@ internal fun StartChatFab(
     }
     val p = progress.value
     val naturalWidthDp = with(LocalDensity.current) { naturalWidthPx.toDp() }
-    Row(
+    TranslucentBackdropSurface(
+        shape = RoundedCornerShape(16.dp),
+        tint = cs.startChatContainer,
         modifier = Modifier
             .height(collapsedSize)
             .then(
@@ -1713,31 +1712,34 @@ internal fun StartChatFab(
                 else Modifier.width(lerp(collapsedSize, naturalWidthDp, p))
             )
             .onSizeChanged { if (naturalWidthPx <= 0) naturalWidthPx = it.width }
-            .clip(RoundedCornerShape(16.dp))
-            .background(cs.startChatContainer)
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = context.getString(R.string.access_start_chat) }
-            // Padding, not spacers: a spacer can be squeezed to zero while the
-            // pill animates, leaving the label flush against the clipped edge
-            // (the RTL report showed the text touching the pill's end). At the
-            // collapsed 56dp width this leaves exactly the 24dp icon.
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = null, tint = cs.startChatContent)
-        if (p > 0.01f) {
-            Spacer(Modifier.width(8.dp))
-            Text(
-                stringResource(R.string.access_start_chat),
-                style = MaterialTheme.typography.labelLarge,
-                // The pill is a secondary container, so its content has to be
-                // the matching "on" role: primary on secondaryContainer is not a
-                // pair Material defines, and a wallpaper palette can make the
-                // two nearly the same darkness (the FAB read as black).
-                color = cs.startChatContent,
-                maxLines = 1,
-                softWrap = false
+        Row(
+            modifier = Modifier
+                .height(collapsedSize)
+                .clickable(onClick = onClick)
+                .semantics {
+                    contentDescription = context.getString(R.string.access_start_chat)
+                }
+                // Padding, not spacers: a spacer can be squeezed to zero while the
+                // pill animates, leaving the label flush against the clipped edge.
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.AutoMirrored.Outlined.Chat,
+                contentDescription = null,
+                tint = cs.startChatContent
             )
+            if (p > 0.01f) {
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.access_start_chat),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = cs.startChatContent,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
         }
     }
 }

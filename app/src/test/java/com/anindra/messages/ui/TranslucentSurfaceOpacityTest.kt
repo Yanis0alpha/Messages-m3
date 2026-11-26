@@ -48,6 +48,7 @@ class TranslucentSurfaceOpacityTest {
         val chatSheet = source("java/com/anindra/messages/ui/ConversationChatSheet.kt")
         val persistentSheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
         val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
+        val backdropSurface = source("java/com/anindra/messages/ui/TranslucentBackdropSurface.kt")
 
         assertTrue(activity.contains("TranslucentSurfaceOpacity.alpha("))
         assertTrue(
@@ -64,5 +65,7 @@ class TranslucentSurfaceOpacityTest {
         assertTrue(conversations.contains("LocalTranslucentSurfaceAlpha.current"))
         assertTrue(conversations.contains("alpha = translucentSurfaceAlpha"))
         assertTrue(conversations.contains("alpha = LocalTranslucentSurfaceAlpha.current"))
+        assertTrue(backdropSurface.contains("LocalTranslucentSurfaceAlpha.current"))
+        assertTrue(backdropSurface.contains("tint.copy(alpha = surfaceAlpha)"))
     }
 }

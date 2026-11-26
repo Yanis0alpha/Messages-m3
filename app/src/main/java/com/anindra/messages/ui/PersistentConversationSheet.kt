@@ -150,7 +150,9 @@ internal fun PersistentConversationSheet(
                         Modifier
                             .matchParentSize()
                             .background(
-                                MaterialTheme.colorScheme.background.copy(alpha = surfaceAlpha)
+                                MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+                                    alpha = surfaceAlpha
+                                )
                             )
                     )
                     Column(Modifier.fillMaxSize()) {
