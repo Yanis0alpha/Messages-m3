@@ -41,40 +41,6 @@ internal object ChatSheetLayout {
     val BACKGROUND_BLUR_RADIUS = 32.dp
 }
 
-/**
- * Material's modal sheet lives in its own transparent Android window. On
- * Android 12+ the window can therefore blur the inbox underneath the
- * translucent sheet instead of merely painting a milky overlay over it.
- */
-@Composable
-private fun SheetBackgroundBlur() {
-    val view = LocalView.current
-    val blurRadiusPx = with(LocalDensity.current) {
-        ChatSheetLayout.BACKGROUND_BLUR_RADIUS.roundToPx()
-    }
-    DisposableEffect(view, blurRadiusPx) {
-        val provider = (view as? DialogWindowProvider)
-            ?: (view.parent as? DialogWindowProvider)
-        val window = provider?.window
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-            window.attributes = window.attributes.apply {
-                blurBehindRadius = blurRadiusPx
-            }
-            window.setBackgroundBlurRadius(blurRadiusPx)
-        }
-        onDispose {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
-                window.setBackgroundBlurRadius(0)
-                window.attributes = window.attributes.apply {
-                    blurBehindRadius = 0
-                }
-                window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConversationChatSheet(
@@ -127,7 +93,34 @@ internal fun ConversationChatSheet(
             // the sheet flush with the screen without adding a permanent gap.
             contentWindowInsets = { WindowInsets.ime }
         ) {
-            SheetBackgroundBlur()
+            // Material's sheet lives in its own transparent Android window.
+            // Apply the effect here, inside that dialog composition, so the
+            // LocalView resolves to the sheet window rather than the activity.
+            val dialogView = LocalView.current
+            val blurRadiusPx = with(LocalDensity.current) {
+                ChatSheetLayout.BACKGROUND_BLUR_RADIUS.roundToPx()
+            }
+            DisposableEffect(dialogView, blurRadiusPx) {
+                val provider = (dialogView as? DialogWindowProvider)
+                    ?: (dialogView.parent as? DialogWindowProvider)
+                val window = provider?.window
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    window.attributes = window.attributes.apply {
+                        blurBehindRadius = blurRadiusPx
+                    }
+                    window.setBackgroundBlurRadius(blurRadiusPx)
+                }
+                onDispose {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
+                        window.setBackgroundBlurRadius(0)
+                        window.attributes = window.attributes.apply {
+                            blurBehindRadius = 0
+                        }
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    }
+                }
+            }
             Column(
                 Modifier
                     .fillMaxWidth()
