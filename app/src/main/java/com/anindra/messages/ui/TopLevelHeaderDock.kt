@@ -8,18 +8,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -138,6 +142,7 @@ internal fun TopLevelHeaderDock(
 }
 
 /** The always-visible search control placed at the top of [TopLevelHeaderDock]. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun TopLevelDockSearchField(
     query: String,
@@ -153,7 +158,20 @@ internal fun TopLevelDockSearchField(
         placeholder = { Text(placeholder, maxLines = 1) },
         singleLine = true,
         leadingIcon = {
-            Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = MaterialShapes.Cookie6Sided.toShape(),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Outlined.Search,
+                        stringResource(R.string.icon_search),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         },
         trailingIcon = if (query.isNotEmpty()) {
             {

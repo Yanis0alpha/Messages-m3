@@ -37,6 +37,8 @@ class TopLevelHeaderDockTest {
         assertTrue(dock.contains("if (!captureGuard.active) drawContent()"))
         assertTrue(dock.contains("alpha = TopLevelHeaderDockLayout.TINT_ALPHA"))
         assertTrue(dock.contains("contentAlignment = Alignment.Center"))
+        assertTrue(dock.contains("shape = MaterialShapes.Cookie6Sided.toShape()"))
+        assertTrue(dock.contains("modifier = Modifier.size(20.dp)"))
     }
 
     @Test

@@ -19,7 +19,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BusinessCenter
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -29,6 +31,7 @@ import com.anindra.messages.data.CalendarSystem
 import com.anindra.messages.data.SettingsStore
 import com.anindra.messages.ui.theme.LocalReduceMotion
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -38,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -99,6 +103,25 @@ fun avatarColor(key: String): Color {
     return avatarColors[Math.abs(h) % avatarColors.size]
 }
 
+/** A stable pseudo-random expressive shape: one contact keeps one silhouette. */
+internal fun avatarShapeIndex(key: String, shapeCount: Int): Int {
+    require(shapeCount > 0)
+    var hash = 0
+    for (character in key) hash = hash * 31 + character.code
+    return (hash and Int.MAX_VALUE) % shapeCount
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal fun expressiveAvatarShape(key: String): Shape = when (avatarShapeIndex(key, 7)) {
+    0 -> MaterialShapes.Gem.toShape()
+    1 -> MaterialShapes.Cookie6Sided.toShape()
+    2 -> MaterialShapes.Cookie7Sided.toShape()
+    3 -> MaterialShapes.Cookie9Sided.toShape()
+    4 -> MaterialShapes.Cookie12Sided.toShape()
+    5 -> MaterialShapes.Clover8Leaf.toShape()
+    else -> MaterialShapes.Sunny.toShape()
+}
+
 /** Google-Messages style contact avatar: contact photo if available, else silhouette. */
 @Composable
 fun PersonAvatar(
@@ -111,10 +134,13 @@ fun PersonAvatar(
      * A picture to draw instead of the contact photo — a group's own image.
      * Coil takes the path; the contact lookup is skipped when it is set.
      */
-    photoModel: Any? = null
+    photoModel: Any? = null,
+    shape: Shape? = null
 ) {
     val fill = backgroundColor ?: avatarColor(key)
     val glyphTint = tint ?: avatarGlyphInk(MaterialTheme.colorScheme)
+    val generatedShape = remember(key) { expressiveAvatarShape(key) }
+    val avatarShape = shape ?: generatedShape
     val context = LocalContext.current
     val photoUri by produceState<String?>(initialValue = photoUriCache.get(key), key) {
         if (photoModel != null) {
@@ -130,7 +156,8 @@ fun PersonAvatar(
     Box(
         modifier = modifier
             .size(size)
-            .background(fill, CircleShape),
+            .background(fill, avatarShape)
+            .clip(avatarShape),
         contentAlignment = Alignment.Center
     ) {
         val model = photoModel ?: photoUri
@@ -139,7 +166,7 @@ fun PersonAvatar(
                 model = model,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(size).clip(CircleShape)
+                modifier = Modifier.size(size).clip(avatarShape)
             )
         } else {
             Icon(
@@ -186,6 +213,7 @@ fun OwnerAvatar(
     tint: Color = MaterialTheme.colorScheme.onPrimary
 ) {
     val context = LocalContext.current
+    val ownerShape = remember { expressiveAvatarShape("owner-profile") }
     val photo by produceState<String?>(initialValue = null) {
         value = withContext(Dispatchers.IO) { resolveOwnerPhotoUri(context) }
     }
@@ -195,7 +223,7 @@ fun OwnerAvatar(
             model = uri,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = modifier.size(size).clip(CircleShape)
+            modifier = modifier.size(size).clip(ownerShape)
         )
     } else {
         PersonAvatar(
@@ -203,7 +231,8 @@ fun OwnerAvatar(
             size = size,
             modifier = modifier,
             backgroundColor = backgroundColor,
-            tint = tint
+            tint = tint,
+            shape = ownerShape
         )
     }
 }
