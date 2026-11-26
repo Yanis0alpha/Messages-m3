@@ -16,9 +16,10 @@ class TopLevelHeaderDockTest {
     private fun source(path: String) = File(main, path).readText()
 
     @Test
-    fun dockOccupiesThirtyPercentOfTheScreen() {
-        assertEquals(0.30f, TopLevelHeaderDockLayout.HEIGHT_FRACTION, 0f)
-        assertEquals(240f, TopLevelHeaderDockLayout.height(800.dp).value, 0.001f)
+    fun dockIsCompactButFitsTheSearchAndCenteredTitle() {
+        assertEquals(168.dp, TopLevelHeaderDockLayout.HEIGHT)
+        assertTrue(TopLevelHeaderDockLayout.HEIGHT > TopLevelHeaderDockLayout.TOP_CONTROL_HEIGHT)
+        assertEquals(56.dp, TopLevelHeaderDockLayout.SEARCH_HEIGHT)
     }
 
     @Test

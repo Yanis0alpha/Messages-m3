@@ -34,23 +34,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
 
 internal object TopLevelHeaderDockLayout {
-    const val HEIGHT_FRACTION = 0.30f
     const val TINT_ALPHA = 0.30f
+    val HEIGHT = 168.dp
     val BOTTOM_CORNER = 32.dp
     val TOP_CONTROL_HEIGHT = 64.dp
     val SEARCH_HEIGHT = 56.dp
-
-    fun height(screenHeight: Dp): Dp = screenHeight * HEIGHT_FRACTION
 }
 
 /**
@@ -67,7 +63,6 @@ internal fun TopLevelHeaderDock(
     val backgroundRoot = LocalView.current.rootView
     val captureGuard = remember { BackdropCaptureGuard() }
     var dockPosition by remember { mutableStateOf(Offset.Zero) }
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val dockShape = RoundedCornerShape(
         bottomStart = TopLevelHeaderDockLayout.BOTTOM_CORNER,
         bottomEnd = TopLevelHeaderDockLayout.BOTTOM_CORNER
@@ -76,7 +71,7 @@ internal fun TopLevelHeaderDock(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(TopLevelHeaderDockLayout.height(screenHeight)),
+            .height(TopLevelHeaderDockLayout.HEIGHT),
         shape = dockShape,
         color = Color.Transparent,
         shadowElevation = 8.dp
