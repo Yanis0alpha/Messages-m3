@@ -1,11 +1,17 @@
 package com.anindra.messages.ui
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
 import android.view.View
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
@@ -15,6 +21,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
 /** Prevents a same-window backdrop capture from drawing the glass over itself. */
 internal class BackdropCaptureGuard {
@@ -31,6 +43,8 @@ private class DynamicBackdropBlurView(
     private var sampledY = Float.NaN
     private var snapshot: Bitmap? = null
     private var capturePosted = false
+    private val sourceWindow = context.findActivity()?.window
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val rootLocation = IntArray(2)
     private val ownLocation = IntArray(2)
 
@@ -78,44 +92,82 @@ private class DynamicBackdropBlurView(
     /**
      * Redrawing a hardware-accelerated root from one of its own children while
      * its RenderNode is recording crashes with "Recording currently in
-     * progress". Capture that same-window root later into a software bitmap;
-     * the view's RenderEffect blurs the safe snapshot on its next real draw.
+     * progress". PixelCopy reads the already-composited window instead. The
+     * software path is retained only as a guarded fallback for capture errors.
      */
     private fun scheduleSameWindowCapture() {
         if (!sharesWindowWithBackdrop() || capturePosted || width <= 0 || height <= 0) return
         capturePosted = true
         post {
-            capturePosted = false
-            if (!sharesWindowWithBackdrop() || width <= 0 || height <= 0) return@post
+            if (!sharesWindowWithBackdrop() || width <= 0 || height <= 0) {
+                capturePosted = false
+                return@post
+            }
 
             val next = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val captureCanvas = Canvas(next)
-            backgroundRoot.getLocationOnScreen(rootLocation)
-            getLocationOnScreen(ownLocation)
-            captureCanvas.translate(
-                (rootLocation[0] - ownLocation[0]).toFloat(),
-                (rootLocation[1] - ownLocation[1]).toFloat()
-            )
-
-            captureGuard?.active = true
-            val captured = try {
-                backgroundRoot.draw(captureCanvas)
-                true
-            } catch (_: IllegalStateException) {
-                false
-            } finally {
-                captureGuard?.active = false
-            }
-
-            if (captured) {
-                // Do not explicitly recycle the previous snapshot: the render
-                // thread may still reference its display-list texture until
-                // this invalidation is committed. GC releases it safely later.
-                snapshot = next
-                invalidate()
+            val window = sourceWindow
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && window != null) {
+                getLocationInWindow(ownLocation)
+                val source = Rect(
+                    ownLocation[0],
+                    ownLocation[1],
+                    ownLocation[0] + width,
+                    ownLocation[1] + height
+                )
+                try {
+                    PixelCopy.request(
+                        window,
+                        source,
+                        next,
+                        { result ->
+                            if (result == PixelCopy.SUCCESS) {
+                                completeSameWindowCapture(next, captured = true)
+                            } else {
+                                captureSameWindowInSoftware(next)
+                            }
+                        },
+                        mainHandler
+                    )
+                } catch (_: IllegalArgumentException) {
+                    captureSameWindowInSoftware(next)
+                }
             } else {
-                next.recycle()
+                captureSameWindowInSoftware(next)
             }
+        }
+    }
+
+    private fun captureSameWindowInSoftware(next: Bitmap) {
+        val captureCanvas = Canvas(next)
+        backgroundRoot.getLocationOnScreen(rootLocation)
+        getLocationOnScreen(ownLocation)
+        captureCanvas.translate(
+            (rootLocation[0] - ownLocation[0]).toFloat(),
+            (rootLocation[1] - ownLocation[1]).toFloat()
+        )
+
+        captureGuard?.active = true
+        val captured = try {
+            backgroundRoot.draw(captureCanvas)
+            true
+        } catch (_: IllegalStateException) {
+            false
+        } finally {
+            captureGuard?.active = false
+        }
+        completeSameWindowCapture(next, captured)
+    }
+
+    private fun completeSameWindowCapture(next: Bitmap, captured: Boolean) {
+        capturePosted = false
+        if (captured && isAttachedToWindow) {
+            // Do not explicitly recycle the previous snapshot: the render
+            // thread may still reference its display-list texture until this
+            // invalidation is committed. GC releases it safely later.
+            snapshot = next
+            invalidate()
+        } else {
+            next.recycle()
         }
     }
 

@@ -153,7 +153,7 @@ private fun DynamicBackdropBlurPreview() {
                 Box(
                     Modifier
                         .matchParentSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.62f))
                 )
                 androidx.compose.material3.Text(
                     "Dynamic glass",

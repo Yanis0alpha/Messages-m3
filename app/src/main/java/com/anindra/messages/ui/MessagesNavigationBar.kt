@@ -49,7 +49,7 @@ enum class TopLevelDestination {
 }
 
 internal val TopLevelNavigationBarClearance = 104.dp
-internal const val TopLevelNavigationBarAlpha = 0.82f
+internal const val TopLevelNavigationBarAlpha = 0.62f
 
 private data class TopLevelNavigationItem(
     val destination: TopLevelDestination,
@@ -121,7 +121,7 @@ internal fun MessagesNavigationBar(
                     backgroundRoot = backgroundRoot,
                     samplePosition = barPosition,
                     captureGuard = captureGuard,
-                    blurRadius = 24.dp,
+                    blurRadius = 32.dp,
                     modifier = Modifier.matchParentSize()
                 )
                 Box(

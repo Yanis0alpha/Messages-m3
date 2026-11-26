@@ -71,6 +71,8 @@ class ConversationChatSheetTest {
         assertTrue(blur.contains("backgroundRoot.rootView === rootView"))
         assertTrue(blur.contains("scheduleSameWindowCapture()"))
         assertTrue(blur.contains("Bitmap.createBitmap("))
+        assertTrue(blur.contains("PixelCopy.request("))
+        assertTrue(blur.contains("result == PixelCopy.SUCCESS"))
         assertTrue(blur.contains("val captureCanvas = Canvas(next)"))
         assertTrue(blur.contains("backgroundRoot.draw(captureCanvas)"))
         assertTrue(blur.contains("snapshot?.let { canvas.drawBitmap"))
