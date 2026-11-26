@@ -2059,6 +2059,12 @@ open class MainActivity : FragmentActivity() {
                     }
                 }
                 val chatUsesSheet = !twoPaneLayout && !bubbleMode
+                // A modal chat overlays the inbox; its top-level navigation
+                // remains composed underneath so it never blinks out and back.
+                val showTopLevelNavigation = useNewUi && (
+                    navRoute in setOf("list", "settings") ||
+                        (chatUsesSheet && navRoute == "chat")
+                )
                 var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
                 val leaveChat: () -> Unit = {
                     pendingShareBody = ""
@@ -2084,6 +2090,7 @@ open class MainActivity : FragmentActivity() {
                         initialStagedMedia = stagedMediaProbe,
                         showBackButton = !chatUsesSheet,
                         imeInsetsHandledByParent = chatUsesSheet,
+                        translucentBackground = chatUsesSheet,
                         backHandled = bubbleBackHandled,
                         onOpenConversationList = bubbleArrowOpensList,
                         onBack = chatBack,
@@ -2118,7 +2125,7 @@ open class MainActivity : FragmentActivity() {
                         onNewChat = { navRoute = "new" },
                         selectedDestination = topLevelDestination,
                         onDestinationSelected = navigateTopLevel,
-                        showNavigationBar = navRoute == "list" || navRoute == "settings",
+                        showNavigationBar = showTopLevelNavigation,
                         backHandled = bubbleBackHandled,
                     ) else com.anindra.messages.ui.legacy.ConversationsScreen(
                         vm = vm,
@@ -2402,7 +2409,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                             chatContent(requestDismiss)
                         }
                     }
-                    if (useNewUi && navRoute in setOf("list", "settings")) {
+                    if (showTopLevelNavigation) {
                         MessagesNavigationBar(
                             selectedDestination = if (navRoute == "settings") {
                                 TopLevelDestination.SETTINGS

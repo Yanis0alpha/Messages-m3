@@ -27,14 +27,35 @@ class ConversationChatSheetTest {
         assertTrue(sheet.contains("skipPartiallyExpanded = true"))
         assertTrue(sheet.contains("BoxWithConstraints(Modifier.fillMaxSize())"))
         assertTrue(sheet.contains("val sheetHeight = maxHeight * ChatSheetLayout.HEIGHT_FRACTION"))
-        assertTrue(sheet.contains(".height(sheetHeight)"))
+        assertTrue(
+            sheet.contains(
+                "val sheetContentHeight = sheetHeight - ChatSheetLayout.DRAG_HANDLE_HEIGHT"
+            )
+        )
+        assertTrue(sheet.contains(".height(sheetContentHeight)"))
         assertTrue(sheet.contains("sheetState.hide()"))
-        assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
+        assertTrue(sheet.contains("dragHandle = { BottomSheetDefaults.DragHandle() }"))
+        assertFalse(sheet.contains("dragHandle = null"))
         assertTrue(sheet.contains("RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)"))
         assertTrue(sheet.contains("contentWindowInsets = { WindowInsets.ime }"))
         assertFalse(sheet.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
         assertTrue(sheet.contains("bottomGap=\${windowHeightPx - bottom}"))
         assertFalse(sheet.contains("modifier = Modifier.fillMaxHeight"))
+    }
+
+    @Test
+    fun sheetUsesTranslucentMaterialGlass() {
+        val sheet = source("java/com/anindra/messages/ui/ConversationChatSheet.kt")
+        val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        assertTrue(sheet.contains("CONTAINER_ALPHA = 0.88f"))
+        assertTrue(sheet.contains("SCRIM_ALPHA = 0.18f"))
+        assertTrue(sheet.contains("FLAG_BLUR_BEHIND"))
+        assertTrue(sheet.contains("setBackgroundBlurRadius(blurRadiusPx)"))
+        assertTrue(sheet.contains("alpha = ChatSheetLayout.CONTAINER_ALPHA"))
+        assertTrue(activity.contains("translucentBackground = chatUsesSheet"))
+        assertTrue(chat.contains("if (translucentBackground)"))
+        assertTrue(chat.contains("Color.Transparent"))
     }
 
     @Test
@@ -55,6 +76,10 @@ class ConversationChatSheetTest {
         assertTrue(activity.contains("onDismissed = leaveChat"))
         assertTrue(activity.contains("onGestureDismiss = leaveChatByGesture"))
         assertTrue(activity.contains("chatContent(requestDismiss)"))
+        assertTrue(activity.contains("val showTopLevelNavigation = useNewUi"))
+        assertTrue(activity.contains("(chatUsesSheet && navRoute == \"chat\")"))
+        assertTrue(activity.contains("showNavigationBar = showTopLevelNavigation"))
+        assertTrue(activity.contains("if (showTopLevelNavigation)"))
         assertTrue(
             activity.contains(
                 "chatUsesSheet &&\n                                        " +

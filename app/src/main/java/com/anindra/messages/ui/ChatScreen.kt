@@ -831,6 +831,8 @@ fun ChatScreen(
     showBackButton: Boolean = true,
     /** The compact sheet applies its IME inset around this complete screen. */
     imeInsetsHandledByParent: Boolean = false,
+    /** Let the compact sheet's glass container show through the chat canvas. */
+    translucentBackground: Boolean = false,
     /**
      * Whether Back leaves the chat. A bubble whose "Close bubble with Back"
      * setting is off leaves Back to the platform, which collapses the expanded
@@ -1670,7 +1672,11 @@ fun ChatScreen(
         )
     }
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = if (translucentBackground) {
+            Color.Transparent
+        } else {
+            MaterialTheme.colorScheme.background
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             val topBarMode = when {

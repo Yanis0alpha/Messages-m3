@@ -123,12 +123,16 @@ private fun ConversationChatSheetPreview() {
                 .height(800.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
+            MessagesNavigationBar(
+                selectedDestination = TopLevelDestination.MESSAGES,
+                onDestinationSelected = {},
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
             ConversationChatSheet(onDismissed = {}, onGestureDismiss = {}) {
                 Column(
                     Modifier
                         .fillMaxWidth()
                         .height(640.dp)
-                        .background(MaterialTheme.colorScheme.background)
                         .padding(24.dp)
                 ) {
                     androidx.compose.material3.Text(
@@ -136,7 +140,9 @@ private fun ConversationChatSheetPreview() {
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Spacer(Modifier.height(16.dp))
-                    androidx.compose.material3.Text("The message history and composer live inside this sheet.")
+                    androidx.compose.material3.Text(
+                        "The blurred inbox and its navigation remain visible through the sheet."
+                    )
                 }
             }
         }
