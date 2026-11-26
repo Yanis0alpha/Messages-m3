@@ -1791,21 +1791,6 @@ internal enum class SearchScope(val labelRes: Int) {
     Starred(R.string.search_scope_starred)
 }
 
-/** Material 3 connected button-group tokens for the compact inbox filters. */
-internal object InboxCategoryButtonGroupLayout {
-    val HEIGHT = 40.dp
-    val MIN_WIDTH = 48.dp
-    val GAP = 2.dp
-    val OUTER_CORNER = 20.dp
-    val INNER_CORNER = 8.dp
-
-    fun startCorner(index: Int, count: Int, selected: Boolean): Dp =
-        if (selected || count == 1 || index == 0) OUTER_CORNER else INNER_CORNER
-
-    fun endCorner(index: Int, count: Int, selected: Boolean): Dp =
-        if (selected || count == 1 || index == count - 1) OUTER_CORNER else INNER_CORNER
-}
-
 @Composable
 internal fun InboxCategoryChips(
     selected: InboxCategory?,
@@ -1823,7 +1808,7 @@ internal fun InboxCategoryChips(
             .horizontalScroll(rememberScrollState())
             .selectableGroup()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(InboxCategoryButtonGroupLayout.GAP)
+        horizontalArrangement = Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)
     ) {
         options.forEachIndexed { index, (category, label) ->
             val isSelected = selected == category
@@ -1858,12 +1843,12 @@ internal fun InboxCategoryChip(
 ) {
     val reduceMotion = LocalReduceMotion.current
     val startCorner by animateDpAsState(
-        targetValue = InboxCategoryButtonGroupLayout.startCorner(index, count, selected),
+        targetValue = ConnectedButtonGroupLayout.startCorner(index, count, selected),
         animationSpec = motionSpring(reduceMotion),
         label = "inboxCategoryStartCorner"
     )
     val endCorner by animateDpAsState(
-        targetValue = InboxCategoryButtonGroupLayout.endCorner(index, count, selected),
+        targetValue = ConnectedButtonGroupLayout.endCorner(index, count, selected),
         animationSpec = motionSpring(reduceMotion),
         label = "inboxCategoryEndCorner"
     )
@@ -1872,8 +1857,8 @@ internal fun InboxCategoryChip(
         selected = selected,
         onClick = onClick,
         modifier = Modifier
-            .height(InboxCategoryButtonGroupLayout.HEIGHT)
-            .widthIn(min = InboxCategoryButtonGroupLayout.MIN_WIDTH)
+            .height(ConnectedButtonGroupLayout.HEIGHT)
+            .widthIn(min = ConnectedButtonGroupLayout.MIN_WIDTH)
             .zIndex(if (selected) 1f else 0f)
             .semantics { role = Role.RadioButton },
         shape = RoundedCornerShape(

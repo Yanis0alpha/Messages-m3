@@ -17,14 +17,16 @@ class InboxCategoryButtonGroupTest {
 
     @Test
     fun connectedGroupUsesSmallGapsAndMorphsSelectionToAPill() {
-        assertEquals(40.dp, InboxCategoryButtonGroupLayout.HEIGHT)
-        assertEquals(48.dp, InboxCategoryButtonGroupLayout.MIN_WIDTH)
-        assertEquals(2.dp, InboxCategoryButtonGroupLayout.GAP)
-        assertEquals(20.dp, InboxCategoryButtonGroupLayout.startCorner(0, 4, false))
-        assertEquals(8.dp, InboxCategoryButtonGroupLayout.endCorner(0, 4, false))
-        assertEquals(8.dp, InboxCategoryButtonGroupLayout.startCorner(1, 4, false))
-        assertEquals(20.dp, InboxCategoryButtonGroupLayout.startCorner(1, 4, true))
-        assertEquals(20.dp, InboxCategoryButtonGroupLayout.endCorner(1, 4, true))
+        assertEquals(40.dp, ConnectedButtonGroupLayout.HEIGHT)
+        assertEquals(48.dp, ConnectedButtonGroupLayout.MIN_WIDTH)
+        assertEquals(2.dp, ConnectedButtonGroupLayout.GAP)
+        assertEquals(20.dp, ConnectedButtonGroupLayout.startCorner(0, 4, false))
+        assertEquals(8.dp, ConnectedButtonGroupLayout.endCorner(0, 4, false))
+        assertEquals(8.dp, ConnectedButtonGroupLayout.startCorner(1, 4, false))
+        assertEquals(20.dp, ConnectedButtonGroupLayout.startCorner(1, 4, true))
+        assertEquals(20.dp, ConnectedButtonGroupLayout.endCorner(1, 4, true))
+        assertEquals(4.dp, ConnectedButtonGroupLayout.startCorner(1, 4, false, pressed = true))
+        assertEquals(20.dp, ConnectedButtonGroupLayout.startCorner(0, 4, false, pressed = true))
 
         val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
         val group = conversations.substringAfter("internal fun InboxCategoryChips(")
@@ -32,7 +34,7 @@ class InboxCategoryButtonGroupTest {
         val button = conversations.substringAfter("internal fun InboxCategoryChip(")
             .substringBefore("internal fun SearchScopeChips(")
 
-        assertTrue(group.contains("Arrangement.spacedBy(InboxCategoryButtonGroupLayout.GAP)"))
+        assertTrue(group.contains("Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)"))
         assertTrue(group.contains(".selectableGroup()"))
         assertTrue(group.contains("add(null to stringResource(R.string.inbox_category_all))"))
         assertTrue(group.contains("InboxCategory.entries.forEach"))

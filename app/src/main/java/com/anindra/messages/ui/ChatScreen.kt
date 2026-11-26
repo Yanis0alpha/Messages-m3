@@ -21,6 +21,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.RepeatMode
@@ -51,6 +52,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -89,9 +91,7 @@ import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Audiotrack
@@ -235,7 +235,9 @@ import com.anindra.messages.voice.VoiceRecorder
 import com.anindra.messages.data.MessageLockCrypto
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.anindra.messages.ui.theme.LocalReduceMotion
 import com.anindra.messages.ui.theme.Motion
@@ -2526,7 +2528,68 @@ internal fun FloatingChatHeader(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private data class SelectionToolbarAction(
+    val contentDescription: String,
+    val onClick: () -> Unit,
+    val icon: @Composable () -> Unit
+)
+
+@Composable
+private fun ConnectedSelectionActionButton(
+    index: Int,
+    count: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val reduceMotion = LocalReduceMotion.current
+    val startCorner by animateDpAsState(
+        targetValue = ConnectedButtonGroupLayout.startCorner(
+            index = index,
+            count = count,
+            selected = false,
+            pressed = pressed
+        ),
+        animationSpec = motionSpring(reduceMotion),
+        label = "selectionActionStartCorner"
+    )
+    val endCorner by animateDpAsState(
+        targetValue = ConnectedButtonGroupLayout.endCorner(
+            index = index,
+            count = count,
+            selected = false,
+            pressed = pressed
+        ),
+        animationSpec = motionSpring(reduceMotion),
+        label = "selectionActionEndCorner"
+    )
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .size(ConnectedButtonGroupLayout.HEIGHT)
+            .semantics {
+                this.contentDescription = contentDescription
+                role = Role.Button
+            },
+        shape = RoundedCornerShape(
+            topStart = startCorner,
+            topEnd = endCorner,
+            bottomEnd = endCorner,
+            bottomStart = startCorner
+        ),
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        interactionSource = interactionSource
+    ) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            icon()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun MessageSelectionToolbar(
     count: Int,
@@ -2548,96 +2611,188 @@ internal fun MessageSelectionToolbar(
     onLockUnlock: () -> Unit
 ) {
     var overflow by remember { mutableStateOf(false) }
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            navigationIconContentColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.primary,
-            actionIconContentColor = MaterialTheme.colorScheme.primary
-        ),
-        navigationIcon = {
-            IconButton(onClick = onClose) {
-                Icon(Icons.Outlined.Close, stringResource(R.string.icon_cancel_selection), tint = MaterialTheme.colorScheme.primary)
-            }
-        },
-        title = {
-            Text(count.toString(), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-        },
-        actions = {
-            if (SelectionToolbar.showCopy(count)) {
-                IconButton(onClick = onCopy) {
-                    Icon(Icons.Default.ContentCopy, stringResource(R.string.icon_copy), tint = MaterialTheme.colorScheme.primary)
+    val actions = buildList {
+        if (SelectionToolbar.showCopy(count)) {
+            add(
+                SelectionToolbarAction(
+                    contentDescription = stringResource(R.string.icon_copy),
+                    onClick = onCopy
+                ) {
+                    Icon(
+                        Icons.Default.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-            }
-            if (SelectionToolbar.showForward(count)) {
-                IconButton(onClick = onForward) {
+            )
+        }
+        if (SelectionToolbar.showForward(count)) {
+            add(
+                SelectionToolbarAction(
+                    contentDescription = stringResource(R.string.chat_forward),
+                    onClick = onForward
+                ) {
                     Icon(
                         painterResource(R.drawable.ic_forward),
-                        stringResource(R.string.chat_forward),
-                        tint = MaterialTheme.colorScheme.primary
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-            }
-            if (SelectionToolbar.showStar(count)) {
-                IconButton(onClick = onToggleStar) {
+            )
+        }
+        if (SelectionToolbar.showStar(count)) {
+            add(
+                SelectionToolbarAction(
+                    contentDescription = stringResource(
+                        if (allStarred) R.string.chat_unstar else R.string.chat_star
+                    ),
+                    onClick = onToggleStar
+                ) {
                     Icon(
                         if (allStarred) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                        stringResource(if (allStarred) R.string.chat_unstar else R.string.chat_star),
-                        tint = MaterialTheme.colorScheme.primary
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            )
+        }
+        if (SelectionToolbar.showTrash(count)) {
+            add(
+                SelectionToolbarAction(
+                    contentDescription = stringResource(R.string.chat_trash),
+                    onClick = onDelete
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            )
+        }
+    }
+    val showMore = SelectionToolbar.showMore(count)
+    val actionCount = actions.size + if (showMore) 1 else 0
+
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                onClick = onClose,
+                modifier = Modifier
+                    .size(40.dp)
+                    .semantics { role = Role.Button },
+                shape = MaterialShapes.Gem.toShape(),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        stringResource(R.string.icon_cancel_selection),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-            if (SelectionToolbar.showTrash(count)) {
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, stringResource(R.string.chat_trash), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(4.dp))
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = MaterialShapes.Cookie6Sided.toShape(),
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        count.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1
+                    )
                 }
             }
-            if (SelectionToolbar.showMore(count)) {
-                Box {
-                    IconButton(onClick = { overflow = true }) {
-                        Icon(Icons.Outlined.MoreVert, stringResource(R.string.icon_more_options), tint = MaterialTheme.colorScheme.primary)
-                    }
-                    DropdownMenu(
-                        expanded = overflow,
-                        onDismissRequest = { overflow = false },
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_select_all)) },
-                            onClick = { overflow = false; onSelectAll() }
-                        )
-                        if (onSelectText != null) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_select_text)) },
-                                onClick = { overflow = false; onSelectText() }
+            Spacer(Modifier.weight(1f))
+            Row(horizontalArrangement = Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)) {
+                actions.forEachIndexed { index, action ->
+                    ConnectedSelectionActionButton(
+                        index = index,
+                        count = actionCount,
+                        contentDescription = action.contentDescription,
+                        onClick = action.onClick,
+                        icon = action.icon
+                    )
+                }
+                if (showMore) {
+                    Box {
+                        ConnectedSelectionActionButton(
+                            index = actions.size,
+                            count = actionCount,
+                            contentDescription = stringResource(R.string.icon_more_options),
+                            onClick = { overflow = true }
+                        ) {
+                            Icon(
+                                Icons.Rounded.MoreVert,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
-                        if (saveTarget != null) {
+                        DropdownMenu(
+                            expanded = overflow,
+                            onDismissRequest = { overflow = false },
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(SelectionToolbar.saveLabelRes(saveTarget, saveCount))) },
-                                onClick = { overflow = false; onSaveMedia() }
+                                text = { Text(stringResource(R.string.chat_select_all)) },
+                                onClick = { overflow = false; onSelectAll() }
                             )
-                        }
-                        if (SelectionToolbar.showSingleMessageActions(count)) {
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_share)) },
-                                onClick = { overflow = false; onShare() }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_view_details)) },
-                                onClick = { overflow = false; onViewDetails() }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(SelectionToolbar.lockLabelRes(allLocked))) },
-                                onClick = { overflow = false; onLockUnlock() }
-                            )
+                            if (onSelectText != null) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.chat_select_text)) },
+                                    onClick = { overflow = false; onSelectText() }
+                                )
+                            }
+                            if (saveTarget != null) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                SelectionToolbar.saveLabelRes(saveTarget, saveCount)
+                                            )
+                                        )
+                                    },
+                                    onClick = { overflow = false; onSaveMedia() }
+                                )
+                            }
+                            if (SelectionToolbar.showSingleMessageActions(count)) {
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.chat_share)) },
+                                    onClick = { overflow = false; onShare() }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.chat_view_details)) },
+                                    onClick = { overflow = false; onViewDetails() }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                SelectionToolbar.lockLabelRes(allLocked)
+                                            )
+                                        )
+                                    },
+                                    onClick = { overflow = false; onLockUnlock() }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

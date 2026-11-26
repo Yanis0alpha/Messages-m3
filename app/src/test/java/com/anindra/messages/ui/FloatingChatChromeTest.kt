@@ -60,6 +60,24 @@ class FloatingChatChromeTest {
     }
 
     @Test
+    fun selectionToolbarUsesConnectedActionsAndExpressiveSelectionShapes() {
+        val toolbar = chat.substringAfter("private data class SelectionToolbarAction(")
+            .substringBefore("internal fun ChatSearchBar(")
+
+        assertTrue(toolbar.contains("ConnectedSelectionActionButton("))
+        assertTrue(toolbar.contains("selected = false"))
+        assertTrue(toolbar.contains("collectIsPressedAsState()"))
+        assertTrue(toolbar.contains("Arrangement.spacedBy(ConnectedButtonGroupLayout.GAP)"))
+        assertTrue(toolbar.contains("color = MaterialTheme.colorScheme.primary"))
+        assertTrue(toolbar.contains("contentColor = MaterialTheme.colorScheme.onPrimary"))
+        assertTrue(toolbar.contains("shape = MaterialShapes.Gem.toShape()"))
+        assertTrue(toolbar.contains("shape = MaterialShapes.Cookie6Sided.toShape()"))
+        assertTrue(toolbar.contains("actions.forEachIndexed"))
+        assertFalse(toolbar.contains("IconButton("))
+        assertFalse(toolbar.contains("TopAppBar("))
+    }
+
+    @Test
     fun callAndOverflowFormASplitButtonWithTheExistingDropdown() {
         val toolbar = chat.substringAfter("internal fun ChatTopBar(")
             .substringBefore("internal fun ChatMessageList(")
