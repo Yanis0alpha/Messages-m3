@@ -20,27 +20,48 @@ class FloatingChatChromeTest {
     }
 
     @Test
-    fun discussionHeaderIsAnInsetRoundedSurface() {
-        val header = chat.substringAfter("internal fun FloatingChatHeader(")
+    fun discussionHeaderIsCenteredWithoutABlockingSurface() {
+        val overlay = chat.substringAfter("internal fun FloatingChatHeader(")
             .substringBefore("internal fun MessageSelectionToolbar(")
+        val toolbar = chat.substringAfter("internal fun ChatTopBar(")
+            .substringBefore("internal fun ChatMessageList(")
 
-        assertTrue(header.contains(".padding(horizontal = 12.dp, vertical = 8.dp)"))
-        assertTrue(header.contains("shape = RoundedCornerShape(28.dp)"))
-        assertTrue(header.contains("color = MaterialTheme.colorScheme.chatBar"))
-        assertTrue(header.contains("shadowElevation = 4.dp"))
-        assertTrue(chat.contains("FloatingChatHeader {\n            AnimatedContent("))
+        assertTrue(overlay.contains("Box("))
+        assertTrue(overlay.contains("contentAlignment = Alignment.TopCenter"))
+        assertFalse(overlay.contains("Surface("))
+        assertFalse(overlay.contains("shadowElevation"))
+        assertTrue(toolbar.contains("CenterAlignedTopAppBar("))
+        assertTrue(toolbar.contains("containerColor = Color.Transparent"))
     }
 
     @Test
-    fun composerIsAnInsetRoundedSurface() {
+    fun composerKeepsOnlyItsInputPillAndSendCircle() {
         val composer = chat.substringAfter("internal fun InputBar(")
             .substringBefore("internal fun SuggestionChips(")
 
         assertTrue(composer.contains(".padding(horizontal = 12.dp, vertical = 8.dp)"))
-        assertTrue(composer.contains("shape = RoundedCornerShape(32.dp)"))
-        assertTrue(composer.contains("color = MaterialTheme.colorScheme.surfaceContainer"))
-        assertTrue(composer.contains("shadowElevation = 4.dp"))
-        assertTrue(composer.contains("modifier = Modifier.fillMaxWidth().padding(4.dp)"))
+        assertTrue(composer.contains("shape = RoundedCornerShape(28.dp)"))
+        assertTrue(composer.contains("color = MaterialTheme.colorScheme.inputPill"))
+        assertFalse(composer.contains("shape = RoundedCornerShape(32.dp)"))
+        assertFalse(composer.contains("color = MaterialTheme.colorScheme.surfaceContainer,"))
+        assertFalse(composer.contains("shadowElevation = 4.dp"))
+    }
+
+    @Test
+    fun messagesUseTheFullViewportBehindTheFloatingChrome() {
+        val screen = chat.substringAfter("fun ChatScreen(")
+            .substringBefore("internal fun FloatingChatHeader(")
+        val bottomBar = screen.substringAfter("bottomBar = {")
+            .substringBefore(") { padding ->")
+
+        assertTrue(screen.contains(") { padding ->\n        Box(Modifier.fillMaxSize())"))
+        assertFalse(screen.contains("Box(Modifier.fillMaxSize().padding(padding))"))
+        assertTrue(screen.contains("top = padding.calculateTopPadding() + 12.dp"))
+        assertTrue(screen.contains("bottom = padding.calculateBottomPadding() + 12.dp"))
+        assertTrue(bottomBar.contains("Modifier.navigationBarsPadding()"))
+        assertFalse(
+            bottomBar.substringBefore("AnimatedVisibility(").contains(".background(")
+        )
     }
 
     @Test
@@ -52,7 +73,8 @@ class FloatingChatChromeTest {
 
     @Test
     fun floatingBoundsRemainObservableForDeviceRegression() {
-        assertTrue(chat.contains("\"header left=\$left right=\$right\""))
-        assertTrue(chat.contains("\"composer left=\$left right=\$right\""))
+        assertTrue(chat.contains("\"header left=\$left top=\$top right=\$right bottom=\$bottom\""))
+        assertTrue(chat.contains("\"composer left=\$left top=\$top right=\$right bottom=\$bottom\""))
+        assertTrue(chat.contains("\"messages top=\$top bottom=\$bottom\""))
     }
 }

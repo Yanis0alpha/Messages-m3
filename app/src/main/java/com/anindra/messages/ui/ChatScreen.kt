@@ -115,6 +115,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Schedule
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -1848,9 +1849,7 @@ fun ChatScreen(
         },
         bottomBar = {
             Column(
-                Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .navigationBarsPadding()
+                Modifier.navigationBarsPadding()
             ) {
                 AnimatedVisibility(
                     visible = showEmoji && !selectionActive,
@@ -2130,13 +2129,21 @@ fun ChatScreen(
             }
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize()) {
             val revealed = remember { mutableStateListOf<Long>() }
             CompositionLocalProvider(LocalDensity provides zoomedDensity) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .onGloballyPositioned { coordinates ->
+                        val top = coordinates.positionInRoot().y.roundToInt()
+                        val bottom = top + coordinates.size.height
+                        android.util.Log.d(
+                            "FloatingChatChrome",
+                            "messages top=$top bottom=$bottom"
+                        )
+                    }
                     // Off means the handler is not installed, so two fingers
                     // scroll the list instead of being captured by the zoom.
                     .pointerInput(conversationId, pinchZoomEnabled) {
@@ -2149,7 +2156,12 @@ fun ChatScreen(
                             }
                         )
                     },
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    top = padding.calculateTopPadding() + 12.dp,
+                    end = 12.dp,
+                    bottom = padding.calculateBottomPadding() + 12.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 itemsIndexed(chatRows, key = { _, row -> row.key }) { idx, row ->
@@ -2273,7 +2285,10 @@ fun ChatScreen(
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(end = 12.dp, top = 8.dp)
+                        .padding(
+                            end = 12.dp,
+                            top = padding.calculateTopPadding() + 8.dp
+                        )
                         .semantics {
                             contentDescription = context.getString(
                                 R.string.access_zoom_reset, ChatZoom.percent(zoom)
@@ -2303,7 +2318,10 @@ fun ChatScreen(
                 exit = fadeOut() + scaleOut(),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 12.dp)
+                    .padding(
+                        end = 16.dp,
+                        bottom = padding.calculateBottomPadding() + 12.dp
+                    )
             ) {
                 SmallFloatingActionButton(
                     onClick = {
@@ -2328,7 +2346,12 @@ fun ChatScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(
+                            start = 12.dp,
+                            top = padding.calculateTopPadding() + 8.dp,
+                            end = 12.dp,
+                            bottom = 8.dp
+                        )
                 ) {
                     Row(
                         Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -2541,22 +2564,22 @@ fun ChatScreen(
 internal fun FloatingChatHeader(
     content: @Composable () -> Unit
 ) {
-    Surface(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .onGloballyPositioned { coordinates ->
-                val left = coordinates.positionInRoot().x.roundToInt()
+                val position = coordinates.positionInRoot()
+                val left = position.x.roundToInt()
+                val top = position.y.roundToInt()
                 val right = left + coordinates.size.width
+                val bottom = top + coordinates.size.height
                 android.util.Log.d(
                     "FloatingChatChrome",
-                    "header left=$left right=$right"
+                    "header left=$left top=$top right=$right bottom=$bottom"
                 )
             },
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.chatBar,
-        tonalElevation = 3.dp,
-        shadowElevation = 4.dp
+        contentAlignment = Alignment.TopCenter
     ) {
         content()
     }
@@ -2586,7 +2609,7 @@ internal fun MessageSelectionToolbar(
     var overflow by remember { mutableStateOf(false) }
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.chatBar,
+            containerColor = Color.Transparent,
             navigationIconContentColor = MaterialTheme.colorScheme.primary,
             titleContentColor = MaterialTheme.colorScheme.primary,
             actionIconContentColor = MaterialTheme.colorScheme.primary
@@ -2691,7 +2714,7 @@ internal fun ChatSearchBar(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.chatBar
+            containerColor = Color.Transparent
         ),
         navigationIcon = {
             IconButton(onClick = onClose) {
@@ -2782,9 +2805,9 @@ internal fun ChatTopBar(
     onSearch: () -> Unit
 ) {
     val context = LocalContext.current
-    TopAppBar(
+    CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.chatBar
+            containerColor = Color.Transparent
         ),
         navigationIcon = {
             if (showBackButton) {
@@ -4018,27 +4041,23 @@ internal fun InputBar(
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
         }
-        Surface(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .onGloballyPositioned { coordinates ->
-                    val left = coordinates.positionInRoot().x.roundToInt()
+                    val position = coordinates.positionInRoot()
+                    val left = position.x.roundToInt()
+                    val top = position.y.roundToInt()
                     val right = left + coordinates.size.width
+                    val bottom = top + coordinates.size.height
                     android.util.Log.d(
                         "FloatingChatChrome",
-                        "composer left=$left right=$right"
+                        "composer left=$left top=$top right=$right bottom=$bottom"
                     )
                 },
-            shape = RoundedCornerShape(32.dp),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            tonalElevation = 3.dp,
-            shadowElevation = 4.dp
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
         // Typing a Persian/Arabic word should flip the field, so the caret and
         // every following line sit on the right (#362). First strong character
         // only: a message's own direction is decided differently (see
@@ -4586,7 +4605,6 @@ internal fun InputBar(
             }
         }
             }
-        }
     }
 }
 
