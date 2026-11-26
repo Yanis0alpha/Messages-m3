@@ -155,7 +155,7 @@ class AboutRowPlacementTest {
         assertTrue(
             "Settings must close with a scrollable gap below the glass navigation",
             settings.contains(
-                "SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance"
+                "SettingsLayout.BOTTOM_GAP + bottomOverlayClearance"
             )
         )
         assertTrue(

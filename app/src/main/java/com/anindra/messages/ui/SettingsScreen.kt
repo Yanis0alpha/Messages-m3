@@ -58,6 +58,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import com.anindra.messages.ui.theme.motionSpring
 import com.anindra.messages.ui.theme.LocalReduceMotion
@@ -111,7 +112,8 @@ fun SettingsScreen(
     onOpenInbox: () -> Unit = {},
     onOpenScheduled: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
-    scrollState: ScrollState = rememberScrollState()
+    scrollState: ScrollState = rememberScrollState(),
+    bottomOverlayClearance: Dp = TopLevelNavigationBarClearance
 ) {
     BackHandler(onBack = onBack)
 
@@ -513,7 +515,7 @@ fun SettingsScreen(
             // guarantees that the final row can still be lifted fully above it.
             Spacer(
                 Modifier.height(
-                    SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance
+                    SettingsLayout.BOTTOM_GAP + bottomOverlayClearance
                 )
             )
         }

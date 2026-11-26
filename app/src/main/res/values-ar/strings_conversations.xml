@@ -14,6 +14,7 @@
     <string name="new_chat_send_to">إرسال إلى \"%s\"</string>
     <string name="text_placeholder">رسالة نصية</string>
     <string name="conversations_archived">المؤرشفة</string>
+    <string name="conversations_archived_empty">لا توجد محادثات مؤرشفة حاليًا</string>
     <string name="conversations_spam_blocked">الرسائل غير المرغوبة والمحظورة</string>
     <string name="conversations_back_to_top">العودة إلى الأعلى</string>
     <string name="conversations_spam_blocked_empty">لا توجد محادثات غير مرغوبة أو محظورة</string>

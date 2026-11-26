@@ -196,12 +196,15 @@ private fun PersistentConversationSheetPreview() {
             PersistentConversationSheet(
                 conversationOpen = false,
                 onCollapsed = {},
-                captureGuard = captureGuard
+                captureGuard = captureGuard,
+                peekHeight = 80.dp
             ) { }
             MessagesNavigationBar(
                 selectedDestination = TopLevelDestination.MESSAGES,
                 onDestinationSelected = {},
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp),
                 sharedCaptureGuard = captureGuard
             )
         }

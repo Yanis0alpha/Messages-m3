@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
 import kotlinx.coroutines.launch
@@ -52,6 +53,8 @@ import kotlinx.coroutines.launch
 internal object PersistentConversationSheetLayout {
     const val PEEK_FRACTION = 0.1f
     const val EXPANDED_FRACTION = 0.9f
+
+    fun peekHeight(containerHeight: Dp): Dp = containerHeight * PEEK_FRACTION
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -60,6 +63,7 @@ internal fun PersistentConversationSheet(
     conversationOpen: Boolean,
     onCollapsed: () -> Unit,
     captureGuard: BackdropCaptureGuard,
+    peekHeight: Dp,
     content: @Composable () -> Unit
 ) {
     val scaffoldState = rememberBottomSheetScaffoldState()
@@ -102,7 +106,6 @@ internal fun PersistentConversationSheet(
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val sheetHeight = maxHeight * PersistentConversationSheetLayout.EXPANDED_FRACTION
-        val peekHeight = maxHeight * PersistentConversationSheetLayout.PEEK_FRACTION
         val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         val toggleLabel = stringResource(
             if (sheetState.currentValue == SheetValue.Expanded) {

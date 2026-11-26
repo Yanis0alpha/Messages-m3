@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.data.SwipeAction
+import com.anindra.messages.ui.ArchivedEmptyState
 import com.anindra.messages.ui.ChangeAffordance
 import com.anindra.messages.ui.ConversationRow
 import com.anindra.messages.ui.ConversationSelectionBar
@@ -320,6 +321,13 @@ private fun InboxCategoryChipsPreview() {
         InboxCategoryChips(selected = InboxCategory.OTP, onSelect = {})
         InboxCategoryChip(label = "Personal", selected = true, onClick = {})
     }
+}
+
+@PreviewLightDark
+@Preview(name = "Empty archive", showBackground = true, widthDp = 380, heightDp = 320)
+@Composable
+private fun ArchivedEmptyStatePreview() {
+    Stage { ArchivedEmptyState(Modifier.fillMaxWidth()) }
 }
 
 @PreviewLightDark

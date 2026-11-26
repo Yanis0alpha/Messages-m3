@@ -14,6 +14,7 @@
     <string name="new_chat_send_to">“%s” को भेजें</string>
     <string name="text_placeholder">पाठ संदेश</string>
     <string name="conversations_archived">संग्रहीत</string>
+    <string name="conversations_archived_empty">फ़िलहाल कोई संग्रहीत बातचीत नहीं है</string>
     <string name="conversations_spam_blocked">स्पैम और ब्लॉक</string>
     <string name="conversations_back_to_top">ऊपर जाएँ</string>
     <string name="conversations_spam_blocked_empty">कोई स्पैम या ब्लॉक किया गया संवाद नहीं</string>

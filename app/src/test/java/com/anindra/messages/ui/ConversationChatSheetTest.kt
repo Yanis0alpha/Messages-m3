@@ -103,6 +103,7 @@ class ConversationChatSheetTest {
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         assertTrue(activity.contains("imeInsetsHandledByParent = chatUsesSheet && !useNewUi"))
         assertTrue(activity.contains("bottomOverlayClearance = if (chatUsesSheet && useNewUi)"))
+        assertTrue(activity.contains("topLevelControlsClearance"))
         assertTrue(chat.contains("if (imeInsetsHandledByParent)"))
         assertTrue(chat.contains("val bottomOverlayInset = if (imeBottom > navBottom) 0.dp"))
         assertTrue(chat.contains("composerBottomInset = keyboardInset"))

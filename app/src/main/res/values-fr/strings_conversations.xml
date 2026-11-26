@@ -13,6 +13,7 @@
     <string name="new_chat_send_to">Envoyer à « %s »</string>
     <string name="text_placeholder">Message texte</string>
     <string name="conversations_archived">Archivées</string>
+    <string name="conversations_archived_empty">Aucune archive pour le moment</string>
     <string name="conversations_spam_blocked">Spams et conversations bloquées</string>
     <string name="conversations_back_to_top">Retour en haut</string>
     <string name="conversations_spam_blocked_empty">Aucune conversation spam ou bloquée</string>

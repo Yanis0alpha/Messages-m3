@@ -60,10 +60,11 @@ class MessagesNavigationBarTest {
         assertTrue(activity.contains("TopLevelDestination.SETTINGS"))
         assertTrue(activity.contains("onDestinationSelected = navigateTopLevel"))
         assertTrue(conversations.contains("val showArchived = selectedDestination == TopLevelDestination.ARCHIVED"))
-        assertTrue(conversations.contains(".height(TopLevelNavigationBarClearance)"))
+        assertTrue(conversations.contains(".height(bottomControlsClearance)"))
+        assertTrue(activity.contains(".padding(bottom = topLevelNavigationBottomOffset)"))
         assertFalse(settings.contains("bottomBar = {"))
         assertFalse(settings.contains(".navigationBarsPadding()"))
-        assertTrue(settings.contains("SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance"))
+        assertTrue(settings.contains("SettingsLayout.BOTTOM_GAP + bottomOverlayClearance"))
     }
 
     @Test
@@ -73,7 +74,7 @@ class MessagesNavigationBarTest {
         assertTrue(scrollingColumn.contains("SettingsRow("))
         assertTrue(
             scrollingColumn.contains(
-                "SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance"
+                "SettingsLayout.BOTTOM_GAP + bottomOverlayClearance"
             )
         )
         assertFalse(settings.contains("bottomBar = {"))

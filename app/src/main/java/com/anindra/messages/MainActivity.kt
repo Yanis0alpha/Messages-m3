@@ -63,6 +63,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anindra.messages.data.AddressIdentity
@@ -88,6 +89,7 @@ import com.anindra.messages.ui.ChatScreen
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
 import com.anindra.messages.ui.PersistentConversationSheet
+import com.anindra.messages.ui.PersistentConversationSheetLayout
 import com.anindra.messages.ui.AddPeopleScreen
 import com.anindra.messages.ui.ContactDetailsScreen
 import com.anindra.messages.ui.NotificationSettingsScreen
@@ -2082,14 +2084,28 @@ open class MainActivity : FragmentActivity() {
                 }
                 val chatUsesSheet = !twoPaneLayout && !bubbleMode
                 val newChatUsesSheet = !twoPaneLayout && !bubbleMode
-                // Modal chats and the contact picker overlay the inbox; its
-                // top-level navigation remains composed underneath so it never
-                // blinks out and back through either sheet transition.
+                val persistentSheetVisible = useNewUi && chatUsesSheet &&
+                    navRoute in setOf("list", "chat", "settings")
+                val persistentConversationPeekHeight = PersistentConversationSheetLayout.peekHeight(
+                    LocalConfiguration.current.screenHeightDp.dp
+                )
+                val topLevelNavigationBottomOffset = if (persistentSheetVisible) {
+                    persistentConversationPeekHeight
+                } else {
+                    0.dp
+                }
+                // Sheets overlay the inbox while the top-level navigation stays
+                // composed above them, so it never blinks through a transition.
                 val showTopLevelNavigation = useNewUi && (
                     navRoute in setOf("list", "settings") ||
                         (chatUsesSheet && navRoute == "chat") ||
                         (newChatUsesSheet && navRoute == "new")
                 )
+                val topLevelControlsClearance = if (showTopLevelNavigation) {
+                    TopLevelNavigationBarClearance + topLevelNavigationBottomOffset
+                } else {
+                    0.dp
+                }
                 val leaveChat: () -> Unit = {
                     pendingShareBody = ""
                     pendingShareMedia = emptyList()
@@ -2116,7 +2132,7 @@ open class MainActivity : FragmentActivity() {
                         imeInsetsHandledByParent = chatUsesSheet && !useNewUi,
                         translucentBackground = chatUsesSheet,
                         bottomOverlayClearance = if (chatUsesSheet && useNewUi) {
-                            TopLevelNavigationBarClearance
+                            topLevelControlsClearance
                         } else {
                             0.dp
                         },
@@ -2176,6 +2192,7 @@ open class MainActivity : FragmentActivity() {
                         selectedDestination = topLevelDestination,
                         onDestinationSelected = navigateTopLevel,
                         showNavigationBar = showTopLevelNavigation,
+                        bottomControlsClearance = topLevelControlsClearance,
                         backHandled = bubbleBackHandled,
                     ) else com.anindra.messages.ui.legacy.ConversationsScreen(
                         vm = vm,
@@ -2291,7 +2308,8 @@ open class MainActivity : FragmentActivity() {
                                         onOpenInbox = { navRoute = "inbox" },
                                         onOpenScheduled = { navRoute = "scheduled" },
                                         onOpenAbout = { navRoute = "about" },
-                                        scrollState = settingsScroll
+                                        scrollState = settingsScroll,
+                                        bottomOverlayClearance = topLevelControlsClearance
                                     ) else com.anindra.messages.ui.legacy.SettingsScreen(
                                         onOpenRoute = { route -> navRoute = route },
                                         onOpenJumpTarget = { row -> settingsJumpTarget = row },
@@ -2448,11 +2466,12 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 routePane(Modifier.fillMaxSize())
                             }
                         }
-                        if (useNewUi && chatUsesSheet && navRoute in setOf("list", "chat", "settings")) {
+                        if (persistentSheetVisible) {
                             PersistentConversationSheet(
                                 conversationOpen = navRoute == "chat",
                                 onCollapsed = leaveChatByGesture,
-                                captureGuard = sharedCaptureGuard
+                                captureGuard = sharedCaptureGuard,
+                                peekHeight = persistentConversationPeekHeight
                             ) {
                                 chatContent(leaveChat)
                             }
@@ -2480,7 +2499,9 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                     topLevelDestination
                                 },
                                 onDestinationSelected = navigateTopLevel,
-                                modifier = Modifier.align(Alignment.BottomCenter),
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = topLevelNavigationBottomOffset),
                                 sharedCaptureGuard = sharedCaptureGuard
                             )
                         }

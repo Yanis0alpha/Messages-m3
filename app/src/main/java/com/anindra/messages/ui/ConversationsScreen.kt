@@ -16,6 +16,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
@@ -75,6 +76,8 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -111,6 +114,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -135,6 +139,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -174,6 +179,7 @@ fun ConversationsScreen(
     selectedDestination: TopLevelDestination,
     onDestinationSelected: (TopLevelDestination) -> Unit,
     showNavigationBar: Boolean = true,
+    bottomControlsClearance: Dp = TopLevelNavigationBarClearance,
     /**
      * The list is composed behind the chat even while the chat is showing, so
      * its Back handler would otherwise answer a bubble's Back (and swallow it)
@@ -535,7 +541,7 @@ fun ConversationsScreen(
                         Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .height(TopLevelNavigationBarClearance)
+                            .height(bottomControlsClearance)
                     )
                 }
             },
@@ -789,59 +795,66 @@ fun ConversationsScreen(
                                 textAlign = TextAlign.Center
                             )
                         }
-                    } else
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(
-                            horizontal = SegmentedListLayout.HORIZONTAL_PADDING,
-                            vertical = SegmentedListLayout.VERTICAL_PADDING
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(
-                            SegmentedListLayout.ITEM_GAP
+                    } else if (showArchived && !searching && scoped.isEmpty()) {
+                        ArchivedEmptyState(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
                         )
-                    ) {
-                        itemsIndexed(scoped, key = { _, convo -> convo.id }) { index, convo ->
-                            SwipeableConversationItem(
-                                context,
-                                modifier = Modifier.animateItem(
-                                    fadeInSpec = motionTween(
-                                        reduceMotion = reduceMotion,
-                                        durationMs = Motion.DURATION_SHORT4
-                                    ),
-                                    placementSpec = motionSpring(reduceMotion),
-                                    fadeOutSpec = motionTween(
-                                        reduceMotion = reduceMotion,
-                                        durationMs = Motion.DURATION_SHORT4
-                                    )
-                                ),
-                                settings = rowSettings,
-                                swipeEnabled = rowSettings.swipeEnabled && !showArchived && !selectionActive,
-                                convo = convo,
-                                workProfile = workNums.contains(phoneKey(convo.address)),
-                                showArchived = showArchived,
-                                position = segmentedListPosition(index, scoped.size),
-                                selected = convo.id in selectedIds,
-                                selectionMode = selectionActive,
-                                onClick = {
-                                    if (selectionActive) {
-                                        toggleSelection(convo)
-                                    } else {
-                                        onOpenConversation(
-                                            convo.id,
-                                            if (searching) ConversationList.handoffQuery(convo, query) else ""
-                                        )
-                                    }
-                                },
-                                onDelete = { moveToTrash(convo) },
-                                onArchive = { archiveWithUndo(convo) },
-                                onToggleRead = { markReadWithUndo(convo) },
-                                onTogglePin = { pinWithUndo(convo) },
-                                onBlock = { blockWithUndo(convo) },
-                                onLongClick = { sheetConvoId = convo.id }
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(
+                                horizontal = SegmentedListLayout.HORIZONTAL_PADDING,
+                                vertical = SegmentedListLayout.VERTICAL_PADDING
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(
+                                SegmentedListLayout.ITEM_GAP
                             )
+                        ) {
+                            itemsIndexed(scoped, key = { _, convo -> convo.id }) { index, convo ->
+                                SwipeableConversationItem(
+                                    context,
+                                    modifier = Modifier.animateItem(
+                                        fadeInSpec = motionTween(
+                                            reduceMotion = reduceMotion,
+                                            durationMs = Motion.DURATION_SHORT4
+                                        ),
+                                        placementSpec = motionSpring(reduceMotion),
+                                        fadeOutSpec = motionTween(
+                                            reduceMotion = reduceMotion,
+                                            durationMs = Motion.DURATION_SHORT4
+                                        )
+                                    ),
+                                    settings = rowSettings,
+                                    swipeEnabled = rowSettings.swipeEnabled && !showArchived && !selectionActive,
+                                    convo = convo,
+                                    workProfile = workNums.contains(phoneKey(convo.address)),
+                                    showArchived = showArchived,
+                                    position = segmentedListPosition(index, scoped.size),
+                                    selected = convo.id in selectedIds,
+                                    selectionMode = selectionActive,
+                                    onClick = {
+                                        if (selectionActive) {
+                                            toggleSelection(convo)
+                                        } else {
+                                            onOpenConversation(
+                                                convo.id,
+                                                if (searching) ConversationList.handoffQuery(convo, query) else ""
+                                            )
+                                        }
+                                    },
+                                    onDelete = { moveToTrash(convo) },
+                                    onArchive = { archiveWithUndo(convo) },
+                                    onToggleRead = { markReadWithUndo(convo) },
+                                    onTogglePin = { pinWithUndo(convo) },
+                                    onBlock = { blockWithUndo(convo) },
+                                    onLongClick = { sheetConvoId = convo.id }
+                                )
+                            }
+                            item(key = "spacer") { Spacer(Modifier.height(96.dp)) }
                         }
-                        item(key = "spacer") { Spacer(Modifier.height(96.dp)) }
                     }
                 }
             }
@@ -855,7 +868,7 @@ fun ConversationsScreen(
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .navigationBarsPadding()
-            .padding(bottom = TopLevelNavigationBarClearance)
+            .padding(bottom = bottomControlsClearance)
     ) {
         BackToTopFab(onClick = { scope.launch { listState.animateScrollToItem(0) } })
     }
@@ -1429,6 +1442,38 @@ internal fun HomeShapeBackdrop() {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun ArchivedEmptyState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(MaterialShapes.Cookie7Sided.toShape())
+                .background(MaterialTheme.colorScheme.tertiaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Archive,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(52.dp)
+            )
+        }
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = stringResource(R.string.conversations_archived_empty),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 internal data class RowSettings(
     val pinnedEnabled: Boolean,
     /** Legacy rows gate on these; the redesigned list treats them as always on. */
@@ -1718,29 +1763,29 @@ internal enum class SearchScope(val labelRes: Int) {
     Starred(R.string.search_scope_starred)
 }
 
-/** The inbox tabs: the same Material 3 filter chips as the search scopes, one
- *  row, single select, "All" first so nothing is ever hidden by default. */
+/** A compact connected Material 3 group; labels keep their natural widths. */
 @Composable
 internal fun InboxCategoryChips(
     selected: InboxCategory?,
     onSelect: (InboxCategory?) -> Unit
 ) {
-    Row(
+    val options = buildList<Pair<InboxCategory?, String>> {
+        add(null to stringResource(R.string.inbox_category_all))
+        InboxCategory.entries.forEach { category ->
+            add(category to stringResource(category.labelRes))
+        }
+    }
+    SingleChoiceSegmentedButtonRow(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        InboxCategoryChip(
-            label = stringResource(R.string.inbox_category_all),
-            selected = selected == null,
-            onClick = { onSelect(null) }
-        )
-        InboxCategory.entries.forEach { category ->
+        options.forEachIndexed { index, (category, label) ->
             InboxCategoryChip(
-                label = stringResource(category.labelRes),
+                label = label,
                 selected = selected == category,
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
                 onClick = { onSelect(category) }
             )
         }
@@ -1756,17 +1801,36 @@ internal val InboxCategory.labelRes: Int
     }
 
 @Composable
-internal fun InboxCategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(
+internal fun InboxCategoryChip(
+    label: String,
+    selected: Boolean,
+    shape: Shape = RoundedCornerShape(20.dp),
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
         selected = selected,
         onClick = onClick,
-        label = { Text(label) },
-        shape = RoundedCornerShape(8.dp),
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    )
+        modifier = Modifier
+            .height(40.dp)
+            .zIndex(if (selected) 1f else 0f)
+            .semantics { role = Role.RadioButton },
+        shape = shape,
+        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
+        contentColor = if (selected) {
+            colors.onSecondaryContainer
+        } else {
+            colors.onSurfaceVariant
+        },
+        border = BorderStroke(1.dp, colors.outlineVariant)
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
+    }
 }
 
 /** Material 3 filter chips: one row, single select, 32dp tall. */

@@ -1,5 +1,6 @@
 package com.anindra.messages.ui
 
+import androidx.compose.ui.unit.dp
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -17,6 +18,7 @@ class PersistentConversationSheetTest {
     fun sheetKeepsATenPercentPeekAndExpandsToNinetyPercent() {
         assertEquals(0.1f, PersistentConversationSheetLayout.PEEK_FRACTION, 0f)
         assertEquals(0.9f, PersistentConversationSheetLayout.EXPANDED_FRACTION, 0f)
+        assertEquals(80.dp, PersistentConversationSheetLayout.peekHeight(800.dp))
 
         val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
         assertTrue(sheet.contains("BottomSheetScaffold("))
@@ -39,13 +41,20 @@ class PersistentConversationSheetTest {
     }
 
     @Test
-    fun persistentSheetStaysBehindThePermanentNavigation() {
+    fun persistentPeekNavigationAndFabFormAVerticalStack() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
         val persistent = activity.indexOf("PersistentConversationSheet(")
         val navigation = activity.indexOf("MessagesNavigationBar(", persistent)
         assertTrue(persistent >= 0)
         assertTrue(navigation > persistent)
         assertTrue(activity.contains("navRoute in setOf(\"list\", \"chat\", \"settings\")"))
+        assertTrue(activity.contains("TopLevelNavigationBarClearance + topLevelNavigationBottomOffset"))
+        assertTrue(activity.contains(".padding(bottom = topLevelNavigationBottomOffset)"))
+        assertTrue(activity.contains("bottomControlsClearance = topLevelControlsClearance"))
+        assertTrue(activity.contains("bottomOverlayClearance = topLevelControlsClearance"))
+        assertTrue(conversations.contains(".height(bottomControlsClearance)"))
+        assertTrue(conversations.contains(".padding(bottom = bottomControlsClearance)"))
         assertTrue(activity.contains("sharedCaptureGuard = sharedCaptureGuard"))
         assertTrue(activity.contains("captureGuard = sharedCaptureGuard"))
     }
