@@ -3001,10 +3001,11 @@ private fun ChatFabMenuItem(
                 .clipToBounds()
                 .layout { measurable, constraints ->
                     val placeable = measurable.measure(constraints)
-                    val width = constraints.constrainWidth(
-                        (
-                            placeable.width * maxOf(widthProgress, 0f)
-                        ).roundToInt()
+                    val width = (
+                        placeable.width * maxOf(widthProgress, 0f)
+                    ).roundToInt().coerceIn(
+                        constraints.minWidth,
+                        constraints.maxWidth
                     )
                     layout(width, placeable.height) {
                         // Keep the trailing edge fixed while the start edge
