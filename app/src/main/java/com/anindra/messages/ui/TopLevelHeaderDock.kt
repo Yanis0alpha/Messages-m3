@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
@@ -46,7 +47,7 @@ import com.anindra.messages.R
 
 internal object TopLevelHeaderDockLayout {
     const val TINT_ALPHA = 0.30f
-    val HEIGHT = 144.dp
+    val HEIGHT = 168.dp
     val BOTTOM_CORNER = 32.dp
     val TOP_CONTROL_HEIGHT = 64.dp
     val SEARCH_HEIGHT = 56.dp
@@ -108,10 +109,11 @@ internal fun TopLevelHeaderDock(
                     )
             )
             Column(
-                // Intentionally no status-bar inset: this top-level dock reaches
-                // the physical top edge and may sit behind a cutout or status icons.
+                // Only the controls avoid the status bar. The glass surface itself
+                // stays attached to the physical top edge and grows downward.
                 modifier = Modifier
                     .fillMaxSize()
+                    .statusBarsPadding()
                     .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 12.dp)
             ) {
                 Box(
