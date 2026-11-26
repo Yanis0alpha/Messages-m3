@@ -31,7 +31,8 @@ class TranslucentSurfaceOpacityTest {
         val store = source("java/com/anindra/messages/data/SettingsStore.kt")
 
         assertTrue(settings.contains("settings_translucent_surface_opacity_title"))
-        assertTrue(settings.contains("Slider("))
+        assertTrue(settings.contains("rememberSliderState("))
+        assertTrue(settings.contains("state = translucentSurfaceOpacitySlider"))
         assertTrue(settings.contains("TranslucentSurfaceOpacity.fromSlider(value)"))
         assertTrue(settings.contains("vm.settings.translucentSurfaceOpacityPercent = percent"))
         assertTrue(settings.contains("stateDescription = opacityValue"))

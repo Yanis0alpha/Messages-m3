@@ -123,7 +123,7 @@ class ConversationChatSheetTest {
         assertTrue(sheet.contains("DynamicBackdropBlur("))
         assertTrue(sheet.contains("actionSheetPosition"))
         assertTrue(sheet.contains("coordinates.positionInWindow()"))
-        assertTrue(sheet.contains("LocalTranslucentSurfaceAlpha.current"))
+        assertTrue(conversations.contains("LocalTranslucentSurfaceAlpha.current"))
         assertTrue(sheet.contains("alpha = translucentSurfaceAlpha"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
     }

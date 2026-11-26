@@ -52,6 +52,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -130,6 +131,12 @@ fun SettingsScreen(
     var translucentSurfaceOpacity by remember {
         mutableIntStateOf(vm.settings.translucentSurfaceOpacityPercent)
     }
+    val translucentSurfaceOpacitySlider = rememberSliderState(
+        value = translucentSurfaceOpacity.toFloat(),
+        steps = TranslucentSurfaceOpacity.SLIDER_STEPS,
+        trackRange = TranslucentSurfaceOpacity.MIN_PERCENT.toFloat()..
+            TranslucentSurfaceOpacity.MAX_PERCENT.toFloat()
+    )
 
     var privacyMode by remember(revision) { mutableStateOf(vm.settings.privacyModeEnabled) }
     var appLock by remember(revision) { mutableStateOf(vm.settings.appLockEnabled) }
@@ -373,17 +380,15 @@ fun SettingsScreen(
                     subtitle = opacityValue,
                     preview = {
                         Slider(
-                            value = translucentSurfaceOpacity.toFloat(),
+                            state = translucentSurfaceOpacitySlider,
                             onValueChange = { value ->
                                 val percent = TranslucentSurfaceOpacity.fromSlider(value)
+                                translucentSurfaceOpacitySlider.value = percent.toFloat()
                                 if (percent != translucentSurfaceOpacity) {
                                     translucentSurfaceOpacity = percent
                                     vm.settings.translucentSurfaceOpacityPercent = percent
                                 }
                             },
-                            valueRange = TranslucentSurfaceOpacity.MIN_PERCENT.toFloat()..
-                                TranslucentSurfaceOpacity.MAX_PERCENT.toFloat(),
-                            steps = TranslucentSurfaceOpacity.SLIDER_STEPS,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .semantics {
