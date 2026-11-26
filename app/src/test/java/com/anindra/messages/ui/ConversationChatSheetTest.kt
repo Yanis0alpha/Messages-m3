@@ -1,6 +1,7 @@
 package com.anindra.messages.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -24,10 +25,14 @@ class ConversationChatSheetTest {
         val sheet = source("java/com/anindra/messages/ui/ConversationChatSheet.kt")
         assertTrue(sheet.contains("ModalBottomSheet("))
         assertTrue(sheet.contains("skipPartiallyExpanded = true"))
-        assertTrue(sheet.contains("fillMaxHeight(ChatSheetLayout.HEIGHT_FRACTION)"))
+        assertTrue(sheet.contains("BoxWithConstraints(Modifier.fillMaxSize())"))
+        assertTrue(sheet.contains(".height(maxHeight * ChatSheetLayout.HEIGHT_FRACTION)"))
         assertTrue(sheet.contains("sheetState.hide()"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
         assertTrue(sheet.contains("RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)"))
+        assertTrue(sheet.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
+        assertTrue(sheet.contains("bottomGap=\${windowHeightPx - bottom}"))
+        assertFalse(sheet.contains("modifier = Modifier.fillMaxHeight"))
     }
 
     @Test
