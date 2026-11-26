@@ -24,6 +24,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,7 +66,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -640,8 +641,21 @@ fun ConversationsScreen(
             // closed back into it.
             if (!loaded) {
                 ProvideShimmer {
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(8, key = { "skeleton_$it" }) { SkeletonConversationRow() }
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(
+                            horizontal = SegmentedListLayout.HORIZONTAL_PADDING,
+                            vertical = SegmentedListLayout.VERTICAL_PADDING
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(
+                            SegmentedListLayout.ITEM_GAP
+                        )
+                    ) {
+                        items(8, key = { "skeleton_$it" }) { index ->
+                            SkeletonConversationRow(
+                                position = segmentedListPosition(index, 8)
+                            )
+                        }
                         item(key = "spacer") { Spacer(Modifier.height(96.dp)) }
                     }
                 }
@@ -717,11 +731,25 @@ fun ConversationsScreen(
                             )
                         }
                     } else {
-                        LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
-                            items(starredHits, key = { "star_${it.messageId}" }) { hit ->
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(
+                                horizontal = SegmentedListLayout.HORIZONTAL_PADDING,
+                                vertical = SegmentedListLayout.VERTICAL_PADDING
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(
+                                SegmentedListLayout.ITEM_GAP
+                            )
+                        ) {
+                            itemsIndexed(
+                                starredHits,
+                                key = { _, hit -> "star_${hit.messageId}" }
+                            ) { index, hit ->
                                 StarredHitRow(
                                     hit = hit,
                                     now = nowTick,
+                                    position = segmentedListPosition(index, starredHits.size),
                                     onClick = { onOpenConversation(hit.conversationId, hit.body) }
                                 )
                             }
@@ -756,8 +784,18 @@ fun ConversationsScreen(
                             )
                         }
                     } else
-                    LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
-                        items(scoped, key = { it.id }) { convo ->
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(
+                            horizontal = SegmentedListLayout.HORIZONTAL_PADDING,
+                            vertical = SegmentedListLayout.VERTICAL_PADDING
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(
+                            SegmentedListLayout.ITEM_GAP
+                        )
+                    ) {
+                        itemsIndexed(scoped, key = { _, convo -> convo.id }) { index, convo ->
                             SwipeableConversationItem(
                                 context,
                                 modifier = Modifier.animateItem(
@@ -776,6 +814,7 @@ fun ConversationsScreen(
                                 convo = convo,
                                 workProfile = workNums.contains(phoneKey(convo.address)),
                                 showArchived = showArchived,
+                                position = segmentedListPosition(index, scoped.size),
                                 selected = convo.id in selectedIds,
                                 selectionMode = selectionActive,
                                 onClick = {
@@ -817,6 +856,81 @@ fun ConversationsScreen(
     }
 
     if (sheetConvo != null) {
+        val sheetActions = buildList {
+            if (showArchived) {
+                add(
+                    ConversationSheetAction(
+                        Icons.Rounded.Archive,
+                        stringResource(R.string.sheet_unarchive),
+                        MaterialTheme.colorScheme.primary
+                    ) {
+                        sheetConvoId = -1L
+                        vm.unarchiveConversation(sheetConvo.id)
+                    }
+                )
+            } else {
+                if (rowSettings.pinnedEnabled) {
+                    add(
+                        ConversationSheetAction(
+                            Icons.Rounded.PushPin,
+                            if (sheetConvo.pinned) {
+                                stringResource(R.string.sheet_unpin)
+                            } else {
+                                stringResource(R.string.sheet_pin)
+                            },
+                            MaterialTheme.colorScheme.primary
+                        ) {
+                            sheetConvoId = -1L
+                            vm.togglePin(sheetConvo.id)
+                        }
+                    )
+                }
+                if (rowSettings.archivingEnabled) {
+                    add(
+                        ConversationSheetAction(
+                            Icons.Rounded.Archive,
+                            stringResource(R.string.sheet_archive),
+                            MaterialTheme.colorScheme.primary
+                        ) {
+                            sheetConvoId = -1L
+                            archiveWithUndo(sheetConvo)
+                        }
+                    )
+                }
+                add(
+                    ConversationSheetAction(
+                        Icons.Rounded.SelectAll,
+                        stringResource(R.string.sheet_multi_select),
+                        MaterialTheme.colorScheme.primary
+                    ) {
+                        sheetConvoId = -1L
+                        selectedIds = setOf(sheetConvo.id)
+                    }
+                )
+                add(
+                    ConversationSheetAction(
+                        Icons.Rounded.Delete,
+                        stringResource(R.string.sheet_delete),
+                        MaterialTheme.colorScheme.error
+                    ) {
+                        sheetConvoId = -1L
+                        moveToTrash(sheetConvo)
+                    }
+                )
+                if (rowSettings.blockingEnabled) {
+                    add(
+                        ConversationSheetAction(
+                            Icons.Rounded.Block,
+                            stringResource(R.string.sheet_block),
+                            MaterialTheme.colorScheme.error
+                        ) {
+                            sheetConvoId = -1L
+                            vm.blockNumber(sheetConvo.address)
+                        }
+                    )
+                }
+            }
+        }
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val actionSheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ModalBottomSheet(
@@ -877,69 +991,23 @@ fun ConversationsScreen(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    if (showArchived) {
-                        SheetActionRow(
-                            Icons.Rounded.Archive,
-                            stringResource(R.string.sheet_unarchive),
-                            MaterialTheme.colorScheme.primary
-                        ) {
-                            sheetConvoId = -1L
-                            vm.unarchiveConversation(sheetConvo.id)
-                        }
-                    } else {
-                        if (rowSettings.pinnedEnabled) {
+                    Spacer(Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier.padding(
+                            horizontal = SegmentedListLayout.HORIZONTAL_PADDING
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(
+                            SegmentedListLayout.ITEM_GAP
+                        )
+                    ) {
+                        sheetActions.forEachIndexed { index, action ->
                             SheetActionRow(
-                                Icons.Rounded.PushPin,
-                                if (sheetConvo.pinned) {
-                                    stringResource(R.string.sheet_unpin)
-                                } else {
-                                    stringResource(R.string.sheet_pin)
-                                },
-                                MaterialTheme.colorScheme.primary
-                            ) {
-                                sheetConvoId = -1L
-                                vm.togglePin(sheetConvo.id)
-                            }
-                        }
-                        if (rowSettings.archivingEnabled) {
-                            SheetActionRow(
-                                Icons.Rounded.Archive,
-                                stringResource(R.string.sheet_archive),
-                                MaterialTheme.colorScheme.primary
-                            ) {
-                                sheetConvoId = -1L
-                                archiveWithUndo(sheetConvo)
-                            }
-                        }
-                        SheetActionRow(
-                            Icons.Rounded.SelectAll,
-                            stringResource(R.string.sheet_multi_select),
-                            MaterialTheme.colorScheme.primary
-                        ) {
-                            sheetConvoId = -1L
-                            selectedIds = setOf(sheetConvo.id)
-                        }
-                        SheetActionRow(
-                            Icons.Rounded.Delete,
-                            stringResource(R.string.sheet_delete),
-                            MaterialTheme.colorScheme.error
-                        ) {
-                            sheetConvoId = -1L
-                            moveToTrash(sheetConvo)
-                        }
-                        if (rowSettings.blockingEnabled) {
-                            SheetActionRow(
-                                Icons.Rounded.Block,
-                                stringResource(R.string.sheet_block),
-                                MaterialTheme.colorScheme.error
-                            ) {
-                                sheetConvoId = -1L
-                                vm.blockNumber(sheetConvo.address)
-                            }
+                                icon = action.icon,
+                                label = action.label,
+                                tint = action.tint,
+                                position = segmentedListPosition(index, sheetActions.size),
+                                onClick = action.onClick
+                            )
                         }
                     }
                 }
@@ -976,10 +1044,27 @@ internal fun SwipeableConversationItem(
     onLongClick: () -> Unit = {},
     selected: Boolean = false,
     selectionMode: Boolean = false,
+    position: RowPosition = RowPosition.SINGLE,
     modifier: Modifier = Modifier
 ) {
     if (swipeEnabled) {
-        SwipeConversationItem(context, settings, convo, workProfile, onClick, onDelete, onArchive, onToggleRead, onTogglePin, onBlock, onLongClick, modifier, selected, selectionMode)
+        SwipeConversationItem(
+            context = context,
+            settings = settings,
+            convo = convo,
+            workProfile = workProfile,
+            onClick = onClick,
+            onDelete = onDelete,
+            onArchive = onArchive,
+            onToggleRead = onToggleRead,
+            onTogglePin = onTogglePin,
+            onBlock = onBlock,
+            onLongClick = onLongClick,
+            modifier = modifier.clip(segmentedListShape(position)),
+            selected = selected,
+            selectionMode = selectionMode,
+            position = position
+        )
     } else {
         ConversationRow(
             modifier = modifier,
@@ -993,7 +1078,8 @@ internal fun SwipeableConversationItem(
             onArchive = onArchive,
             onLongClick = onLongClick,
             selected = selected,
-            selectionMode = selectionMode
+            selectionMode = selectionMode,
+            position = position
         )
     }
 }
@@ -1014,7 +1100,8 @@ internal fun SwipeConversationItem(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     selected: Boolean = false,
-    selectionMode: Boolean = false
+    selectionMode: Boolean = false,
+    position: RowPosition = RowPosition.SINGLE
 ) {
     var dismissStateRef: SwipeToDismissBoxState? = null
     val dismissState = rememberSwipeToDismissBoxState(
@@ -1093,7 +1180,8 @@ internal fun SwipeConversationItem(
             onArchive = onArchive,
             onLongClick = onLongClick,
             selected = selected,
-            selectionMode = selectionMode
+            selectionMode = selectionMode,
+            position = position
         )
     }
 
@@ -1306,7 +1394,8 @@ internal fun ConversationRow(
     onArchive: () -> Unit = {},
     onLongClick: () -> Unit = {},
     selected: Boolean = false,
-    selectionMode: Boolean = false
+    selectionMode: Boolean = false,
+    position: RowPosition = RowPosition.SINGLE
 ) {
     val now = LocalNowTick.current
     val senderLabel = ContactDetails.listLabel(
@@ -1330,12 +1419,19 @@ internal fun ConversationRow(
         if (convo.pinned && settings.pinnedEnabled) context.getString(R.string.access_pinned) else null,
         if (selectionMode && selected) context.getString(R.string.contact_selected) else null
     )
-    Box(modifier = modifier.fillMaxWidth()) {
+    LaunchedEffect(convo.id, position) {
+        android.util.Log.d("SegmentedList", "kind=conversation position=$position")
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(segmentedListShape(position))
+    ) {
         val pinnedTint = when {
             selected && selectionMode -> MaterialTheme.colorScheme.surfaceContainerHighest
             convo.pinned && settings.pinnedEnabled ->
-                MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
-            else -> MaterialTheme.colorScheme.background
+                MaterialTheme.colorScheme.surfaceContainer
+            else -> MaterialTheme.colorScheme.surfaceContainerLow
         }
 
         Row(
@@ -1440,17 +1536,30 @@ private enum class ConversationAction {
     Pin, Unpin, Archive, Unarchive, Delete, Block
 }
 
+private data class ConversationSheetAction(
+    val icon: ImageVector,
+    val label: String,
+    val tint: Color,
+    val onClick: () -> Unit
+)
+
 @Composable
 internal fun SheetActionRow(
     icon: ImageVector,
     label: String,
     tint: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    position: RowPosition = RowPosition.SINGLE
 ) {
+    LaunchedEffect(label, position) {
+        android.util.Log.d("SegmentedList", "kind=action position=$position")
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(segmentedListShape(position))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClick = onClick)
             .padding(horizontal = 24.dp, vertical = 14.dp)
     ) {
@@ -1621,11 +1730,18 @@ internal fun SearchScopeChips(selected: SearchScope, onSelect: (SearchScope) -> 
 
 /** One bookmarked message under the Starred scope: who, what, and when. */
 @Composable
-internal fun StarredHitRow(hit: StarredMessage, now: Long, onClick: () -> Unit) {
+internal fun StarredHitRow(
+    hit: StarredMessage,
+    now: Long,
+    onClick: () -> Unit,
+    position: RowPosition = RowPosition.SINGLE
+) {
     val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(segmentedListShape(position))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically

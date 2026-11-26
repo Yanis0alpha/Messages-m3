@@ -350,10 +350,12 @@ fun ProvideShimmer(content: @Composable () -> Unit) {
 private val LocalShimmerTranslate = androidx.compose.runtime.compositionLocalOf { 0f }
 
 @Composable
-fun SkeletonConversationRow() {
+fun SkeletonConversationRow(position: RowPosition = RowPosition.SINGLE) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(segmentedListShape(position))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

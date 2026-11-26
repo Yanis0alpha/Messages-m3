@@ -34,6 +34,7 @@ import com.anindra.messages.data.InboxCategory
 import com.anindra.messages.data.RuleKind
 import com.anindra.messages.ui.AddCategoryRuleForm
 import com.anindra.messages.ui.RuleSection
+import com.anindra.messages.ui.RowPosition
 import com.anindra.messages.ui.InboxCategoryChip
 import com.anindra.messages.ui.InboxCategoryChips
 import com.anindra.messages.ui.SearchScopeChips
@@ -54,12 +55,32 @@ import com.anindra.messages.R
 @Composable
 private fun SheetActionRowsPreview() {
     Stage {
-        SheetActionRow(Icons.Rounded.PushPin, "Pin", MaterialTheme.colorScheme.onSurface, {})
-        SheetActionRow(Icons.Rounded.MarkChatRead, "Mark as read", MaterialTheme.colorScheme.onSurface, {})
-        SheetActionRow(Icons.Rounded.Drafts, "Mark as unread", MaterialTheme.colorScheme.onSurface, {})
-        SheetActionRow(Icons.Rounded.Archive, "Archive", MaterialTheme.colorScheme.onSurface, {})
-        SheetActionRow(Icons.Rounded.Block, "Block", MaterialTheme.colorScheme.error, {})
-        SheetActionRow(Icons.Rounded.Delete, "Delete", MaterialTheme.colorScheme.error, {})
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SheetActionRow(
+                Icons.Rounded.PushPin, "Pin", MaterialTheme.colorScheme.onSurface, {},
+                RowPosition.FIRST
+            )
+            SheetActionRow(
+                Icons.Rounded.MarkChatRead, "Mark as read", MaterialTheme.colorScheme.onSurface, {},
+                RowPosition.MIDDLE
+            )
+            SheetActionRow(
+                Icons.Rounded.Drafts, "Mark as unread", MaterialTheme.colorScheme.onSurface, {},
+                RowPosition.MIDDLE
+            )
+            SheetActionRow(
+                Icons.Rounded.Archive, "Archive", MaterialTheme.colorScheme.onSurface, {},
+                RowPosition.MIDDLE
+            )
+            SheetActionRow(
+                Icons.Rounded.Block, "Block", MaterialTheme.colorScheme.error, {},
+                RowPosition.MIDDLE
+            )
+            SheetActionRow(
+                Icons.Rounded.Delete, "Delete", MaterialTheme.colorScheme.error, {},
+                RowPosition.LAST
+            )
+        }
     }
 }
 
@@ -80,38 +101,50 @@ private fun StartChatFabPreview() {
 @Composable
 private fun ConversationRowsPreview() {
     Stage {
-        ConversationRow(
-            context = androidx.compose.ui.platform.LocalContext.current,
-            settings = fullRowSettings,
-            convo = sampleConversation(1, "Priya Raman", "Are we still on for tomorrow?", unreadCount = 2),
-            workProfile = false,
-            showArchived = false,
-            onClick = {}
-        )
-        ConversationRow(
-            context = androidx.compose.ui.platform.LocalContext.current,
-            settings = fullRowSettings,
-            convo = sampleConversation(2, "+15551239999", "Ok sounds good 👍", isMe = true),
-            workProfile = false,
-            showArchived = false,
-            onClick = {}
-        )
-        ConversationRow(
-            context = androidx.compose.ui.platform.LocalContext.current,
-            settings = fullRowSettings,
-            convo = sampleConversation(3, "Work group", "Ana: pushed the fix", groupTitle = "Ana, Ben, Chi"),
-            workProfile = true,
-            showArchived = false,
-            onClick = {}
-        )
-        ConversationRow(
-            context = androidx.compose.ui.platform.LocalContext.current,
-            settings = fullRowSettings,
-            convo = sampleConversation(4, "Draft thread", "last message", draft = "typing a reply"),
-            workProfile = false,
-            showArchived = false,
-            onClick = {}
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            ConversationRow(
+                context = androidx.compose.ui.platform.LocalContext.current,
+                settings = fullRowSettings,
+                convo = sampleConversation(
+                    1, "Priya Raman", "Are we still on for tomorrow?", unreadCount = 2
+                ),
+                workProfile = false,
+                showArchived = false,
+                onClick = {},
+                position = RowPosition.FIRST
+            )
+            ConversationRow(
+                context = androidx.compose.ui.platform.LocalContext.current,
+                settings = fullRowSettings,
+                convo = sampleConversation(2, "+15551239999", "Ok sounds good 👍", isMe = true),
+                workProfile = false,
+                showArchived = false,
+                onClick = {},
+                position = RowPosition.MIDDLE
+            )
+            ConversationRow(
+                context = androidx.compose.ui.platform.LocalContext.current,
+                settings = fullRowSettings,
+                convo = sampleConversation(
+                    3, "Work group", "Ana: pushed the fix", groupTitle = "Ana, Ben, Chi"
+                ),
+                workProfile = true,
+                showArchived = false,
+                onClick = {},
+                position = RowPosition.MIDDLE
+            )
+            ConversationRow(
+                context = androidx.compose.ui.platform.LocalContext.current,
+                settings = fullRowSettings,
+                convo = sampleConversation(
+                    4, "Draft thread", "last message", draft = "typing a reply"
+                ),
+                workProfile = false,
+                showArchived = false,
+                onClick = {},
+                position = RowPosition.LAST
+            )
+        }
     }
 }
 
