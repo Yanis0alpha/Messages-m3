@@ -2194,6 +2194,7 @@ open class MainActivity : FragmentActivity() {
                         onDestinationSelected = navigateTopLevel,
                         showNavigationBar = showTopLevelNavigation,
                         bottomControlsClearance = topLevelControlsClearance,
+                        applyNavigationBarsPadding = !persistentSheetVisible,
                         backHandled = bubbleBackHandled,
                     ) else com.anindra.messages.ui.legacy.ConversationsScreen(
                         vm = vm,
@@ -2479,7 +2480,8 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .padding(bottom = topLevelNavigationBottomOffset),
-                                sharedCaptureGuard = sharedCaptureGuard
+                                sharedCaptureGuard = sharedCaptureGuard,
+                                applyNavigationBarsPadding = !persistentSheetVisible
                             )
                         }
                         if (persistentSheetVisible) {

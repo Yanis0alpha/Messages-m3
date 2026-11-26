@@ -180,6 +180,7 @@ fun ConversationsScreen(
     onDestinationSelected: (TopLevelDestination) -> Unit,
     showNavigationBar: Boolean = true,
     bottomControlsClearance: Dp = TopLevelNavigationBarClearance,
+    applyNavigationBarsPadding: Boolean = true,
     /**
      * The list is composed behind the chat even while the chat is showing, so
      * its Back handler would otherwise answer a bubble's Back (and swallow it)
@@ -541,7 +542,13 @@ fun ConversationsScreen(
                     Spacer(
                         Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding()
+                            .then(
+                                if (applyNavigationBarsPadding) {
+                                    Modifier.navigationBarsPadding()
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .height(bottomControlsClearance)
                     )
                 }
@@ -882,7 +889,13 @@ fun ConversationsScreen(
         visible = backToTop && !showArchived,
         modifier = Modifier
             .align(Alignment.BottomCenter)
-            .navigationBarsPadding()
+            .then(
+                if (applyNavigationBarsPadding) {
+                    Modifier.navigationBarsPadding()
+                } else {
+                    Modifier
+                }
+            )
             .padding(bottom = bottomControlsClearance)
     ) {
         BackToTopFab(onClick = { scope.launch { listState.animateScrollToItem(0) } })

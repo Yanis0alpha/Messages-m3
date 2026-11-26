@@ -60,6 +60,20 @@ class PersistentConversationSheetTest {
     }
 
     @Test
+    fun raisedNavigationDoesNotAddTheSystemInsetToThePeekGap() {
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val navigation = source("java/com/anindra/messages/ui/MessagesNavigationBar.kt")
+        val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
+        val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
+
+        assertTrue(activity.contains("applyNavigationBarsPadding = !persistentSheetVisible"))
+        assertTrue(navigation.contains("if (applyNavigationBarsPadding)"))
+        assertTrue(navigation.contains(".then(systemBarPadding)"))
+        assertTrue(conversations.contains("if (applyNavigationBarsPadding)"))
+        assertTrue(chat.contains("bottomOverlayClearance - navBottom"))
+    }
+
+    @Test
     fun backgroundUsesSeveralMaterialThreeShapes() {
         val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
         assertTrue(conversations.contains("HomeShapeBackdrop()"))

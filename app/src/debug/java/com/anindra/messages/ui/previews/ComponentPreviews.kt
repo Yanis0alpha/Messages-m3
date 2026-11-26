@@ -199,7 +199,8 @@ private fun PersistentConversationSheetPreview() {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 80.dp),
-                sharedCaptureGuard = captureGuard
+                sharedCaptureGuard = captureGuard,
+                applyNavigationBarsPadding = false
             )
             PersistentConversationSheet(
                 conversationOpen = false,

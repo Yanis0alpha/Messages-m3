@@ -1039,7 +1039,11 @@ fun ChatScreen(
     } else {
         (imeBottom - navBottom).coerceAtLeast(0.dp)
     }
-    val bottomOverlayInset = if (imeBottom > navBottom) 0.dp else bottomOverlayClearance
+    val bottomOverlayInset = if (imeBottom > navBottom) {
+        0.dp
+    } else {
+        (bottomOverlayClearance - navBottom).coerceAtLeast(0.dp)
+    }
     // Picked media waits here until the user sends it, so a picture can be
     // explained or dropped before it leaves — it is no longer sent on pick.
     val pendingMedia = remember { mutableStateListOf<Uri>() }

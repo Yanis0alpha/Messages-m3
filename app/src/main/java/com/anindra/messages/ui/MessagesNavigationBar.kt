@@ -62,7 +62,8 @@ internal fun MessagesNavigationBar(
     selectedDestination: TopLevelDestination,
     onDestinationSelected: (TopLevelDestination) -> Unit,
     modifier: Modifier = Modifier,
-    sharedCaptureGuard: BackdropCaptureGuard? = null
+    sharedCaptureGuard: BackdropCaptureGuard? = null,
+    applyNavigationBarsPadding: Boolean = true
 ) {
     val backgroundRoot = LocalView.current.rootView
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
@@ -91,9 +92,14 @@ internal fun MessagesNavigationBar(
         )
     )
 
+    val systemBarPadding = if (applyNavigationBarsPadding) {
+        Modifier.navigationBarsPadding()
+    } else {
+        Modifier
+    }
     Box(
         modifier = modifier
-            .navigationBarsPadding()
+            .then(systemBarPadding)
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .fillMaxWidth(),
         contentAlignment = Alignment.Center
