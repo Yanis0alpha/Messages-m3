@@ -32,6 +32,12 @@ class FloatingChatChromeTest {
         assertTrue(overlay.contains("shadowElevation = 4.dp"))
         assertTrue(toolbar.contains("CenterAlignedTopAppBar("))
         assertTrue(toolbar.contains("containerColor = Color.Transparent"))
+        assertTrue(toolbar.contains("windowInsets = if (showBackButton)"))
+        assertTrue(toolbar.contains("WindowInsets(0, 0, 0, 0)"))
+        assertTrue(toolbar.contains("Column(modifier = Modifier.widthIn(max = 160.dp))"))
+        assertTrue(toolbar.contains("max = if (workProfile) 100.dp else 128.dp"))
+        assertFalse(toolbar.contains("weight(1f, fill = false)"))
+        assertTrue(toolbar.contains("\"title left=\$left top=\$top right=\$right bottom=\$bottom\""))
     }
 
     @Test

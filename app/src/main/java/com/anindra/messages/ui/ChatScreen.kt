@@ -2812,6 +2812,11 @@ internal fun ChatTopBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent
         ),
+        windowInsets = if (showBackButton) {
+            TopAppBarDefaults.windowInsets
+        } else {
+            WindowInsets(0, 0, 0, 0)
+        },
         navigationIcon = {
             if (showBackButton) {
                 IconButton(onClick = onBack) {
@@ -2822,7 +2827,19 @@ internal fun ChatTopBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onOpenDetails() }
+                modifier = Modifier
+                    .clickable { onOpenDetails() }
+                    .onGloballyPositioned { coordinates ->
+                        val position = coordinates.positionInRoot()
+                        val left = position.x.roundToInt()
+                        val top = position.y.roundToInt()
+                        val right = left + coordinates.size.width
+                        val bottom = top + coordinates.size.height
+                        android.util.Log.d(
+                            "FloatingChatChrome",
+                            "title left=$left top=$top right=$right bottom=$bottom"
+                        )
+                    }
             ) {
                 PersonAvatar(
                     convo?.groupTitle?.ifBlank { convo.address } ?: "?",
@@ -2830,7 +2847,7 @@ internal fun ChatTopBar(
                     photoModel = convo?.groupAvatar?.takeIf { it.isNotBlank() }
                 )
                 Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f, fill = false)) {
+                Column(modifier = Modifier.widthIn(max = 160.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             convo?.let {
@@ -2844,7 +2861,9 @@ internal fun ChatTopBar(
                             // always longer than the bar. Clipped at the comma it
                             // read as a broken name; ellipsized it reads as more.
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
+                            modifier = Modifier.widthIn(
+                                max = if (workProfile) 100.dp else 128.dp
+                            )
                         )
                         if (workProfile) {
                             Spacer(Modifier.width(6.dp))
