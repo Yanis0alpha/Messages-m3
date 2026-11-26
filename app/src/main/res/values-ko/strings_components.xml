@@ -80,4 +80,5 @@
     <string name="contact_create_group">그룹 만들기</string>
     <string name="contact_group_name_optional">선택 사항 - 이름이 지정됩니다</string>
     <string name="action_add">추가</string>
+    <string name="navigation_settings">설정</string>
 </resources>

@@ -43,6 +43,7 @@ import com.anindra.messages.ui.NewerDataDialog
 import com.anindra.messages.ui.InputBar
 import com.anindra.messages.ui.LocationDialog
 import com.anindra.messages.ui.MessageDetailsDialog
+import com.anindra.messages.ui.MessagesNavigationBar
 import com.anindra.messages.ui.OwnerAvatar
 import com.anindra.messages.ui.ScheduleDialog
 import com.anindra.messages.ui.PersonAvatar
@@ -52,6 +53,7 @@ import com.anindra.messages.ui.SettingsRow
 import com.anindra.messages.ui.SkeletonConversationRow
 import com.anindra.messages.ui.SwipeActionPreview
 import com.anindra.messages.ui.SwipeDirection
+import com.anindra.messages.ui.TopLevelDestination
 import com.anindra.messages.ui.UnreadBadge
 import com.anindra.messages.ui.WorkProfileBadge
 import com.anindra.messages.ui.theme.A11yOptions
@@ -87,6 +89,24 @@ internal fun Stage(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             content()
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Floating navigation bar", showBackground = true, widthDp = 380)
+@Composable
+private fun MessagesNavigationBarPreview() {
+    MessagesTheme(mode = "system") {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            MessagesNavigationBar(
+                selectedDestination = TopLevelDestination.MESSAGES,
+                onDestinationSelected = {}
+            )
         }
     }
 }

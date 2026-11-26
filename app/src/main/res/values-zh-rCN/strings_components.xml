@@ -80,4 +80,5 @@
     <string name="contact_create_group">创建群组</string>
     <string name="contact_group_name_optional">可选 - 我们会自动命名</string>
     <string name="action_add">添加</string>
+    <string name="navigation_settings">设置</string>
 </resources>

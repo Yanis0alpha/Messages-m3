@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -239,6 +240,14 @@ fun SettingsScreen(
         // Google Messages paints the settings sheet a step lighter than the rest
         // of the app and insets the rows into it: page #1E1F20, row #131314.
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        bottomBar = {
+            Spacer(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(TopLevelNavigationBarClearance)
+            )
+        },
         topBar = {
             TopAppBar(
                 // GM paints the app bar with the sheet, not with the page: the

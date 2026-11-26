@@ -93,6 +93,8 @@ import com.anindra.messages.ui.ScheduledMessagesScreen
 import com.anindra.messages.ui.NewChatScreen
 import com.anindra.messages.ui.AboutScreen
 import com.anindra.messages.ui.SettingsScreen
+import com.anindra.messages.ui.MessagesNavigationBar
+import com.anindra.messages.ui.TopLevelDestination
 import com.anindra.messages.ui.AdvancedSettingsScreen
 import com.anindra.messages.ui.AccessibilityScreen
 import com.anindra.messages.ui.MmsSupportScreen
@@ -1538,6 +1540,7 @@ open class MainActivity : FragmentActivity() {
         }
 
     private var navRoute by androidx.compose.runtime.mutableStateOf("list")
+    private var topLevelDestination by androidx.compose.runtime.mutableStateOf(TopLevelDestination.MESSAGES)
     private var pendingOpenAddress by androidx.compose.runtime.mutableStateOf<String?>(null)
     private var pendingOpenConversationId by androidx.compose.runtime.mutableStateOf<Long?>(null)
     private var pendingShareBody by androidx.compose.runtime.mutableStateOf("")
@@ -2044,6 +2047,17 @@ open class MainActivity : FragmentActivity() {
                     windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
                 val listWeight = 0.4f
 
+                val navigateTopLevel: (TopLevelDestination) -> Unit = { destination ->
+                    when (destination) {
+                        TopLevelDestination.MESSAGES,
+                        TopLevelDestination.ARCHIVED -> {
+                            topLevelDestination = destination
+                            navRoute = "list"
+                        }
+                        TopLevelDestination.SETTINGS -> navRoute = "settings"
+                    }
+                }
+
                 val conversationList: @Composable () -> Unit = {
                     if (useNewUi) ConversationsScreen(
                         vm = vm,
@@ -2056,7 +2070,9 @@ open class MainActivity : FragmentActivity() {
                             navRoute = "chat"
                         },
                         onNewChat = { navRoute = "new" },
-                        onOpenSettings = { navRoute = "settings" },
+                        selectedDestination = topLevelDestination,
+                        onDestinationSelected = navigateTopLevel,
+                        showNavigationBar = navRoute == "list" || navRoute == "settings",
                         backHandled = bubbleBackHandled,
                     ) else com.anindra.messages.ui.legacy.ConversationsScreen(
                         vm = vm,
@@ -2352,20 +2368,33 @@ onOpenAccessibility = { navRoute = "accessibility" },
                     }
                 }
 
-                if (twoPaneLayout) {
-                    androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
-                        androidx.compose.foundation.layout.Box(
-                            Modifier.weight(listWeight).fillMaxSize()
-                        ) { conversationList() }
-                        androidx.compose.material3.VerticalDivider()
-                        androidx.compose.foundation.layout.Box(
-                            Modifier.weight(1f - listWeight).fillMaxSize()
-                        ) { routePane(Modifier.fillMaxSize()) }
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                    if (twoPaneLayout) {
+                        androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.weight(listWeight).fillMaxSize()
+                            ) { conversationList() }
+                            androidx.compose.material3.VerticalDivider()
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.weight(1f - listWeight).fillMaxSize()
+                            ) { routePane(Modifier.fillMaxSize()) }
+                        }
+                    } else {
+                        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                            conversationList()
+                            routePane(Modifier.fillMaxSize())
+                        }
                     }
-                } else {
-                    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-                        conversationList()
-                        routePane(Modifier.fillMaxSize())
+                    if (useNewUi && navRoute in setOf("list", "settings")) {
+                        MessagesNavigationBar(
+                            selectedDestination = if (navRoute == "settings") {
+                                TopLevelDestination.SETTINGS
+                            } else {
+                                topLevelDestination
+                            },
+                            onDestinationSelected = navigateTopLevel,
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
                     }
                 }
             }
