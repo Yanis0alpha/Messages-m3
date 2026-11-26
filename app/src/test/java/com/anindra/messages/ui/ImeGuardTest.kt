@@ -34,6 +34,30 @@ class ImeGuardTest {
     }
 
     @Test
+    fun translucentKeyboardUsesThePlatformInsetWhenTheFrameDoesNotResize() {
+        assertEquals(
+            640,
+            ImeGuard.appliedBottomPx(
+                reportedPx = 640,
+                visibleOverlapPx = 0,
+                platformReportedPx = 640
+            )
+        )
+    }
+
+    @Test
+    fun aDebugStandInCannotInventATranslucentKeyboard() {
+        assertEquals(
+            0,
+            ImeGuard.appliedBottomPx(
+                reportedPx = 2200,
+                visibleOverlapPx = 0,
+                platformReportedPx = 0
+            )
+        )
+    }
+
+    @Test
     fun theOverlapIsTheWindowBottomAgainstTheVisibleFrame() {
         // Full-screen window, keyboard over the bottom third.
         assertEquals(800, ImeGuard.overlapPx(0, 2400, 1600))

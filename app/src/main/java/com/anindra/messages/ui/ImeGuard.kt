@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.Dp
  *  header, with the reserved height blank below it, and the conversation went
  *  with it. The window's own visible display frame is the number the OEM
  *  itself places its UI by, so it is trusted over the report and the smaller
- *  of the two wins. */
+ *  of the two wins. A translucent IME does not shrink that frame; in that case
+ *  Android's real inset remains the only usable keyboard boundary. */
 object ImeGuard {
 
     /** Debug builds only: set from a launch intent extra, this is read instead
@@ -38,6 +39,20 @@ object ImeGuard {
      *  it (a device that resized the window for the keyboard) still stands. */
     fun appliedBottomPx(reportedPx: Int, visibleOverlapPx: Int): Int =
         reportedPx.coerceAtMost(visibleOverlapPx.coerceAtLeast(0))
+
+    /** A translucent IME may leave the visible display frame unchanged. In
+     *  that case the platform inset is the only real geometry available. The
+     *  separate platform value also prevents a debug stand-in from creating a
+     *  keyboard inset while Android itself reports no IME. */
+    fun appliedBottomPx(
+        reportedPx: Int,
+        visibleOverlapPx: Int,
+        platformReportedPx: Int
+    ): Int = if (visibleOverlapPx > 0) {
+        appliedBottomPx(reportedPx, visibleOverlapPx)
+    } else {
+        reportedPx.coerceAtMost(platformReportedPx.coerceAtLeast(0))
+    }
 
     /** How much of the window the keyboard covers, from the window's own
      *  visible display frame: the window's bottom edge on screen against the
@@ -59,27 +74,28 @@ object ImeGuard {
 
     /** The padding to apply right now, logged so a dishonest report on a real
      *  phone is visible in logcat without a debugger. */
-    fun appliedBottomPx(root: View, reportedPx: Int): Int {
+    fun appliedBottomPx(root: View, reportedPx: Int, platformReportedPx: Int): Int {
         val visible = visibleOverlapPx(root)
-        val applied = appliedBottomPx(reportedPx, visible)
+        val applied = appliedBottomPx(reportedPx, visible, platformReportedPx)
         android.util.Log.d(
             "ImeGuard",
-            "reported=$reportedPx visible=$visible applied=$applied"
+            "reported=$reportedPx platform=$platformReportedPx " +
+                "visible=$visible applied=$applied"
         )
         return applied
     }
 }
 
 /** The keyboard's height right now, with an OEM's dishonest report clamped by
- *  [ImeGuard]. The composer's padding and the tray's slot are both sized from
- *  this one number, so the two cannot disagree about how tall the keyboard is. */
+ *  [ImeGuard] and a translucent keyboard's real platform inset preserved. */
 @Composable
 fun imeBottomDp(): Dp {
     val density = LocalDensity.current
     val root = LocalView.current.rootView
-    val reported = ImeGuard.reportedBottomPx(WindowInsets.ime.getBottom(density))
-    val applied = androidx.compose.runtime.remember(reported) {
-        ImeGuard.appliedBottomPx(root, reported)
+    val platformReported = WindowInsets.ime.getBottom(density)
+    val reported = ImeGuard.reportedBottomPx(platformReported)
+    val applied = androidx.compose.runtime.remember(reported, platformReported) {
+        ImeGuard.appliedBottomPx(root, reported, platformReported)
     }
     return with(density) { applied.toDp() }
 }
