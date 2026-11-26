@@ -1,6 +1,7 @@
 package com.anindra.messages.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -58,6 +59,21 @@ class MessagesNavigationBarTest {
         assertTrue(activity.contains("onDestinationSelected = navigateTopLevel"))
         assertTrue(conversations.contains("val showArchived = selectedDestination == TopLevelDestination.ARCHIVED"))
         assertTrue(conversations.contains(".height(TopLevelNavigationBarClearance)"))
-        assertTrue(settings.contains(".height(TopLevelNavigationBarClearance)"))
+        assertFalse(settings.contains("bottomBar = {"))
+        assertFalse(settings.contains(".navigationBarsPadding()"))
+        assertTrue(settings.contains("SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance"))
+    }
+
+    @Test
+    fun settingsRowsScrollBehindTheGlassNavigation() {
+        val settings = source("java/com/anindra/messages/ui/SettingsScreen.kt")
+        val scrollingColumn = settings.substringAfter(".verticalScroll(scrollState)")
+        assertTrue(scrollingColumn.contains("SettingsRow("))
+        assertTrue(
+            scrollingColumn.contains(
+                "SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance"
+            )
+        )
+        assertFalse(settings.contains("bottomBar = {"))
     }
 }

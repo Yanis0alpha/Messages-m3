@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -240,14 +239,9 @@ fun SettingsScreen(
         // Google Messages paints the settings sheet a step lighter than the rest
         // of the app and insets the rows into it: page #1E1F20, row #131314.
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        bottomBar = {
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .height(TopLevelNavigationBarClearance)
-            )
-        },
+        // No Scaffold bottom bar here: the floating glass navigation is drawn
+        // above this screen by MainActivity, so settings rows can scroll behind
+        // it and remain visible through its backdrop blur.
         topBar = {
             TopAppBar(
                 // GM paints the app bar with the sheet, not with the page: the
@@ -468,9 +462,14 @@ fun SettingsScreen(
                 )
             }
 
-            // What the removed footer left behind: the list ends on a card, and
-            // without this the card sits flush against the bottom inset.
-            Spacer(Modifier.height(SettingsLayout.BOTTOM_GAP))
+            // Rows are allowed to pass behind the floating glass navigation.
+            // This scroll-content tail (unlike a Scaffold bottom bar) only
+            // guarantees that the final row can still be lifted fully above it.
+            Spacer(
+                Modifier.height(
+                    SettingsLayout.BOTTOM_GAP + TopLevelNavigationBarClearance
+                )
+            )
         }
     }
 
