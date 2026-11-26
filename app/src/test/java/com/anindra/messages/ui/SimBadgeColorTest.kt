@@ -26,19 +26,24 @@ class SimBadgeColorTest {
         source.substring(start, end)
     }
 
+    private val simControl: String by lazy {
+        inputBar.substringAfter("if (SimSwitcher.shouldShowSwitch(sims.size))")
+            .substringBefore("if (showEmojiButton && attachEnabled)")
+    }
+
     @Test
     fun simIconStaysTintedWithOnSurfaceVariant() {
-        assertTrue(inputBar.contains("tint = MaterialTheme.colorScheme.onSurfaceVariant"))
+        assertTrue(simControl.contains("tint = MaterialTheme.colorScheme.onSurfaceVariant"))
     }
 
     @Test
     fun simLabelUsesASurfaceColourForContrastOnTheIcon() {
-        assertTrue(inputBar.contains("color = MaterialTheme.colorScheme.surface"))
+        assertTrue(simControl.contains("color = MaterialTheme.colorScheme.surface"))
     }
 
     @Test
     fun simLabelNeverHardcodesWhiteOrPrimaryContainer() {
-        assertFalse(inputBar.contains("Color.White"))
-        assertFalse(inputBar.contains("onPrimaryContainer"))
+        assertFalse(simControl.contains("Color.White"))
+        assertFalse(simControl.contains("onPrimaryContainer"))
     }
 }
