@@ -2564,7 +2564,7 @@ fun ChatScreen(
 internal fun FloatingChatHeader(
     content: @Composable () -> Unit
 ) {
-    Box(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -2579,7 +2579,10 @@ internal fun FloatingChatHeader(
                     "header left=$left top=$top right=$right bottom=$bottom"
                 )
             },
-        contentAlignment = Alignment.TopCenter
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
+        shadowElevation = 4.dp
     ) {
         content()
     }
@@ -4041,7 +4044,7 @@ internal fun InputBar(
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
         }
-        Row(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -4056,8 +4059,15 @@ internal fun InputBar(
                         "composer left=$left top=$top right=$right bottom=$bottom"
                     )
                 },
-            verticalAlignment = Alignment.CenterVertically
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 3.dp,
+            shadowElevation = 4.dp
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
         // Typing a Persian/Arabic word should flip the field, so the caret and
         // every following line sit on the right (#362). First strong character
         // only: a message's own direction is decided differently (see
@@ -4605,6 +4615,7 @@ internal fun InputBar(
             }
         }
             }
+        }
     }
 }
 

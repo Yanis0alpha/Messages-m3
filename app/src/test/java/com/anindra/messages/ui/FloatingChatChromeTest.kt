@@ -20,31 +20,32 @@ class FloatingChatChromeTest {
     }
 
     @Test
-    fun discussionHeaderIsCenteredWithoutABlockingSurface() {
+    fun discussionHeaderIsCenteredInsideARoundedRectangle() {
         val overlay = chat.substringAfter("internal fun FloatingChatHeader(")
             .substringBefore("internal fun MessageSelectionToolbar(")
         val toolbar = chat.substringAfter("internal fun ChatTopBar(")
             .substringBefore("internal fun ChatMessageList(")
 
-        assertTrue(overlay.contains("Box("))
-        assertTrue(overlay.contains("contentAlignment = Alignment.TopCenter"))
-        assertFalse(overlay.contains("Surface("))
-        assertFalse(overlay.contains("shadowElevation"))
+        assertTrue(overlay.contains("Surface("))
+        assertTrue(overlay.contains("shape = RoundedCornerShape(28.dp)"))
+        assertTrue(overlay.contains("color = MaterialTheme.colorScheme.surfaceContainer"))
+        assertTrue(overlay.contains("shadowElevation = 4.dp"))
         assertTrue(toolbar.contains("CenterAlignedTopAppBar("))
         assertTrue(toolbar.contains("containerColor = Color.Transparent"))
     }
 
     @Test
-    fun composerKeepsOnlyItsInputPillAndSendCircle() {
+    fun composerGroupsTheInputAndVoiceButtonInsideARoundedRectangle() {
         val composer = chat.substringAfter("internal fun InputBar(")
             .substringBefore("internal fun SuggestionChips(")
 
         assertTrue(composer.contains(".padding(horizontal = 12.dp, vertical = 8.dp)"))
         assertTrue(composer.contains("shape = RoundedCornerShape(28.dp)"))
         assertTrue(composer.contains("color = MaterialTheme.colorScheme.inputPill"))
-        assertFalse(composer.contains("shape = RoundedCornerShape(32.dp)"))
-        assertFalse(composer.contains("color = MaterialTheme.colorScheme.surfaceContainer,"))
-        assertFalse(composer.contains("shadowElevation = 4.dp"))
+        assertTrue(composer.contains("shape = RoundedCornerShape(32.dp)"))
+        assertTrue(composer.contains("color = MaterialTheme.colorScheme.surfaceContainer,"))
+        assertTrue(composer.contains("shadowElevation = 4.dp"))
+        assertTrue(composer.contains("modifier = Modifier.fillMaxWidth().padding(4.dp)"))
     }
 
     @Test
