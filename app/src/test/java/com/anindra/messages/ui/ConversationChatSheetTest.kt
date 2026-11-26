@@ -45,7 +45,7 @@ class ConversationChatSheetTest {
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
-        assertTrue(sheet.contains("CONTAINER_ALPHA = 0.88f"))
+        assertTrue(sheet.contains("LocalTranslucentSurfaceAlpha.current"))
         assertTrue(sheet.contains("SCRIM_ALPHA = 0.18f"))
         assertTrue(sheet.contains("DynamicBackdropBlur("))
         assertTrue(blur.contains("RenderEffect.createBlurEffect("))
@@ -59,7 +59,7 @@ class ConversationChatSheetTest {
         assertTrue(sheet.contains("containerColor = Color.Transparent"))
         assertFalse(blur.contains("FLAG_BLUR_BEHIND"))
         assertFalse(blur.contains("setBackgroundBlurRadius"))
-        assertTrue(sheet.contains("alpha = ChatSheetLayout.CONTAINER_ALPHA"))
+        assertTrue(sheet.contains("alpha = surfaceAlpha"))
         assertTrue(activity.contains("translucentBackground = chatUsesSheet"))
         assertTrue(chat.contains("if (translucentBackground)"))
         assertTrue(chat.contains("Color.Transparent"))
@@ -123,7 +123,8 @@ class ConversationChatSheetTest {
         assertTrue(sheet.contains("DynamicBackdropBlur("))
         assertTrue(sheet.contains("actionSheetPosition"))
         assertTrue(sheet.contains("coordinates.positionInWindow()"))
-        assertTrue(sheet.contains("alpha = ChatSheetLayout.CONTAINER_ALPHA"))
+        assertTrue(sheet.contains("LocalTranslucentSurfaceAlpha.current"))
+        assertTrue(sheet.contains("alpha = translucentSurfaceAlpha"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))
     }
 

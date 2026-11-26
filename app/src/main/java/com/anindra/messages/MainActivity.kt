@@ -55,6 +55,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
@@ -74,6 +75,7 @@ import com.anindra.messages.data.BlockedMessage
 import com.anindra.messages.data.DownloadsStore
 import com.anindra.messages.data.MmsSupport
 import com.anindra.messages.data.TrashedMessage
+import com.anindra.messages.data.TranslucentSurfaceOpacity
 import com.anindra.messages.data.Message
 import com.anindra.messages.data.MessageSearchFilters
 import com.anindra.messages.data.Repository
@@ -95,6 +97,7 @@ import com.anindra.messages.ui.NewChatScreen
 import com.anindra.messages.ui.AboutScreen
 import com.anindra.messages.ui.SettingsScreen
 import com.anindra.messages.ui.MessagesNavigationBar
+import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
 import com.anindra.messages.ui.TopLevelDestination
 import com.anindra.messages.ui.AdvancedSettingsScreen
 import com.anindra.messages.ui.AccessibilityScreen
@@ -1826,6 +1829,18 @@ open class MainActivity : FragmentActivity() {
                 val inboxScroll = rememberScrollState()
                 val settingsRevision by vm.settings.revision.collectAsState()
                 val useNewUi = settingsRevision.let { vm.settings.useNewUi }
+                val translucentSurfaceOpacity = settingsRevision.let {
+                    vm.settings.translucentSurfaceOpacityPercent
+                }
+                val translucentSurfaceAlpha = TranslucentSurfaceOpacity.alpha(
+                    translucentSurfaceOpacity
+                )
+                LaunchedEffect(translucentSurfaceOpacity, translucentSurfaceAlpha) {
+                    android.util.Log.d(
+                        "TranslucentSurfaceOpacity",
+                        "percent=$translucentSurfaceOpacity alpha=$translucentSurfaceAlpha"
+                    )
+                }
                 val trashConversationList = rememberLazyListState()
                 val trashMessageList = rememberLazyListState()
                 val spamConversationList = rememberLazyListState()
@@ -2401,49 +2416,53 @@ onOpenAccessibility = { navRoute = "accessibility" },
                     }
                 }
 
-                androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-                    if (twoPaneLayout) {
-                        androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
-                            androidx.compose.foundation.layout.Box(
-                                Modifier.weight(listWeight).fillMaxSize()
-                            ) { conversationList() }
-                            androidx.compose.material3.VerticalDivider()
-                            androidx.compose.foundation.layout.Box(
-                                Modifier.weight(1f - listWeight).fillMaxSize()
-                            ) { routePane(Modifier.fillMaxSize()) }
+                CompositionLocalProvider(
+                    LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha
+                ) {
+                    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                        if (twoPaneLayout) {
+                            androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
+                                androidx.compose.foundation.layout.Box(
+                                    Modifier.weight(listWeight).fillMaxSize()
+                                ) { conversationList() }
+                                androidx.compose.material3.VerticalDivider()
+                                androidx.compose.foundation.layout.Box(
+                                    Modifier.weight(1f - listWeight).fillMaxSize()
+                                ) { routePane(Modifier.fillMaxSize()) }
+                            }
+                        } else {
+                            androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                                conversationList()
+                                routePane(Modifier.fillMaxSize())
+                            }
                         }
-                    } else {
-                        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-                            conversationList()
-                            routePane(Modifier.fillMaxSize())
+                        if (chatUsesSheet && navRoute == "chat") {
+                            ConversationChatSheet(
+                                onDismissed = leaveChat,
+                                onGestureDismiss = leaveChatByGesture
+                            ) { requestDismiss ->
+                                chatContent(requestDismiss)
+                            }
                         }
-                    }
-                    if (chatUsesSheet && navRoute == "chat") {
-                        ConversationChatSheet(
-                            onDismissed = leaveChat,
-                            onGestureDismiss = leaveChatByGesture
-                        ) { requestDismiss ->
-                            chatContent(requestDismiss)
+                        if (newChatUsesSheet && navRoute == "new") {
+                            ConversationChatSheet(
+                                onDismissed = leaveNewChat,
+                                onGestureDismiss = leaveNewChat
+                            ) { requestDismiss ->
+                                newChatContent(requestDismiss)
+                            }
                         }
-                    }
-                    if (newChatUsesSheet && navRoute == "new") {
-                        ConversationChatSheet(
-                            onDismissed = leaveNewChat,
-                            onGestureDismiss = leaveNewChat
-                        ) { requestDismiss ->
-                            newChatContent(requestDismiss)
+                        if (showTopLevelNavigation) {
+                            MessagesNavigationBar(
+                                selectedDestination = if (navRoute == "settings") {
+                                    TopLevelDestination.SETTINGS
+                                } else {
+                                    topLevelDestination
+                                },
+                                onDestinationSelected = navigateTopLevel,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            )
                         }
-                    }
-                    if (showTopLevelNavigation) {
-                        MessagesNavigationBar(
-                            selectedDestination = if (navRoute == "settings") {
-                                TopLevelDestination.SETTINGS
-                            } else {
-                                topLevelDestination
-                            },
-                            onDestinationSelected = navigateTopLevel,
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        )
                     }
                 }
             }

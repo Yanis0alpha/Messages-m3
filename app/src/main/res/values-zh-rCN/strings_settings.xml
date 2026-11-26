@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">全部标记为已读？</string>
     <string name="settings_mark_read_confirm_message">所有对话的未读徽章都将被清除。此操作无法撤销。</string>
     <string name="settings_theme_title">选择主题</string>
+    <string name="settings_translucent_surface_opacity_title">半透明表面的不透明度</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">归档</string>
     <string name="settings_archiving_subtitle">允许归档对话</string>
     <string name="settings_pinned_title">置顶对话</string>

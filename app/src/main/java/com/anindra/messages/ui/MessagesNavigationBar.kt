@@ -49,7 +49,6 @@ enum class TopLevelDestination {
 }
 
 internal val TopLevelNavigationBarClearance = 104.dp
-internal const val TopLevelNavigationBarAlpha = 0.62f
 
 private data class TopLevelNavigationItem(
     val destination: TopLevelDestination,
@@ -65,6 +64,7 @@ internal fun MessagesNavigationBar(
     modifier: Modifier = Modifier
 ) {
     val backgroundRoot = LocalView.current.rootView
+    val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
     val captureGuard = remember { BackdropCaptureGuard() }
     var barPosition by remember { mutableStateOf(Offset.Zero) }
     val barShape = RoundedCornerShape(32.dp)
@@ -129,7 +129,7 @@ internal fun MessagesNavigationBar(
                         .matchParentSize()
                         .background(
                             MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-                                alpha = TopLevelNavigationBarAlpha
+                                alpha = surfaceAlpha
                             )
                         )
                 )

@@ -45,6 +45,7 @@ import com.anindra.messages.ui.ChatBubble
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.DialogText
 import com.anindra.messages.ui.DynamicBackdropBlur
+import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
 import com.anindra.messages.ui.ReactionBar
 import com.anindra.messages.ui.SuggestionChips
 import com.anindra.messages.ui.ReactionChips
@@ -153,7 +154,11 @@ private fun DynamicBackdropBlurPreview() {
                 Box(
                     Modifier
                         .matchParentSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.62f))
+                        .background(
+                            MaterialTheme.colorScheme.surface.copy(
+                                alpha = LocalTranslucentSurfaceAlpha.current
+                            )
+                        )
                 )
                 androidx.compose.material3.Text(
                     "Dynamic glass",

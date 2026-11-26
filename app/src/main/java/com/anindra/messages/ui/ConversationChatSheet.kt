@@ -41,7 +41,6 @@ import kotlinx.coroutines.launch
 
 internal object ChatSheetLayout {
     const val HEIGHT_FRACTION = 0.9f
-    const val CONTAINER_ALPHA = 0.88f
     const val SCRIM_ALPHA = 0.18f
     val DRAG_HANDLE_HEIGHT = 48.dp
     val BACKGROUND_BLUR_RADIUS = 32.dp
@@ -61,6 +60,7 @@ internal fun ConversationChatSheet(
     // Captured before ModalBottomSheet enters its dialog window: this is the
     // inbox/navigation tree that the glass samples, never the sheet itself.
     val backgroundRoot = LocalView.current.rootView
+    val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var sheetPosition by remember { mutableStateOf(Offset.Zero) }
 
     fun finishDismiss(action: () -> Unit) {
@@ -129,7 +129,7 @@ internal fun ConversationChatSheet(
                         .matchParentSize()
                         .background(
                             MaterialTheme.colorScheme.surface.copy(
-                                alpha = ChatSheetLayout.CONTAINER_ALPHA
+                                alpha = surfaceAlpha
                             )
                         )
                 )

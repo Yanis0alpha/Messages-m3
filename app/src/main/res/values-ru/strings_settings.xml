@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">Отметить все как прочитанные?</string>
     <string name="settings_mark_read_confirm_message">Значки непрочитанных будут убраны во всех переписках. Это действие нельзя отменить.</string>
     <string name="settings_theme_title">Выбрать тему</string>
+    <string name="settings_translucent_surface_opacity_title">Непрозрачность полупрозрачных поверхностей</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">Архивирование</string>
     <string name="settings_archiving_subtitle">Разрешить архивирование переписок</string>
     <string name="settings_pinned_title">Закреплённые переписки</string>

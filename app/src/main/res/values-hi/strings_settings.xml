@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">सभी को पढ़े के रूप में चिह्नित करें?</string>
     <string name="settings_mark_read_confirm_message">सभी संवादों के अपढ़े बैज साफ़ हो जाएंगे। इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="settings_theme_title">थीम चुनें</string>
+    <string name="settings_translucent_surface_opacity_title">पारभासी सतहों की अपारदर्शिता</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">आर्काइव</string>
     <string name="settings_archiving_subtitle">संवाद संग्रहीत करने की अनुमति दें</string>
     <string name="settings_pinned_title">पिन किए गए संवाद</string>

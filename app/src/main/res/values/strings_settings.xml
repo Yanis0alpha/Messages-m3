@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">Mark all as read?</string>
     <string name="settings_mark_read_confirm_message">Unread badges will be cleared on every conversation. This can’t be undone.</string>
     <string name="settings_theme_title">Choose theme</string>
+    <string name="settings_translucent_surface_opacity_title">Opacity of translucent surfaces</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">Archiving</string>
     <string name="settings_archiving_subtitle">Allow archiving conversations</string>
     <string name="settings_pinned_title">Pinned conversations</string>

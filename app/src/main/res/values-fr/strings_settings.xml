@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">Tout marquer comme lu ?</string>
     <string name="settings_mark_read_confirm_message">Les badges non lus seront effacés pour chaque conversation. Cette action est irréversible.</string>
     <string name="settings_theme_title">Thème</string>
+    <string name="settings_translucent_surface_opacity_title">Opacité des surfaces translucides</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">Archivage</string>
     <string name="settings_archiving_subtitle">Autoriser l\'archivage des conversations</string>
     <string name="settings_pinned_title">Conversations épinglées</string>

@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">همه به‌عنوان خوانده‌شده علامت بخورند؟</string>
     <string name="settings_mark_read_confirm_message">نشان خوانده‌نشده روی همه گفتگوها پاک می‌شود. قابل بازگشت نیست.</string>
     <string name="settings_theme_title">انتخاب پوسته</string>
+    <string name="settings_translucent_surface_opacity_title">کدری سطوح نیمه‌شفاف</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">بایگانی</string>
     <string name="settings_archiving_subtitle">اجازه بایگانی گفتگوها</string>
     <string name="settings_pinned_title">گفتگوهای سنجاق‌شده</string>

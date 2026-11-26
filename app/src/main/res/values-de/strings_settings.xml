@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">Alle als gelesen markieren?</string>
     <string name="settings_mark_read_confirm_message">Die Ungelesen-Markierungen aller Unterhaltungen werden entfernt. Das lässt sich nicht rückgängig machen.</string>
     <string name="settings_theme_title">Design wählen</string>
+    <string name="settings_translucent_surface_opacity_title">Deckkraft transparenter Flächen</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">Archivierung</string>
     <string name="settings_archiving_subtitle">Archivieren von Unterhaltungen ermöglichen</string>
     <string name="settings_pinned_title">Angeheftete Unterhaltungen</string>

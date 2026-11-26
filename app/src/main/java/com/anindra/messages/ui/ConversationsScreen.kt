@@ -211,6 +211,7 @@ fun ConversationsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val backdropRoot = LocalView.current.rootView
+    val translucentSurfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var actionSheetPosition by remember { mutableStateOf(Offset.Zero) }
     val syncDone by vm.initialSyncDone.collectAsState()
     val syncProgress by vm.initialSyncProgress.collectAsState()
@@ -847,7 +848,7 @@ fun ConversationsScreen(
                         .matchParentSize()
                         .background(
                             MaterialTheme.colorScheme.surface.copy(
-                                alpha = ChatSheetLayout.CONTAINER_ALPHA
+                                alpha = translucentSurfaceAlpha
                             )
                         )
                 )

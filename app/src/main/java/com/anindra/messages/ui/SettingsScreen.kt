@@ -50,6 +50,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -75,11 +76,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.AppViewModel
 import com.anindra.messages.data.SettingsStore
+import com.anindra.messages.data.TranslucentSurfaceOpacity
 import com.anindra.messages.data.PeriodicBackupScheduler
 import com.anindra.messages.data.SimCard
 import com.anindra.messages.data.SimCards
@@ -122,6 +127,9 @@ fun SettingsScreen(
     var themeDialog by remember { mutableStateOf(false) }
     var markReadDialog by remember { mutableStateOf(false) }
     val themeMode = vm.themeMode
+    var translucentSurfaceOpacity by remember {
+        mutableIntStateOf(vm.settings.translucentSurfaceOpacityPercent)
+    }
 
     var privacyMode by remember(revision) { mutableStateOf(vm.settings.privacyModeEnabled) }
     var appLock by remember(revision) { mutableStateOf(vm.settings.appLockEnabled) }
@@ -351,6 +359,39 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_theme_title),
                     subtitle = themeLabel(themeMode, context),
                     onClick = { themeDialog = true }
+                )
+                val opacityTitle = stringResource(
+                    R.string.settings_translucent_surface_opacity_title
+                )
+                val opacityValue = stringResource(
+                    R.string.settings_translucent_surface_opacity_value,
+                    translucentSurfaceOpacity
+                )
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = opacityTitle,
+                    subtitle = opacityValue,
+                    preview = {
+                        Slider(
+                            value = translucentSurfaceOpacity.toFloat(),
+                            onValueChange = { value ->
+                                val percent = TranslucentSurfaceOpacity.fromSlider(value)
+                                if (percent != translucentSurfaceOpacity) {
+                                    translucentSurfaceOpacity = percent
+                                    vm.settings.translucentSurfaceOpacityPercent = percent
+                                }
+                            },
+                            valueRange = TranslucentSurfaceOpacity.MIN_PERCENT.toFloat()..
+                                TranslucentSurfaceOpacity.MAX_PERCENT.toFloat(),
+                            steps = TranslucentSurfaceOpacity.SLIDER_STEPS,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = opacityTitle
+                                    stateDescription = opacityValue
+                                }
+                        )
+                    }
                 )
                 val selectedSub = sims.firstOrNull { it.subscriptionId == vm.settings.simSubscriptionId }
                 val currentSimLabel = if (selectedSub == null) {

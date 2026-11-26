@@ -46,6 +46,7 @@ class SettingsStore(context: Context) {
         const val THEME_DYNAMIC = "dynamic"
 
         const val KEY_THEME = "theme_mode"
+        const val KEY_TRANSLUCENT_SURFACE_OPACITY = "translucent_surface_opacity_percent"
         const val KEY_CALENDAR = "calendar_system"
         const val KEY_NOTIFICATIONS = "notifications_enabled"
         const val KEY_SOUNDS = "message_sounds_enabled"
@@ -163,6 +164,20 @@ class SettingsStore(context: Context) {
     var themeMode: String
         get() = prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
         set(v) { prefs.edit().putString(KEY_THEME, v).apply(); _revision.value++ }
+
+    var translucentSurfaceOpacityPercent: Int
+        get() = TranslucentSurfaceOpacity.normalize(
+            prefs.getInt(
+                KEY_TRANSLUCENT_SURFACE_OPACITY,
+                TranslucentSurfaceOpacity.DEFAULT_PERCENT
+            )
+        )
+        set(v) {
+            prefs.edit()
+                .putInt(KEY_TRANSLUCENT_SURFACE_OPACITY, TranslucentSurfaceOpacity.normalize(v))
+                .apply()
+            _revision.value++
+        }
 
     /**
      * The calendar the user picked (#363), which may be [CalendarSystem.AUTO].

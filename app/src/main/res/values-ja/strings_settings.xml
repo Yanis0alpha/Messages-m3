@@ -69,6 +69,8 @@
     <string name="settings_mark_read_confirm_title">すべて既読にしますか？</string>
     <string name="settings_mark_read_confirm_message">すべての会話の未読バッジが消去されます。この操作は取り消せません。</string>
     <string name="settings_theme_title">テーマを選択</string>
+    <string name="settings_translucent_surface_opacity_title">半透明サーフェスの不透明度</string>
+    <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
     <string name="settings_archiving_title">アーカイブ</string>
     <string name="settings_archiving_subtitle">会話のアーカイブを許可</string>
     <string name="settings_pinned_title">ピン留めされた会話</string>
