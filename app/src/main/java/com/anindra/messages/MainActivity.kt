@@ -2451,7 +2451,11 @@ onOpenAccessibility = { navRoute = "accessibility" },
                     LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha,
                     LocalContentColor provides MaterialTheme.colorScheme.onBackground
                 ) {
-                    val sharedCaptureGuard = remember { BackdropCaptureGuard() }
+                    // A shared guard lets the sheet's software capture cache the
+                    // navigation with all of its content omitted until another
+                    // state change invalidates it. Each glass excludes only itself.
+                    val navigationCaptureGuard = remember { BackdropCaptureGuard() }
+                    val persistentSheetCaptureGuard = remember { BackdropCaptureGuard() }
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
                         if (twoPaneLayout) {
                             androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
@@ -2480,7 +2484,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .padding(bottom = topLevelNavigationBottomOffset),
-                                sharedCaptureGuard = sharedCaptureGuard,
+                                sharedCaptureGuard = navigationCaptureGuard,
                                 applyNavigationBarsPadding = !persistentSheetVisible
                             )
                         }
@@ -2488,7 +2492,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                             PersistentConversationSheet(
                                 conversationOpen = navRoute == "chat",
                                 onCollapsed = leaveChatByGesture,
-                                captureGuard = sharedCaptureGuard,
+                                captureGuard = persistentSheetCaptureGuard,
                                 peekHeight = persistentConversationPeekHeight
                             ) {
                                 chatContent(leaveChat)

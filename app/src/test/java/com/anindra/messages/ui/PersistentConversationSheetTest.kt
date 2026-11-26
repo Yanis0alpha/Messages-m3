@@ -55,8 +55,15 @@ class PersistentConversationSheetTest {
         assertTrue(activity.contains("bottomOverlayClearance = topLevelControlsClearance"))
         assertTrue(conversations.contains(".height(bottomControlsClearance)"))
         assertTrue(conversations.contains(".padding(bottom = bottomControlsClearance)"))
-        assertTrue(activity.contains("sharedCaptureGuard = sharedCaptureGuard"))
-        assertTrue(activity.contains("captureGuard = sharedCaptureGuard"))
+    }
+
+    @Test
+    fun navigationAndSheetCapturesCannotHideEachOther() {
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        assertTrue(activity.contains("val navigationCaptureGuard = remember"))
+        assertTrue(activity.contains("val persistentSheetCaptureGuard = remember"))
+        assertTrue(activity.contains("sharedCaptureGuard = navigationCaptureGuard"))
+        assertTrue(activity.contains("captureGuard = persistentSheetCaptureGuard"))
     }
 
     @Test

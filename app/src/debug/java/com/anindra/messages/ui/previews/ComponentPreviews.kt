@@ -186,7 +186,8 @@ private fun DynamicBackdropBlurPreview() {
 @Composable
 private fun PersistentConversationSheetPreview() {
     MessagesTheme(mode = "system") {
-        val captureGuard = remember { BackdropCaptureGuard() }
+        val navigationCaptureGuard = remember { BackdropCaptureGuard() }
+        val sheetCaptureGuard = remember { BackdropCaptureGuard() }
         Box(
             Modifier
                 .fillMaxSize()
@@ -199,13 +200,13 @@ private fun PersistentConversationSheetPreview() {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 80.dp),
-                sharedCaptureGuard = captureGuard,
+                sharedCaptureGuard = navigationCaptureGuard,
                 applyNavigationBarsPadding = false
             )
             PersistentConversationSheet(
                 conversationOpen = false,
                 onCollapsed = {},
-                captureGuard = captureGuard,
+                captureGuard = sheetCaptureGuard,
                 peekHeight = 80.dp
             ) { }
         }
