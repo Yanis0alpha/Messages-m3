@@ -39,7 +39,7 @@ class AvatarExpressiveShapeTest {
             "MaterialShapes.Sunny.toShape()"
         ).forEach { assertTrue("missing expressive avatar shape: $it", components.contains(it)) }
 
-        assertTrue(components.contains("val generatedShape = remember(key)"))
+        assertTrue(components.contains("val generatedShape = expressiveAvatarShape(key)"))
         assertTrue(components.contains(".background(fill, avatarShape)"))
         assertTrue(components.contains(".clip(avatarShape)"))
         assertTrue(components.contains("modifier = modifier.size(size).clip(ownerShape)"))

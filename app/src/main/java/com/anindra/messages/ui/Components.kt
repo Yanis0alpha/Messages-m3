@@ -112,6 +112,7 @@ internal fun avatarShapeIndex(key: String, shapeCount: Int): Int {
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
 internal fun expressiveAvatarShape(key: String): Shape = when (avatarShapeIndex(key, 7)) {
     0 -> MaterialShapes.Gem.toShape()
     1 -> MaterialShapes.Cookie6Sided.toShape()
@@ -139,7 +140,7 @@ fun PersonAvatar(
 ) {
     val fill = backgroundColor ?: avatarColor(key)
     val glyphTint = tint ?: avatarGlyphInk(MaterialTheme.colorScheme)
-    val generatedShape = remember(key) { expressiveAvatarShape(key) }
+    val generatedShape = expressiveAvatarShape(key)
     val avatarShape = shape ?: generatedShape
     val context = LocalContext.current
     val photoUri by produceState<String?>(initialValue = photoUriCache.get(key), key) {
@@ -213,7 +214,7 @@ fun OwnerAvatar(
     tint: Color = MaterialTheme.colorScheme.onPrimary
 ) {
     val context = LocalContext.current
-    val ownerShape = remember { expressiveAvatarShape("owner-profile") }
+    val ownerShape = expressiveAvatarShape("owner-profile")
     val photo by produceState<String?>(initialValue = null) {
         value = withContext(Dispatchers.IO) { resolveOwnerPhotoUri(context) }
     }
