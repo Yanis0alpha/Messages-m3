@@ -23,6 +23,10 @@ class PersistentConversationSheetTest {
         assertEquals(0.9f, PersistentConversationSheetLayout.EXPANDED_FRACTION, 0f)
         assertEquals(3, PersistentConversationSheetLayout.ACTION_TIMEOUT_SECONDS)
         assertEquals(1_000L, PersistentConversationSheetLayout.ACTION_TICK_MS)
+        assertEquals(0.5f, PersistentConversationSheetLayout.DISMISS_PREVIEW_THRESHOLD, 0f)
+        assertEquals(0f, persistentSheetCollapseProgress(100f, 100f, 900f), 0f)
+        assertEquals(0.5f, persistentSheetCollapseProgress(500f, 100f, 900f), 0f)
+        assertEquals(1f, persistentSheetCollapseProgress(900f, 100f, 900f), 0f)
         assertEquals(80.dp, PersistentConversationSheetLayout.peekHeight(800.dp))
 
         val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
@@ -70,6 +74,11 @@ class PersistentConversationSheetTest {
         assertTrue(sheet.contains("snapshotFlow {"))
         assertTrue(sheet.contains("sheetState.isAnimationRunning"))
         assertTrue(sheet.contains("}.collect { snapshot ->"))
+        assertTrue(sheet.contains("coordinates.positionInRoot().y"))
+        assertTrue(sheet.contains("persistentSheetCollapseProgress("))
+        assertTrue(sheet.contains("collapseProgress >="))
+        assertTrue(sheet.contains("dragDismissPreviewVisible"))
+        assertTrue(sheet.contains("label = \"persistentConversationEmptyState\""))
         assertTrue(sheet.contains("expandedConversation = false"))
         assertTrue(sheet.contains("rememberUpdatedState(onCollapsed)"))
         assertTrue(sheet.contains("latestOnCollapsed()"))
@@ -114,7 +123,11 @@ class PersistentConversationSheetTest {
         assertTrue(sheet.contains("sheetMode != PersistentConversationSheetMode.ACTIVE"))
         assertTrue(sheet.contains("restoreMinimizedConversation()"))
         assertTrue(sheet.contains("showMinimizedSummary = true"))
-        assertTrue(sheet.contains("targetValue = if (showMinimizedSummary) 0f else 1f"))
+        assertTrue(
+            sheet.contains(
+                "targetValue = if (showMinimizedSummary || dragDismissPreviewVisible) 0f else 1f"
+            )
+        )
         assertTrue(sheet.contains("PersistentConversationHandleMode.MINIMIZED"))
         assertTrue(sheet.contains("MinimizedConversationPill("))
         assertTrue(sheet.contains("conversationTitle: String"))

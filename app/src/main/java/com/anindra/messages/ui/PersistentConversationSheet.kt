@@ -46,6 +46,7 @@ import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,7 +62,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -85,8 +88,18 @@ internal object PersistentConversationSheetLayout {
     const val EXPANDED_FRACTION = 0.9f
     const val ACTION_TIMEOUT_SECONDS = 3
     const val ACTION_TICK_MS = 1_000L
+    const val DISMISS_PREVIEW_THRESHOLD = 0.5f
 
     fun peekHeight(containerHeight: Dp): Dp = containerHeight * PEEK_FRACTION
+}
+
+internal fun persistentSheetCollapseProgress(
+    sheetTop: Float,
+    expandedTop: Float,
+    collapsedTop: Float
+): Float {
+    val range = (collapsedTop - expandedTop).coerceAtLeast(1f)
+    return ((sheetTop - expandedTop) / range).coerceIn(0f, 1f)
 }
 
 private enum class PersistentConversationSheetMode {
@@ -144,14 +157,7 @@ internal fun PersistentConversationSheet(
     var handleActionsVisible by remember { mutableStateOf(false) }
     var showMinimizedSummary by remember { mutableStateOf(false) }
     var actionCountdownSeconds by remember { mutableIntStateOf(0) }
-    val conversationContentProgress by animateFloatAsState(
-        targetValue = if (showMinimizedSummary) 0f else 1f,
-        animationSpec = motionTween(
-            LocalReduceMotion.current,
-            Motion.DURATION_SHORT4
-        ),
-        label = "persistentConversationContent"
-    )
+    var sheetTopInRoot by remember { mutableFloatStateOf(0f) }
     val latestOnCollapsed by rememberUpdatedState(onCollapsed)
 
     LaunchedEffect(conversationOpen) {
@@ -258,6 +264,34 @@ internal fun PersistentConversationSheet(
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val sheetHeight = maxHeight * PersistentConversationSheetLayout.EXPANDED_FRACTION
+        val density = LocalDensity.current
+        val expandedTopPx = with(density) { (maxHeight - sheetHeight).toPx() }
+        val collapsedTopPx = with(density) { (maxHeight - peekHeight).toPx() }
+        val collapseProgress = persistentSheetCollapseProgress(
+            sheetTop = sheetTopInRoot,
+            expandedTop = expandedTopPx,
+            collapsedTop = collapsedTopPx
+        )
+        val dragDismissPreviewVisible = conversationOpen &&
+            expandedConversation &&
+            sheetMode == PersistentConversationSheetMode.ACTIVE &&
+            collapseProgress >= PersistentConversationSheetLayout.DISMISS_PREVIEW_THRESHOLD
+        val conversationContentProgress by animateFloatAsState(
+            targetValue = if (showMinimizedSummary || dragDismissPreviewVisible) 0f else 1f,
+            animationSpec = motionTween(
+                LocalReduceMotion.current,
+                Motion.DURATION_SHORT4
+            ),
+            label = "persistentConversationContent"
+        )
+        val emptyStateProgress by animateFloatAsState(
+            targetValue = if (dragDismissPreviewVisible) 1f else 0f,
+            animationSpec = motionTween(
+                LocalReduceMotion.current,
+                Motion.DURATION_SHORT4
+            ),
+            label = "persistentConversationEmptyState"
+        )
         val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         val openConversationLabel = stringResource(R.string.access_open_conversation)
         val handleLabel = if (showMinimizedSummary) {
@@ -303,6 +337,10 @@ internal fun PersistentConversationSheet(
                         .onGloballyPositioned { coordinates ->
                             val current = coordinates.positionInWindow()
                             if (sheetPosition != current) sheetPosition = current
+                            val currentTopInRoot = coordinates.positionInRoot().y
+                            if (sheetTopInRoot != currentTopInRoot) {
+                                sheetTopInRoot = currentTopInRoot
+                            }
                         }
                         .drawWithContent {
                             if (!captureGuard.active) drawContent()
@@ -383,7 +421,9 @@ internal fun PersistentConversationSheet(
                                             scaleY = scale
                                         }
                                         .then(
-                                            if (showMinimizedSummary) {
+                                            if (showMinimizedSummary ||
+                                                dragDismissPreviewVisible
+                                            ) {
                                                 Modifier.clearAndSetSemantics { }
                                             } else {
                                                 Modifier
@@ -393,6 +433,23 @@ internal fun PersistentConversationSheet(
                                     // Keep ChatScreen composed so a minimized
                                     // conversation retains its draft and scroll.
                                     content()
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer { alpha = emptyStateProgress }
+                                        .then(
+                                            if (dragDismissPreviewVisible) {
+                                                Modifier
+                                            } else {
+                                                Modifier.clearAndSetSemantics { }
+                                            }
+                                        ),
+                                    contentAlignment = Alignment.TopCenter
+                                ) {
+                                    Box(Modifier.padding(top = 24.dp)) {
+                                        PersistentConversationEmptyState()
+                                    }
                                 }
                             } else {
                                 PersistentConversationEmptyState()

@@ -1,8 +1,9 @@
 package com.anindra.messages.ui
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,48 +17,76 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toPath
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.Morph
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.anindra.messages.R
+import com.anindra.messages.ui.theme.LocalReduceMotion
 import com.anindra.messages.ui.theme.incomingBubble
+import com.anindra.messages.ui.theme.motionSpring
+import com.anindra.messages.ui.theme.motionTween
 import com.anindra.messages.ui.theme.onSelectedBubble
 import com.anindra.messages.ui.theme.outgoingBubble
 import com.anindra.messages.ui.theme.selectedBubble
 import com.anindra.messages.voice.VoiceNotePolicy
 import com.anindra.messages.voice.VoicePlayback
-import com.anindra.messages.voice.VoiceWaveform
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private class ExpressiveVoiceControlShape(
+    private val morph: Morph,
+    private val progress: Float
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+        val path = morph.toPath(progress.coerceIn(0f, 1f))
+        path.transform(Matrix().apply { scale(x = size.width, y = size.height) })
+        path.translate(size.center - path.getBounds().center)
+        return Outline.Generic(path)
+    }
+}
 
 /**
  * A voice note in the conversation, laid out the way Google Messages draws one:
- * play/pause, the recording's waveform with the played part filled in, and the
- * length on the end.
+ * an Arch-to-Cookie play control, an expressive wavy playback indicator, and
+ * the duration in its own trailing pill.
  *
- * The length is measured rather than assumed — an MMS voice note carries no
- * duration column — and the waveform is decoded from the note itself, so a quiet
- * recording looks quiet.
+ * The length is measured rather than assumed because an MMS voice note carries
+ * no duration column. Playback progress drives the Material 3 expressive wave.
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun VoiceBubble(
     uri: String,
@@ -72,18 +101,38 @@ internal fun VoiceBubble(
     val state by VoicePlayback.state.collectAsStateWithLifecycle()
     val mine = state.uri == uri
     val playing = mine && state.playing
+    val reduceMotion = LocalReduceMotion.current
     var durationMs by remember(uri) { mutableIntStateOf(VoicePlayback.cachedDuration(uri)) }
-    var peaks by remember(uri) { mutableStateOf(VoiceWaveform.cached(uri)) }
     LaunchedEffect(uri) {
         if (durationMs <= 0) durationMs = VoicePlayback.measureDuration(context, uri)
-        if (peaks == null) peaks = VoiceWaveform.peaks(context, uri)
     }
     val total = if (mine && state.durationMs > 0) state.durationMs else durationMs
     val position = if (mine && (playing || state.positionMs > 0)) state.positionMs else 0
     val progress = if (total > 0) (position.toFloat() / total).coerceIn(0f, 1f) else 0f
-    val bars = peaks ?: VoiceWaveform.placeholder(uri)
-    val ink = if (isMe) cs.onPrimaryContainer else cs.onSurface
-    val accent = if (isMe) cs.onPrimaryContainer else cs.primary
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = motionTween(reduceMotion, 220),
+        label = "voiceBubbleProgress"
+    )
+    val controlMorph = remember {
+        Morph(MaterialShapes.Arch, MaterialShapes.Cookie6Sided)
+    }
+    val controlMorphProgress by animateFloatAsState(
+        targetValue = if (playing) 1f else 0f,
+        animationSpec = motionSpring(reduceMotion),
+        label = "voiceBubbleControlMorph"
+    )
+    val controlShape = remember(controlMorph, controlMorphProgress) {
+        ExpressiveVoiceControlShape(controlMorph, controlMorphProgress)
+    }
+    val strokeWidth = with(LocalDensity.current) { 7.dp.toPx() }
+    val progressStroke = remember(strokeWidth) {
+        Stroke(width = strokeWidth, cap = StrokeCap.Round)
+    }
+    val ink = if (isSelected) cs.onSelectedBubble
+    else if (isMe) cs.onPrimaryContainer else cs.onSurface
+    val accent = if (isSelected) cs.onSelectedBubble
+    else if (isMe) cs.onPrimaryContainer else cs.primary
     val lengthText = if (position > 0) {
         "${VoiceNotePolicy.label(position.toLong())} / ${VoiceNotePolicy.label(total.toLong())}"
     } else {
@@ -99,45 +148,53 @@ internal fun VoiceBubble(
     ) {
         Column(Modifier.padding(horizontal = 6.dp, vertical = 6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
+                Surface(
                     onClick = { VoicePlayback.toggle(context, uri) },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(48.dp),
+                    shape = controlShape,
+                    color = accent.copy(alpha = 0.14f),
+                    contentColor = accent
                 ) {
-                    Icon(
-                        if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = stringResource(
-                            if (playing) R.string.access_voice_pause else R.string.access_voice_play
-                        ),
-                        tint = accent,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-                Canvas(
-                    Modifier
-                        .weight(1f)
-                        .height(24.dp)
-                        .padding(horizontal = 4.dp)
-                ) {
-                    val gap = size.width / (bars.size * 2f - 1f)
-                    val barWidth = gap.coerceAtLeast(1f)
-                    val played = progress * bars.size
-                    bars.forEachIndexed { index, value ->
-                        val height = (value * size.height).coerceAtLeast(2.dp.toPx())
-                        val x = index * gap * 2f
-                        drawRoundRect(
-                            color = if (index < played) accent else accent.copy(alpha = 0.32f),
-                            topLeft = Offset(x, (size.height - height) / 2f),
-                            size = Size(barWidth, height),
-                            cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = stringResource(
+                                if (playing) {
+                                    R.string.access_voice_pause
+                                } else {
+                                    R.string.access_voice_play
+                                }
+                            ),
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
-                Text(
-                    text = lengthText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = ink.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(start = 6.dp, end = 8.dp)
+                LinearWavyProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(28.dp)
+                        .padding(horizontal = 8.dp),
+                    color = accent,
+                    trackColor = accent.copy(alpha = 0.24f),
+                    stroke = progressStroke,
+                    trackStroke = progressStroke,
+                    gapSize = 5.dp,
+                    stopSize = 5.dp,
+                    amplitude = { if (reduceMotion) 0f else 1f },
+                    wavelength = 30.dp
                 )
+                Surface(
+                    shape = CircleShape,
+                    color = ink.copy(alpha = 0.12f),
+                    contentColor = ink
+                ) {
+                    Text(
+                        text = lengthText,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
             if (body.text.isNotBlank()) {
                 Text(
