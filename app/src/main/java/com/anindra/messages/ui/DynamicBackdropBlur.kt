@@ -53,15 +53,26 @@ internal object DynamicBackdropLayer {
     const val SHEET_FLOATING_CONTENT = 7f
 }
 
+private data class DynamicBackdropSource(
+    val layer: Float,
+    val backdrop: LayerBackdrop,
+    val order: Long
+)
+
 @Stable
-private class DynamicBackdropGraph(
-    private val layers: List<Pair<Float, LayerBackdrop>>
-) {
+private class DynamicBackdropGraph {
     private val movingOwners = mutableStateMapOf<Any, Unit>()
+    private val sources = mutableMapOf<Any, DynamicBackdropSource>()
+    private val sourceCache = mutableMapOf<Float, Pair<Int, List<LayerBackdrop>>>()
+    private val backdropCache = mutableMapOf<Float, Backdrop>()
+    private var nextSourceOrder = 0L
+    private var sourceRevisionState by mutableIntStateOf(0)
+
     var motionFrame by mutableIntStateOf(0)
         private set
 
     val motionActive: Boolean get() = movingOwners.isNotEmpty()
+    val sourceRevision: Int get() = sourceRevisionState
 
     fun setMoving(owner: Any, moving: Boolean) {
         if (moving) movingOwners[owner] = Unit else movingOwners.remove(owner)
@@ -71,44 +82,71 @@ private class DynamicBackdropGraph(
         motionFrame = if (motionFrame == Int.MAX_VALUE) 0 else motionFrame + 1
     }
 
-    fun source(layer: Float): LayerBackdrop? = layers.firstOrNull { it.first == layer }?.second
+    fun registerSource(owner: Any, layer: Float, backdrop: LayerBackdrop) {
+        val current = sources[owner]
+        if (current?.layer == layer && current.backdrop === backdrop) return
+        nextSourceOrder += 1L
+        sources[owner] = DynamicBackdropSource(layer, backdrop, nextSourceOrder)
+        invalidateSources()
+    }
 
-    fun below(layer: Float): Backdrop? {
-        // Chat menu pills and pre-blurred Settings cards use one coordinate space each. Avoiding
-        // unrelated layers prevents a two-pane inbox or the raw background from shifting them.
-        val lower = layers.asSequence()
-            .filter { (sourceLayer, _) ->
+    fun unregisterSource(owner: Any) {
+        if (sources.remove(owner) != null) invalidateSources()
+    }
+
+    fun backdropBelow(layer: Float): Backdrop = backdropCache.getOrPut(layer) {
+        RegisteredBackdrop(this, layer)
+    }
+
+    fun sourcesBelow(layer: Float): List<LayerBackdrop> {
+        val revision = sourceRevisionState
+        sourceCache[layer]?.takeIf { it.first == revision }?.let { return it.second }
+        // Every attachment owns a separate graphics layer. Sorting by attachment order preserves
+        // the real screen stack: the always-composed inbox stays below Settings or a chat route,
+        // while two-pane sources retain their own non-overlapping window coordinates.
+        val selected = sources.values.asSequence()
+            .filter { source ->
                 when (layer) {
                     DynamicBackdropLayer.SHEET_FLOATING_CONTENT ->
-                        sourceLayer == DynamicBackdropLayer.SHEET_CONTENT
+                        source.layer == DynamicBackdropLayer.SHEET_CONTENT
                     DynamicBackdropLayer.SETTINGS_CARD ->
-                        sourceLayer == DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND
+                        source.layer == DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND
                     else ->
-                        sourceLayer < layer &&
-                            sourceLayer != DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND
+                        source.layer < layer &&
+                            source.layer != DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND
                 }
             }
-            .map { it.second }
+            .sortedBy { it.order }
+            .map { it.backdrop }
             .toList()
-        return when (lower.size) {
-            0 -> null
-            1 -> lower.first()
-            else -> CombinedBackdrop(lower)
+        sourceCache[layer] = revision to selected
+        return selected
+    }
+
+    private fun invalidateSources() {
+        sourceCache.clear()
+        sourceRevisionState = if (sourceRevisionState == Int.MAX_VALUE) {
+            0
+        } else {
+            sourceRevisionState + 1
         }
     }
 }
 
 /**
- * Draws ordered layer backdrops into one effect. Adapted from BakaSU Manager's Apache-2.0
- * CombinedBackdrop approach: the source is recorded in a graphics layer and each consumer samples
- * it using live layout coordinates, so scrolling never waits for a later bitmap capture.
+ * Draws the currently attached sources into one effect. Adapted from BakaSU Manager's Apache-2.0
+ * CombinedBackdrop approach: each owner keeps its own graphics layer and live coordinates, so two
+ * simultaneously composed routes can never overwrite one another's sampled texture.
  */
-private class CombinedBackdrop(
-    private val backdrops: List<Backdrop>
+private class RegisteredBackdrop(
+    private val graph: DynamicBackdropGraph,
+    private val consumerLayer: Float
 ) : Backdrop {
-    override val isCoordinatesDependent: Boolean = backdrops.any { it.isCoordinatesDependent }
-    override val offsetResidualX: Float get() = backdrops.firstOrNull()?.offsetResidualX ?: 0f
-    override val offsetResidualY: Float get() = backdrops.firstOrNull()?.offsetResidualY ?: 0f
+    override val isCoordinatesDependent: Boolean = true
+    override val offsetResidualX: Float
+        get() = graph.sourcesBelow(consumerLayer).firstOrNull()?.offsetResidualX ?: 0f
+    override val offsetResidualY: Float
+        get() = graph.sourcesBelow(consumerLayer).firstOrNull()?.offsetResidualY ?: 0f
 
     override fun DrawScope.drawBackdrop(
         density: Density,
@@ -116,7 +154,7 @@ private class CombinedBackdrop(
         layerBlock: (GraphicsLayerScope.() -> Unit)?,
         downscaleFactor: Int
     ) {
-        backdrops.forEach { backdrop ->
+        graph.sourcesBelow(consumerLayer).forEach { backdrop ->
             with(backdrop) {
                 drawBackdrop(density, coordinates, layerBlock, downscaleFactor)
             }
@@ -136,36 +174,7 @@ internal fun DynamicBackdropHost(content: @Composable () -> Unit) {
         return
     }
 
-    val background = rememberLayerBackdrop()
-    val settingsBlurredBackground = rememberLayerBackdrop()
-    val pageContent = rememberLayerBackdrop()
-    val header = rememberLayerBackdrop()
-    val navigation = rememberLayerBackdrop()
-    val sheetFallback = MaterialTheme.colorScheme.surface
-    val sheetContent = rememberLayerBackdrop {
-        // Only the recorded layer receives this base; the visible sheet keeps its configured tint.
-        drawRect(sheetFallback)
-        drawContent()
-    }
-    val graph = remember(
-        background,
-        settingsBlurredBackground,
-        pageContent,
-        header,
-        navigation,
-        sheetContent
-    ) {
-        DynamicBackdropGraph(
-            listOf(
-                DynamicBackdropLayer.BACKGROUND to background,
-                DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND to settingsBlurredBackground,
-                DynamicBackdropLayer.CONTENT to pageContent,
-                DynamicBackdropLayer.HEADER to header,
-                DynamicBackdropLayer.NAVIGATION to navigation,
-                DynamicBackdropLayer.SHEET_CONTENT to sheetContent
-            )
-        )
-    }
+    val graph = remember { DynamicBackdropGraph() }
     // Scrollers and draggable sheets are commonly translated as cached graphics layers. Refresh
     // only while one is moving so the sampled coordinates follow the current frame, then go idle.
     LaunchedEffect(graph) {
@@ -220,7 +229,21 @@ internal fun Modifier.dynamicBackdropSource(
     // miuix-blur uses Android RuntimeShader, just as BakaSU Manager does.
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@composed this
     val graph = LocalDynamicBackdropGraph.current ?: return@composed this
-    val backdrop = graph.source(layer) ?: return@composed this
+    val owner = remember(graph) { Any() }
+    val sheetFallback = MaterialTheme.colorScheme.surface
+    val backdrop = rememberLayerBackdrop(
+        onDraw = {
+            if (layer == DynamicBackdropLayer.SHEET_CONTENT) {
+                // Only the recorded layer receives this base; the visible sheet keeps its tint.
+                drawRect(sheetFallback)
+            }
+            drawContent()
+        }
+    )
+    DisposableEffect(graph, owner, layer, backdrop) {
+        graph.registerSource(owner, layer, backdrop)
+        onDispose { graph.unregisterSource(owner) }
+    }
     val refreshed = if (followMotion) {
         this.drawWithContent {
             graph.motionFrame
@@ -240,11 +263,14 @@ internal fun Modifier.dynamicBackdropEffect(
 ): Modifier = composed {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@composed this
     val graph = LocalDynamicBackdropGraph.current ?: return@composed this
-    val backdrop = remember(graph, layer) { graph.below(layer) } ?: return@composed this
+    val backdrop = remember(graph, layer) { graph.backdropBelow(layer) }
     drawBackdrop(
         backdrop = backdrop,
         shape = { RectangleShape },
         effects = {
+            // Rebuild when a route source attaches or detaches; each source retains independent
+            // coordinates instead of racing to overwrite a shared graphics layer.
+            graph.sourceRevision
             // Match BakaSU: this state read makes miuix recompute its remembered consumer
             // coordinates on the current frame even when an ancestor only transforms the layer.
             if (followMotion) graph.motionFrame

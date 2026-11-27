@@ -166,7 +166,8 @@ class FloatingChatChromeTest {
         assertTrue(versions.contains("name = \"miuix-blur-android\""))
         assertTrue(appBuild.contains("implementation(libs.miuix.blur)"))
         assertFalse(appBuild.contains("implementation(libs.haze)"))
-        assertTrue(blur.contains("rememberLayerBackdrop()"))
+        assertTrue(blur.contains("rememberLayerBackdrop("))
+        assertTrue(blur.contains("graph.registerSource(owner, layer, backdrop)"))
         assertTrue(blur.contains("textureBlurEffect("))
         assertTrue(blur.contains("noiseCoefficient = 0f"))
     }
