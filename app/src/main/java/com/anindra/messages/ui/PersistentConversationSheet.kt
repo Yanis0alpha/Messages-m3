@@ -106,12 +106,9 @@ internal fun persistentSheetCollapseProgress(
 internal fun shouldShowPersistentConversationSheet(
     useNewUi: Boolean,
     chatUsesSheet: Boolean,
-    navRoute: String,
-    topLevelDestination: TopLevelDestination
-): Boolean = useNewUi && chatUsesSheet && (
-    navRoute == "chat" ||
-        (navRoute == "list" && topLevelDestination == TopLevelDestination.MESSAGES)
-)
+    navRoute: String
+): Boolean = useNewUi && chatUsesSheet &&
+    navRoute in setOf("list", "chat", "settings")
 
 private enum class PersistentConversationSheetMode {
     ACTIVE,

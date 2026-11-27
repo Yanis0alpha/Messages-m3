@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">Rechercher des conversations</string>
+    <string name="conversations_archived_search">Rechercher des archives</string>
     <string name="conversations_retry_loading">Réessayer le chargement</string>
     <string name="conversations_allow_access">Autoriser l\'accès</string>
     <string name="conversations_open_settings">Ouvrir les paramètres de l\'application</string>

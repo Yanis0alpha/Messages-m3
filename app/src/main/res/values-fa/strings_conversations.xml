@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">جستجوی گفتگوها</string>
+    <string name="conversations_archived_search">جستجوی بایگانی</string>
     <string name="conversations_retry_loading">تلاش مجدد برای بارگذاری</string>
     <string name="conversations_allow_access">اجازه دسترسی</string>
     <string name="conversations_open_settings">باز کردن تنظیمات برنامه</string>

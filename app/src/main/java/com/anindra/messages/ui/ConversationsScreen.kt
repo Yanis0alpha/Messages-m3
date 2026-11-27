@@ -184,25 +184,25 @@ fun ConversationsScreen(
 ) {
     val reduceMotion = LocalReduceMotion.current
     var displayedDestination by remember { mutableStateOf(selectedDestination) }
-    val topLevelContentAlpha = remember { Animatable(1f) }
+    val topLevelContentScale = remember { Animatable(1f) }
     LaunchedEffect(selectedDestination, reduceMotion) {
         if (selectedDestination == displayedDestination) {
-            topLevelContentAlpha.snapTo(1f)
+            topLevelContentScale.snapTo(1f)
         } else if (reduceMotion) {
             displayedDestination = selectedDestination
-            topLevelContentAlpha.snapTo(1f)
+            topLevelContentScale.snapTo(1f)
         } else {
-            // Use the same two-phase fade-through as the Settings destination:
-            // remove the current page, swap it, then reveal the new page.
-            topLevelContentAlpha.animateTo(
-                targetValue = 0f,
+            // Keep the Material backdrop visible while the current destination
+            // zooms away. Swap at the smallest point, then grow the new page in.
+            topLevelContentScale.animateTo(
+                targetValue = TopLevelDestinationTransition.MIN_SCALE,
                 animationSpec = tween(
                     durationMillis = TopLevelDestinationTransition.OUTGOING_DURATION_MS
                 )
             )
             displayedDestination = selectedDestination
-            topLevelContentAlpha.snapTo(0f)
-            topLevelContentAlpha.animateTo(
+            topLevelContentScale.snapTo(TopLevelDestinationTransition.MIN_SCALE)
+            topLevelContentScale.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
                     durationMillis = TopLevelDestinationTransition.INCOMING_DURATION_MS
@@ -242,6 +242,7 @@ fun ConversationsScreen(
     var query by remember { mutableStateOf("") }
     var searchScope by remember { mutableStateOf(SearchScope.All) }
     val showArchived = displayedDestination == TopLevelDestination.ARCHIVED
+    val requestedArchived = selectedDestination == TopLevelDestination.ARCHIVED
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -555,13 +556,13 @@ fun ConversationsScreen(
         }
     }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .graphicsLayer { alpha = topLevelContentAlpha.value }
-    ) {
+    Box(Modifier.fillMaxSize()) {
         HomeShapeBackdrop()
         Scaffold(
+            modifier = Modifier.graphicsLayer {
+                scaleX = topLevelContentScale.value
+                scaleY = topLevelContentScale.value
+            },
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -592,7 +593,7 @@ fun ConversationsScreen(
 
             TopLevelHeaderDock(
                 title = stringResource(
-                    if (showArchived) {
+                    if (requestedArchived) {
                         R.string.conversations_archived
                     } else {
                         R.string.conversations_messages
@@ -617,7 +618,13 @@ fun ConversationsScreen(
                             query = it
                             searching = true
                         },
-                        placeholder = stringResource(R.string.conversations_search),
+                        placeholder = stringResource(
+                            if (requestedArchived) {
+                                R.string.conversations_archived_search
+                            } else {
+                                R.string.conversations_search
+                            }
+                        ),
                         onFocusChanged = { focused ->
                             if (focused) searching = true
                         },
@@ -1473,6 +1480,40 @@ internal fun HomeShapeBackdrop() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ArchivedEmptyState(modifier: Modifier = Modifier) {
+    val reduceMotion = LocalReduceMotion.current
+    val shapeEntrance = remember { Animatable(if (reduceMotion) 1f else 0f) }
+    val shapeRotation = remember { Animatable(0f) }
+    LaunchedEffect(reduceMotion) {
+        if (reduceMotion) {
+            shapeEntrance.snapTo(1f)
+            shapeRotation.snapTo(0f)
+        } else {
+            shapeEntrance.snapTo(0f)
+            shapeRotation.snapTo(0f)
+            launch {
+                shapeEntrance.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
+            }
+            launch {
+                shapeRotation.animateTo(
+                    targetValue = 8f,
+                    animationSpec = tween(durationMillis = 180)
+                )
+                shapeRotation.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )
+            }
+        }
+    }
     Column(
         modifier = modifier.padding(horizontal = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1481,6 +1522,12 @@ internal fun ArchivedEmptyState(modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .size(120.dp)
+                .graphicsLayer {
+                    alpha = shapeEntrance.value
+                    scaleX = 0.72f + (0.28f * shapeEntrance.value)
+                    scaleY = 0.72f + (0.28f * shapeEntrance.value)
+                    rotationZ = shapeRotation.value
+                }
                 .clip(MaterialShapes.Cookie7Sided.toShape())
                 .background(MaterialTheme.colorScheme.tertiaryContainer),
             contentAlignment = Alignment.Center

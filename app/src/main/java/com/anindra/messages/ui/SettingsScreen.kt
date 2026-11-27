@@ -75,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -291,22 +292,8 @@ fun SettingsScreen(
         // of the app and insets the rows into it: page #1E1F20, row #131314.
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        // No Scaffold bottom bar here: the floating glass navigation is drawn
-        // above this screen by MainActivity, so settings rows can scroll behind
-        // it and remain visible through its backdrop blur.
-        topBar = {
-            TopLevelHeaderDock(
-                title = stringResource(R.string.navigation_settings)
-            ) {
-                TopLevelDockSearchField(
-                    query = settingsQuery,
-                    onQueryChange = { settingsQuery = it },
-                    placeholder = stringResource(R.string.settings_search_hint),
-                    onFocusChanged = { settingsSearchFocused = it },
-                    onClear = { settingsQuery = "" }
-                )
-            }
-        }
+        // Both glass docks are overlays: rows can travel behind the header and
+        // the navigation while their blurred silhouettes remain visible.
     ) { padding ->
         val pageColor = MaterialTheme.colorScheme.surfaceContainer
         val rowColor = MaterialTheme.colorScheme.background
@@ -366,14 +353,20 @@ fun SettingsScreen(
             )
         }
 
-        Column(
-            Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = SettingsLayout.SCREEN_PADDING)
-        ) {
-            Spacer(Modifier.height(SettingsLayout.TOP_GAP))
+        Box(Modifier.padding(padding).fillMaxSize()) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = SettingsLayout.SCREEN_PADDING)
+            ) {
+                // This initial gap starts the rows below the dock, but belongs
+                // to the scroll content so the cards can later pass behind it.
+                Spacer(
+                    Modifier.height(
+                        TopLevelHeaderDockLayout.HEIGHT + SettingsLayout.TOP_GAP
+                    )
+                )
 
             CompositionLocalProvider(
                 LocalSettingsRowSearchQuery provides settingsQuery
@@ -557,11 +550,27 @@ fun SettingsScreen(
             // Rows are allowed to pass behind the floating glass navigation.
             // This scroll-content tail (unlike a Scaffold bottom bar) only
             // guarantees that the final row can still be lifted fully above it.
-            Spacer(
-                Modifier.height(
-                    SettingsLayout.BOTTOM_GAP + bottomOverlayClearance
+                Spacer(
+                    Modifier.height(
+                        SettingsLayout.BOTTOM_GAP + bottomOverlayClearance
+                    )
                 )
-            )
+            }
+
+            TopLevelHeaderDock(
+                title = stringResource(R.string.navigation_settings),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .zIndex(1f)
+            ) {
+                TopLevelDockSearchField(
+                    query = settingsQuery,
+                    onQueryChange = { settingsQuery = it },
+                    placeholder = stringResource(R.string.settings_search_hint),
+                    onFocusChanged = { settingsSearchFocused = it },
+                    onClear = { settingsQuery = "" }
+                )
+            }
         }
     }
 

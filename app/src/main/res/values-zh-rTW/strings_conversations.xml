@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">搜尋對話</string>
+    <string name="conversations_archived_search">搜尋封存對話</string>
     <string name="conversations_retry_loading">重新載入</string>
     <string name="conversations_allow_access">允許存取</string>
     <string name="conversations_open_settings">開啟設定</string>

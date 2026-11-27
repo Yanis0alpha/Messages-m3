@@ -49,10 +49,11 @@ enum class TopLevelDestination {
 }
 
 internal object TopLevelDestinationTransition {
-    // Material fade-through: the old destination leaves first, then the new
-    // destination appears. Keeping the phases separate avoids a muddy overlap.
-    const val OUTGOING_DURATION_MS = 90
-    const val INCOMING_DURATION_MS = 180
+    // The current destination zooms away, then the next one grows into place.
+    // The backdrop never disappears, so there is no blank frame between tabs.
+    const val OUTGOING_DURATION_MS = 180
+    const val INCOMING_DURATION_MS = 280
+    const val MIN_SCALE = 0.88f
 }
 
 internal fun isTopLevelRouteTransition(from: String, to: String): Boolean {

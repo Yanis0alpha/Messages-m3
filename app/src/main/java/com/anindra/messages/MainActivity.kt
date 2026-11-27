@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.tween
@@ -2114,8 +2116,7 @@ open class MainActivity : FragmentActivity() {
                 val persistentSheetVisible = shouldShowPersistentConversationSheet(
                     useNewUi = useNewUi,
                     chatUsesSheet = chatUsesSheet,
-                    navRoute = navRoute,
-                    topLevelDestination = topLevelDestination
+                    navRoute = navRoute
                 )
                 val persistentConversationOpen =
                     navRoute == "chat" || retainedMinimizedConversation
@@ -2260,19 +2261,31 @@ open class MainActivity : FragmentActivity() {
                                 val to = routeDepth[targetState] ?: 0
                                 when {
                                     isTopLevelRouteTransition(initialState, targetState) ->
-                                        fadeIn(
+                                        (scaleIn(
+                                            animationSpec = tween(
+                                                durationMillis =
+                                                    TopLevelDestinationTransition.INCOMING_DURATION_MS
+                                            ),
+                                            initialScale =
+                                                TopLevelDestinationTransition.MIN_SCALE
+                                        ) + fadeIn(
                                             tween(
                                                 durationMillis =
-                                                    TopLevelDestinationTransition.INCOMING_DURATION_MS,
-                                                delayMillis =
-                                                    TopLevelDestinationTransition.OUTGOING_DURATION_MS
+                                                    TopLevelDestinationTransition.INCOMING_DURATION_MS
                                             )
-                                        ) togetherWith fadeOut(
+                                        )) togetherWith (scaleOut(
+                                            animationSpec = tween(
+                                                durationMillis =
+                                                    TopLevelDestinationTransition.OUTGOING_DURATION_MS
+                                            ),
+                                            targetScale =
+                                                TopLevelDestinationTransition.MIN_SCALE
+                                        ) + fadeOut(
                                             tween(
                                                 durationMillis =
                                                     TopLevelDestinationTransition.OUTGOING_DURATION_MS
                                             )
-                                        )
+                                        ))
                                     chatUsesSheet &&
                                         (initialState == "chat" || targetState == "chat") ->
                                         androidx.compose.animation.EnterTransition.None togetherWith

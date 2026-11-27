@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">대화 검색</string>
+    <string name="conversations_archived_search">보관된 대화 검색</string>
     <string name="conversations_retry_loading">다시 시도</string>
     <string name="conversations_allow_access">접근 허용</string>
     <string name="conversations_open_settings">앱 설정 열기</string>

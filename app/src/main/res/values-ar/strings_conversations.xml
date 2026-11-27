@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">البحث في المحادثات</string>
+    <string name="conversations_archived_search">البحث في الأرشيف</string>
     <string name="conversations_retry_loading">إعادة المحاولة</string>
     <string name="conversations_allow_access">السماح بالوصول</string>
     <string name="conversations_open_settings">فتح إعدادات التطبيق</string>

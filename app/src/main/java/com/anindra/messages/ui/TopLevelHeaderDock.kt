@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +26,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,17 +42,76 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
+import com.anindra.messages.ui.theme.LocalReduceMotion
+import java.text.BreakIterator
+import kotlinx.coroutines.delay
 
 internal object TopLevelHeaderDockLayout {
     const val TINT_ALPHA = 0.30f
+    const val ERASE_CHARACTER_DELAY_MS = 14L
+    const val TYPE_CHARACTER_DELAY_MS = 22L
     val HEIGHT = 168.dp
     val BOTTOM_CORNER = 32.dp
     val TOP_CONTROL_HEIGHT = 64.dp
     val SEARCH_HEIGHT = 56.dp
+}
+
+internal fun typewriterFrames(text: String): List<String> {
+    if (text.isEmpty()) return listOf("")
+    val iterator = BreakIterator.getCharacterInstance()
+    iterator.setText(text)
+    val frames = mutableListOf("")
+    iterator.first()
+    var boundary = iterator.next()
+    while (boundary != BreakIterator.DONE) {
+        frames += text.substring(0, boundary)
+        boundary = iterator.next()
+    }
+    return frames
+}
+
+@Composable
+internal fun TypewriterSwapText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    fontWeight: FontWeight? = null,
+    color: Color = Color.Unspecified,
+    textAlign: TextAlign? = null
+) {
+    val reduceMotion = LocalReduceMotion.current
+    var displayedText by remember { mutableStateOf(if (reduceMotion) text else "") }
+    LaunchedEffect(text, reduceMotion) {
+        if (reduceMotion) {
+            displayedText = text
+            return@LaunchedEffect
+        }
+        typewriterFrames(displayedText)
+            .dropLast(1)
+            .asReversed()
+            .forEach { frame ->
+                displayedText = frame
+                delay(TopLevelHeaderDockLayout.ERASE_CHARACTER_DELAY_MS)
+            }
+        typewriterFrames(text).drop(1).forEach { frame ->
+            displayedText = frame
+            delay(TopLevelHeaderDockLayout.TYPE_CHARACTER_DELAY_MS)
+        }
+    }
+    Text(
+        text = displayedText,
+        modifier = modifier,
+        style = style,
+        fontWeight = fontWeight,
+        color = color,
+        textAlign = textAlign,
+        maxLines = 1
+    )
 }
 
 /**
@@ -129,13 +190,12 @@ internal fun TopLevelHeaderDock(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
+                    TypewriterSwapText(
                         text = title,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -157,7 +217,7 @@ internal fun TopLevelDockSearchField(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text(placeholder, maxLines = 1) },
+        placeholder = { TypewriterSwapText(text = placeholder) },
         singleLine = true,
         leadingIcon = {
             Surface(

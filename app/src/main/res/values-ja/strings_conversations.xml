@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">会話を検索</string>
+    <string name="conversations_archived_search">アーカイブを検索</string>
     <string name="conversations_retry_loading">再読み込み</string>
     <string name="conversations_allow_access">アクセスを許可</string>
     <string name="conversations_open_settings">アプリ設定を開く</string>

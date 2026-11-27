@@ -72,9 +72,10 @@ class MessagesNavigationBarTest {
     }
 
     @Test
-    fun allTopLevelDestinationsUseTheSameFadeThroughTransition() {
-        assertEquals(90, TopLevelDestinationTransition.OUTGOING_DURATION_MS)
-        assertEquals(180, TopLevelDestinationTransition.INCOMING_DURATION_MS)
+    fun allTopLevelDestinationsUseTheSameZoomTransitionWithoutABlankFrame() {
+        assertEquals(180, TopLevelDestinationTransition.OUTGOING_DURATION_MS)
+        assertEquals(280, TopLevelDestinationTransition.INCOMING_DURATION_MS)
+        assertEquals(0.88f, TopLevelDestinationTransition.MIN_SCALE, 0f)
         assertTrue(isTopLevelRouteTransition("list", "settings"))
         assertTrue(isTopLevelRouteTransition("chat", "settings"))
         assertTrue(isTopLevelRouteTransition("settings", "list"))
@@ -87,9 +88,15 @@ class MessagesNavigationBarTest {
         val transition = activity.substringAfter("transitionSpec = {")
             .substringBefore("modifier = paneModifier")
         assertTrue(conversations.contains("var displayedDestination by remember"))
-        assertTrue(conversations.contains("val topLevelContentAlpha = remember { Animatable(1f) }"))
+        assertTrue(conversations.contains("val topLevelContentScale = remember { Animatable(1f) }"))
         assertTrue(conversations.contains("displayedDestination = selectedDestination"))
-        assertTrue(conversations.contains(".graphicsLayer { alpha = topLevelContentAlpha.value }"))
+        assertTrue(conversations.contains("scaleX = topLevelContentScale.value"))
+        assertTrue(conversations.contains("scaleY = topLevelContentScale.value"))
+        assertFalse(conversations.contains("alpha = topLevelContentAlpha.value"))
+        assertTrue(conversations.contains("val shapeEntrance = remember { Animatable("))
+        assertTrue(conversations.contains("targetValue = 8f"))
+        assertTrue(conversations.contains("rotationZ = shapeRotation.value"))
+        assertTrue(conversations.contains("scaleX = 0.72f + (0.28f * shapeEntrance.value)"))
         assertTrue(
             conversations.contains(
                 "TopLevelDestinationTransition.OUTGOING_DURATION_MS"
@@ -101,7 +108,9 @@ class MessagesNavigationBarTest {
             )
         )
         assertTrue(transition.contains("isTopLevelRouteTransition(initialState, targetState)"))
-        assertTrue(transition.contains("delayMillis ="))
+        assertTrue(transition.contains("scaleIn("))
+        assertTrue(transition.contains("scaleOut("))
+        assertTrue(transition.contains("TopLevelDestinationTransition.MIN_SCALE"))
         assertTrue(
             transition.indexOf("isTopLevelRouteTransition(initialState, targetState)") <
                 transition.indexOf("slideInHorizontally(navSlide)")
@@ -119,5 +128,9 @@ class MessagesNavigationBarTest {
             )
         )
         assertFalse(settings.contains("bottomBar = {"))
+        assertFalse(settings.contains("topBar = {"))
+        assertTrue(settings.contains("TopLevelHeaderDockLayout.HEIGHT + SettingsLayout.TOP_GAP"))
+        assertTrue(settings.contains(".align(Alignment.TopCenter)"))
+        assertTrue(settings.contains(".zIndex(1f)"))
     }
 }

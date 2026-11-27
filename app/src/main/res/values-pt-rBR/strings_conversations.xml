@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="conversations_search">Pesquisar conversas</string>
+    <string name="conversations_archived_search">Pesquisar arquivadas</string>
     <string name="conversations_retry_loading">Tentar carregar novamente</string>
     <string name="conversations_allow_access">Permitir acesso</string>
     <string name="conversations_open_settings">Abrir configurações do app</string>

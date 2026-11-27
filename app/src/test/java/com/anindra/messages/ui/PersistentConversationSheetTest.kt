@@ -158,29 +158,26 @@ class PersistentConversationSheetTest {
     }
 
     @Test
-    fun archivesAndSettingsHideButRetainTheMinimizedConversation() {
+    fun tenPercentSheetStaysVisibleOnMessagesArchivesAndSettings() {
         assertTrue(
             shouldShowPersistentConversationSheet(
                 useNewUi = true,
                 chatUsesSheet = true,
-                navRoute = "list",
-                topLevelDestination = TopLevelDestination.MESSAGES
+                navRoute = "list"
             )
         )
-        assertFalse(
+        assertTrue(
             shouldShowPersistentConversationSheet(
                 useNewUi = true,
                 chatUsesSheet = true,
-                navRoute = "list",
-                topLevelDestination = TopLevelDestination.ARCHIVED
+                navRoute = "list"
             )
         )
-        assertFalse(
+        assertTrue(
             shouldShowPersistentConversationSheet(
                 useNewUi = true,
                 chatUsesSheet = true,
-                navRoute = "settings",
-                topLevelDestination = TopLevelDestination.SETTINGS
+                navRoute = "settings"
             )
         )
 

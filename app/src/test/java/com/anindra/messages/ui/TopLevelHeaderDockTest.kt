@@ -23,6 +23,20 @@ class TopLevelHeaderDockTest {
     }
 
     @Test
+    fun titlesAndPlaceholdersEraseThenTypeTheirReplacement() {
+        assertEquals(listOf("", "C", "Ch", "Cha", "Chat"), typewriterFrames("Chat"))
+        assertEquals(14L, TopLevelHeaderDockLayout.ERASE_CHARACTER_DELAY_MS)
+        assertEquals(22L, TopLevelHeaderDockLayout.TYPE_CHARACTER_DELAY_MS)
+
+        val dock = source("java/com/anindra/messages/ui/TopLevelHeaderDock.kt")
+        assertTrue(dock.contains("internal fun TypewriterSwapText("))
+        assertTrue(dock.contains("typewriterFrames(displayedText)"))
+        assertTrue(dock.contains(".dropLast(1)"))
+        assertTrue(dock.contains("typewriterFrames(text).drop(1)"))
+        assertTrue(dock.contains("placeholder = { TypewriterSwapText(text = placeholder) }"))
+    }
+
+    @Test
     fun dockIsEdgeAttachedRoundedOnlyBelowAndThirtyPercentGlass() {
         val dock = source("java/com/anindra/messages/ui/TopLevelHeaderDock.kt")
 
@@ -51,6 +65,7 @@ class TopLevelHeaderDockTest {
         assertTrue(conversations.contains("TopLevelDockSearchField("))
         assertTrue(conversations.contains("R.string.conversations_messages"))
         assertTrue(conversations.contains("R.string.conversations_archived"))
+        assertTrue(conversations.contains("R.string.conversations_archived_search"))
         assertTrue(conversations.contains("contentWindowInsets = WindowInsets(0, 0, 0, 0)"))
         assertTrue(settings.contains("TopLevelHeaderDock("))
         assertTrue(settings.contains("TopLevelDockSearchField("))
