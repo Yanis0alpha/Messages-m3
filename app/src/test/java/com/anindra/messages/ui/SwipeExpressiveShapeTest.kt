@@ -34,6 +34,11 @@ class SwipeExpressiveShapeTest {
         val shapes = conversations.substringAfter("private fun SwipeAction.expressiveShape()")
             .substringBefore("fun SwipeActionPreview(")
 
+        assertTrue(
+            conversations.contains(
+                "@Composable\nprivate fun SwipeAction.expressiveShape(): Shape"
+            )
+        )
         assertTrue(shapes.contains("SwipeAction.ARCHIVE -> MaterialShapes.Cookie7Sided"))
         assertTrue(shapes.contains("SwipeAction.DELETE -> MaterialShapes.Gem"))
         assertTrue(shapes.contains("SwipeAction.MARK_READ_UNREAD -> MaterialShapes.Cookie9Sided"))

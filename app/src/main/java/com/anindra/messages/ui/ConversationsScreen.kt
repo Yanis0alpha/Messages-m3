@@ -1331,6 +1331,7 @@ private fun SwipeAction.icon(unread: Boolean): ImageVector = when (this) {
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
 private fun SwipeAction.expressiveShape(): Shape = when (this) {
     SwipeAction.ARCHIVE -> MaterialShapes.Cookie7Sided.toShape()
     SwipeAction.DELETE -> MaterialShapes.Gem.toShape()
