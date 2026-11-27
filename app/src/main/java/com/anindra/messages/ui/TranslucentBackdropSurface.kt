@@ -19,6 +19,7 @@ internal fun TranslucentBackdropSurface(
     modifier: Modifier = Modifier,
     blurRadius: Dp = 25.dp,
     backdropLayer: Float = DynamicBackdropLayer.CONTENT,
+    followMotion: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
@@ -28,7 +29,7 @@ internal fun TranslucentBackdropSurface(
             .clip(shape)
             // Cards sample the shared layer below them. Their own pixels are not registered as
             // independent sources, which keeps long Settings lists to one recorded backdrop.
-            .dynamicBackdropEffect(blurRadius, backdropLayer)
+            .dynamicBackdropEffect(blurRadius, backdropLayer, followMotion)
     ) {
         Box(
             Modifier

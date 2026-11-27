@@ -888,6 +888,9 @@ fun ChatScreen(
         vmContacts.filter { it.workProfile }.map { phoneKey(it.number) }.toSet()
     }
     val listState = rememberLazyListState()
+    DynamicBackdropMotionTracker {
+        listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+    }
     // #348: pinch scales the message text and lets the bubbles re-lay out. The
     // zoom is remembered per conversation, in settings, so it survives leaving
     // the chat and an app restart.
@@ -2087,7 +2090,10 @@ fun ChatScreen(
         Box(
             Modifier
                 .fillMaxSize()
-                .dynamicBackdropSource(DynamicBackdropLayer.SHEET_CONTENT)
+                .dynamicBackdropSource(
+                    DynamicBackdropLayer.SHEET_CONTENT,
+                    followMotion = true
+                )
         ) {
             val revealed = remember { mutableStateListOf<Long>() }
             CompositionLocalProvider(LocalDensity provides zoomedDensity) {
@@ -3025,7 +3031,8 @@ private fun ChatFabMenuItem(
                 .clip(CircleShape)
                 .dynamicBackdropEffect(
                     25.dp,
-                    DynamicBackdropLayer.SHEET_FLOATING_CONTENT
+                    DynamicBackdropLayer.SHEET_FLOATING_CONTENT,
+                    followMotion = true
                 )
         ) {
             Box(

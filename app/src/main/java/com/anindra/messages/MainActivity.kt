@@ -88,6 +88,7 @@ import com.anindra.messages.data.ForwardPlan
 import com.anindra.messages.sms.SmsSender
 import com.anindra.messages.share.ShareText
 import com.anindra.messages.ui.DynamicBackdropHost
+import com.anindra.messages.ui.DynamicBackdropMotionTracker
 import com.anindra.messages.ui.ChatScreen
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
@@ -2512,6 +2513,9 @@ onOpenAccessibility = { navRoute = "accessibility" },
                         LocalContentColor provides MaterialTheme.colorScheme.onBackground
                     ) {
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                        // AnimatedContent applies route motion as a render transform, so keep
+                        // same-frame backdrop coordinates live until its longest transition ends.
+                        DynamicBackdropMotionTracker(settleDelayMillis = 700L) { navRoute }
                         if (twoPaneLayout) {
                             androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
                                 androidx.compose.foundation.layout.Box(

@@ -357,13 +357,22 @@ fun SettingsScreen(
             )
         }
 
+        DynamicBackdropMotionTracker { scrollState.value }
+
         Box(Modifier.padding(padding).fillMaxSize()) {
+            // Blur the static shapes once, keep their crisp copy visible between cards, and let
+            // moving cards copy the cached blurred layer instead of running one Gaussian each.
             SettingsExpressiveBackdrop()
+            SettingsBlurredBackdropSource()
+            SettingsExpressiveBackdrop(registerAsSource = false)
 
             Column(
                 Modifier
                     .fillMaxSize()
-                    .dynamicBackdropSource(DynamicBackdropLayer.CONTENT)
+                    .dynamicBackdropSource(
+                        DynamicBackdropLayer.CONTENT,
+                        followMotion = true
+                    )
                     .verticalScroll(scrollState)
                     .padding(horizontal = SettingsLayout.SCREEN_PADDING)
             ) {
@@ -1080,12 +1089,18 @@ fun SettingsScreen(
 /** Expressive silhouettes scattered behind the fixed glass settings surfaces. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun SettingsExpressiveBackdrop() {
+internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
     val colors = MaterialTheme.colorScheme
     Box(
         Modifier
             .fillMaxSize()
-            .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+            .then(
+                if (registerAsSource) {
+                    Modifier.dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+                } else {
+                    Modifier
+                }
+            )
             .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box(
@@ -1146,6 +1161,21 @@ internal fun SettingsExpressiveBackdrop() {
     }
 }
 
+/** One full-screen Gaussian pass reused by every moving Settings card. */
+@Composable
+private fun SettingsBlurredBackdropSource() {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .dynamicBackdropSource(DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND)
+            .dynamicBackdropEffect(
+                blurRadius = 25.dp,
+                layer = DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND,
+                followMotion = false
+            )
+    )
+}
+
 /**
  * A run of settings rows separated by a small gap. Each row draws its own card;
  * the group itself is only the vertical rhythm, so a group's outer rows are
@@ -1171,7 +1201,10 @@ fun GroupedRowCard(
             bottomStart = corners.bottomStart
         ),
         tint = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        blurRadius = 0.dp,
+        backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
+        followMotion = true
     ) {
         content()
     }
@@ -1208,7 +1241,10 @@ fun GroupedRowList(
     TranslucentBackdropSurface(
         shape = RoundedCornerShape(SettingsLayout.OUTER_RADIUS),
         tint = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        blurRadius = 0.dp,
+        backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
+        followMotion = true
     ) {
         Column { content() }
     }
@@ -1323,7 +1359,10 @@ fun SettingsRow(
             bottomStart = corners.bottomStart
         ),
         tint = MaterialTheme.colorScheme.background,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        blurRadius = 0.dp,
+        backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
+        followMotion = true
     ) {
         Column(
             modifier = Modifier

@@ -161,6 +161,9 @@ internal fun PersistentConversationSheet(
 ) {
     val scaffoldState = rememberBottomSheetScaffoldState()
     val sheetState = scaffoldState.bottomSheetState
+    DynamicBackdropMotionTracker {
+        runCatching { sheetState.requireOffset() }.getOrNull()
+    }
     val scope = rememberCoroutineScope()
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var expandedConversation by remember { mutableStateOf(false) }
@@ -372,7 +375,8 @@ internal fun PersistentConversationSheet(
                         .clip(sheetShape)
                         .dynamicBackdropEffect(
                             ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
-                            DynamicBackdropLayer.SHEET
+                            DynamicBackdropLayer.SHEET,
+                            followMotion = true
                         )
                         .onGloballyPositioned { coordinates ->
                             val currentTopInRoot = coordinates.positionInRoot().y

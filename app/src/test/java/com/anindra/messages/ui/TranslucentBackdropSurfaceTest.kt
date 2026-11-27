@@ -19,7 +19,7 @@ class TranslucentBackdropSurfaceTest {
 
         assertTrue(surface.contains(".clip(shape)"))
         assertFalse(surface.contains(".dynamicBackdropSource(backdropLayer)"))
-        assertTrue(surface.contains(".dynamicBackdropEffect(blurRadius, backdropLayer)"))
+        assertTrue(surface.contains(".dynamicBackdropEffect(blurRadius, backdropLayer, followMotion)"))
         assertTrue(surface.contains("tint.copy(alpha = surfaceAlpha)"))
     }
 
@@ -47,8 +47,12 @@ class TranslucentBackdropSurfaceTest {
             .substringBefore("fun SettingsFooter(")
         assertTrue(settingsRow.contains("TranslucentBackdropSurface("))
         assertTrue(settingsRow.contains("tint = MaterialTheme.colorScheme.background"))
-        assertTrue(settings.contains("internal fun SettingsExpressiveBackdrop()"))
+        assertTrue(settings.contains("internal fun SettingsExpressiveBackdrop("))
         assertTrue(settings.contains("SettingsExpressiveBackdrop()"))
+        assertTrue(settings.contains("SettingsBlurredBackdropSource()"))
+        assertTrue(settings.contains("DynamicBackdropLayer.SETTINGS_BLURRED_BACKGROUND"))
+        assertTrue(settings.contains("DynamicBackdropLayer.SETTINGS_CARD"))
+        assertTrue(settings.contains("blurRadius = 0.dp"))
         assertTrue(settings.contains("MaterialShapes.Cookie12Sided.toShape()"))
         assertTrue(settings.contains("MaterialShapes.Clover8Leaf.toShape()"))
         assertTrue(settings.contains("MaterialShapes.Sunny.toShape()"))

@@ -38,11 +38,9 @@ class MessagesNavigationBarTest {
         assertTrue(bar.contains("val surfaceAlpha = LocalTranslucentSurfaceAlpha.current"))
         assertTrue(bar.contains("alpha = surfaceAlpha"))
         assertTrue(bar.contains(".dynamicBackdropSource(DynamicBackdropLayer.NAVIGATION)"))
-        assertTrue(
-            bar.contains(
-                ".dynamicBackdropEffect(25.dp, DynamicBackdropLayer.NAVIGATION)"
-            )
-        )
+        assertTrue(bar.contains(".dynamicBackdropEffect("))
+        assertTrue(bar.contains("DynamicBackdropLayer.NAVIGATION"))
+        assertTrue(bar.contains("followMotion = true"))
         assertTrue(bar.contains("imageVector = if (selected) item.selectedIcon else item.unselectedIcon"))
         assertTrue(bar.contains("Icons.AutoMirrored.Filled.Chat"))
         assertTrue(bar.contains("Icons.Rounded.Archive"))

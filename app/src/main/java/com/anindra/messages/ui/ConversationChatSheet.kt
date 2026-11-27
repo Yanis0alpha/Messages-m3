@@ -53,6 +53,9 @@ internal fun ConversationChatSheet(
     content: @Composable (requestDismiss: () -> Unit) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    DynamicBackdropMotionTracker {
+        runCatching { sheetState.requireOffset() }.getOrNull()
+    }
     val scope = rememberCoroutineScope()
     var dismissing by remember { mutableStateOf(false) }
     var dismissed by remember { mutableStateOf(false) }
@@ -104,7 +107,8 @@ internal fun ConversationChatSheet(
                     .clip(sheetShape)
                     .dynamicBackdropEffect(
                         ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
-                        DynamicBackdropLayer.SHEET
+                        DynamicBackdropLayer.SHEET,
+                        followMotion = true
                     )
                     .onGloballyPositioned { coordinates ->
                         val top = coordinates.positionInWindow().y.roundToInt()

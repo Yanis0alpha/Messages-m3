@@ -222,6 +222,10 @@ fun ConversationsScreen(
     }
     // Recreated on empty→loaded so the list opens at the top (no restored offset, no anchor jump).
     val listState = remember(conversations.isNotEmpty()) { LazyListState(0, 0) }
+    DynamicBackdropMotionTracker { topLevelContentScale.value }
+    DynamicBackdropMotionTracker {
+        listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+    }
     // GM behavior: the stringResource(R.string.access_start_chat) pill collapses to an icon-only FAB as soon as
     // the list scrolls away from the top, and re-expands when it returns.
     val fabExpanded = remember(listState) {
@@ -590,7 +594,10 @@ fun ConversationsScreen(
                 Modifier
                     .padding(padding)
                     .fillMaxSize()
-                    .dynamicBackdropSource(DynamicBackdropLayer.CONTENT)
+                    .dynamicBackdropSource(
+                        DynamicBackdropLayer.CONTENT,
+                        followMotion = true
+                    )
                     .nestedScroll(pullToReveal)
             ) {
 
@@ -995,6 +1002,9 @@ fun ConversationsScreen(
             }
         }
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        DynamicBackdropMotionTracker {
+            runCatching { sheetState.requireOffset() }.getOrNull()
+        }
         val actionSheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ModalBottomSheet(
             onDismissRequest = { sheetConvoId = -1L },
@@ -1010,7 +1020,11 @@ fun ConversationsScreen(
                 Modifier
                     .fillMaxWidth()
                     .clip(actionSheetShape)
-                    .dynamicBackdropEffect(25.dp, DynamicBackdropLayer.SHEET)
+                    .dynamicBackdropEffect(
+                        25.dp,
+                        DynamicBackdropLayer.SHEET,
+                        followMotion = true
+                    )
             ) {
                 Box(
                     Modifier

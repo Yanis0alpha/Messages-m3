@@ -138,7 +138,11 @@ internal fun TopLevelHeaderDock(
                 .fillMaxSize()
                 .clip(dockShape)
                 .dynamicBackdropSource(DynamicBackdropLayer.HEADER)
-                .dynamicBackdropEffect(25.dp, DynamicBackdropLayer.HEADER)
+                .dynamicBackdropEffect(
+                    25.dp,
+                    DynamicBackdropLayer.HEADER,
+                    followMotion = true
+                )
         ) {
             Box(
                 Modifier
