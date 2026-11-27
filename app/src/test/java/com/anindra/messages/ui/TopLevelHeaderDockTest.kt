@@ -46,7 +46,7 @@ class TopLevelHeaderDockTest {
         assertFalse(dock.contains("topStart = TopLevelHeaderDockLayout.BOTTOM_CORNER"))
         assertTrue(dock.contains(".fillMaxWidth()"))
         assertTrue(dock.contains(".dynamicBackdropSource(DynamicBackdropLayer.HEADER)"))
-        assertTrue(dock.contains(".dynamicBackdropEffect(32.dp)"))
+        assertTrue(dock.contains(".dynamicBackdropEffect(25.dp, DynamicBackdropLayer.HEADER)"))
         assertTrue(dock.contains("alpha = TopLevelHeaderDockLayout.TINT_ALPHA"))
         assertTrue(dock.contains("contentAlignment = Alignment.Center"))
         assertTrue(dock.contains(".statusBarsPadding()"))

@@ -240,7 +240,7 @@ class PersistentConversationSheetTest {
     }
 
     @Test
-    fun navigationAndSheetShareOrderedDynamicBackdropLayers() {
+    fun navigationAndSheetUseOrderedDynamicBackdropLayersWithoutSheetFeedback() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val navigation = source("java/com/anindra/messages/ui/MessagesNavigationBar.kt")
         val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
@@ -248,7 +248,8 @@ class PersistentConversationSheetTest {
         assertTrue(
             navigation.contains(".dynamicBackdropSource(DynamicBackdropLayer.NAVIGATION)")
         )
-        assertTrue(sheet.contains(".dynamicBackdropSource(DynamicBackdropLayer.SHEET)"))
+        assertTrue(sheet.contains("DynamicBackdropLayer.SHEET"))
+        assertFalse(sheet.contains(".dynamicBackdropSource(DynamicBackdropLayer.SHEET)"))
     }
 
     @Test

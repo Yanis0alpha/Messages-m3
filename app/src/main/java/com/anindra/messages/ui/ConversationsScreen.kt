@@ -586,7 +586,13 @@ fun ConversationsScreen(
                 }
             }
         ) { padding ->
-            Column(Modifier.padding(padding).fillMaxSize().nestedScroll(pullToReveal)) {
+            Column(
+                Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .dynamicBackdropSource(DynamicBackdropLayer.CONTENT)
+                    .nestedScroll(pullToReveal)
+            ) {
 
             // The dock is drawn outside the zooming Scaffold below. This
             // spacer keeps list content clear of it without scaling the header.
@@ -1004,8 +1010,7 @@ fun ConversationsScreen(
                 Modifier
                     .fillMaxWidth()
                     .clip(actionSheetShape)
-                    .dynamicBackdropSource(DynamicBackdropLayer.SHEET)
-                    .dynamicBackdropEffect()
+                    .dynamicBackdropEffect(25.dp, DynamicBackdropLayer.SHEET)
             ) {
                 Box(
                     Modifier

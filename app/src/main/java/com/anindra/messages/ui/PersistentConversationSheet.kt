@@ -370,8 +370,10 @@ internal fun PersistentConversationSheet(
                         .fillMaxWidth()
                         .height(sheetHeight)
                         .clip(sheetShape)
-                        .dynamicBackdropSource(DynamicBackdropLayer.SHEET)
-                        .dynamicBackdropEffect(ChatSheetLayout.BACKGROUND_BLUR_RADIUS)
+                        .dynamicBackdropEffect(
+                            ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
+                            DynamicBackdropLayer.SHEET
+                        )
                         .onGloballyPositioned { coordinates ->
                             val currentTopInRoot = coordinates.positionInRoot().y
                             if (sheetTopInRoot != currentTopInRoot) {

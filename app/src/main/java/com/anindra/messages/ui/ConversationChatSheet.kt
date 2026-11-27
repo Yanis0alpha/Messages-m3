@@ -42,7 +42,7 @@ internal object ChatSheetLayout {
     const val HEIGHT_FRACTION = 0.9f
     const val SCRIM_ALPHA = 0.18f
     val DRAG_HANDLE_HEIGHT = 48.dp
-    val BACKGROUND_BLUR_RADIUS = 32.dp
+    val BACKGROUND_BLUR_RADIUS = 25.dp
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,8 +102,10 @@ internal fun ConversationChatSheet(
                     .fillMaxWidth()
                     .height(sheetHeight)
                     .clip(sheetShape)
-                    .dynamicBackdropSource(DynamicBackdropLayer.SHEET)
-                    .dynamicBackdropEffect(ChatSheetLayout.BACKGROUND_BLUR_RADIUS)
+                    .dynamicBackdropEffect(
+                        ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
+                        DynamicBackdropLayer.SHEET
+                    )
                     .onGloballyPositioned { coordinates ->
                         val top = coordinates.positionInWindow().y.roundToInt()
                         val bottom = top + coordinates.size.height

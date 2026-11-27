@@ -363,6 +363,7 @@ fun SettingsScreen(
             Column(
                 Modifier
                     .fillMaxSize()
+                    .dynamicBackdropSource(DynamicBackdropLayer.CONTENT)
                     .verticalScroll(scrollState)
                     .padding(horizontal = SettingsLayout.SCREEN_PADDING)
             ) {
@@ -1085,6 +1086,7 @@ internal fun SettingsExpressiveBackdrop() {
         Modifier
             .fillMaxSize()
             .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box(
             Modifier

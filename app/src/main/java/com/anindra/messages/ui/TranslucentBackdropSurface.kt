@@ -17,7 +17,7 @@ internal fun TranslucentBackdropSurface(
     shape: Shape,
     tint: Color,
     modifier: Modifier = Modifier,
-    blurRadius: Dp = 32.dp,
+    blurRadius: Dp = 25.dp,
     backdropLayer: Float = DynamicBackdropLayer.CONTENT,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -26,10 +26,9 @@ internal fun TranslucentBackdropSurface(
     Box(
         modifier
             .clip(shape)
-            // Modifier order matters: higher glass can sample this surface,
-            // while its own effect only draws sources with a lower layer.
-            .dynamicBackdropSource(backdropLayer)
-            .dynamicBackdropEffect(blurRadius)
+            // Cards sample the shared layer below them. Their own pixels are not registered as
+            // independent sources, which keeps long Settings lists to one recorded backdrop.
+            .dynamicBackdropEffect(blurRadius, backdropLayer)
     ) {
         Box(
             Modifier

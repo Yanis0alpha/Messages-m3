@@ -116,7 +116,7 @@ internal fun MessagesNavigationBar(
                     .height(80.dp)
                     .clip(barShape)
                     .dynamicBackdropSource(DynamicBackdropLayer.NAVIGATION)
-                    .dynamicBackdropEffect(32.dp)
+                    .dynamicBackdropEffect(25.dp, DynamicBackdropLayer.NAVIGATION)
             ) {
                 Box(
                     Modifier

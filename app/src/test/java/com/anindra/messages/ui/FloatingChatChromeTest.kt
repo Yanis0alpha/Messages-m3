@@ -129,12 +129,11 @@ class FloatingChatChromeTest {
         assertTrue(fabMenuItem.contains("right = size.width"))
         assertFalse(fabMenuItem.contains(".layout {"))
         assertFalse(fabMenuItem.contains("placeable.place("))
+        assertFalse(fabMenuItem.contains(".dynamicBackdropSource("))
+        assertTrue(fabMenuItem.contains(".dynamicBackdropEffect("))
         assertTrue(
-            fabMenuItem.contains(
-                ".dynamicBackdropSource(DynamicBackdropLayer.FLOATING_CONTENT)"
-            )
+            fabMenuItem.contains("DynamicBackdropLayer.SHEET_FLOATING_CONTENT")
         )
-        assertTrue(fabMenuItem.contains(".dynamicBackdropEffect(32.dp)"))
         assertTrue(fabMenuItem.contains("shape = CircleShape"))
         assertTrue(fabMenuItem.contains("color = Color.Transparent"))
         assertTrue(fabMenuItem.contains("LocalTranslucentSurfaceAlpha.current"))
@@ -154,6 +153,22 @@ class FloatingChatChromeTest {
                     "name = \"material3\", version.ref = \"material3\" }"
             )
         )
+    }
+
+    @Test
+    fun dynamicGlassUsesTheSameMiuixLayerBackdropAsBakaSuManager() {
+        val blur = File(
+            root,
+            "app/src/main/java/com/anindra/messages/ui/DynamicBackdropBlur.kt"
+        ).readText()
+
+        assertTrue(versions.contains("miuix = \"0.9.4\""))
+        assertTrue(versions.contains("name = \"miuix-blur-android\""))
+        assertTrue(appBuild.contains("implementation(libs.miuix.blur)"))
+        assertFalse(appBuild.contains("implementation(libs.haze)"))
+        assertTrue(blur.contains("rememberLayerBackdrop()"))
+        assertTrue(blur.contains("textureBlurEffect("))
+        assertTrue(blur.contains("noiseCoefficient = 0f"))
     }
 
     @Test

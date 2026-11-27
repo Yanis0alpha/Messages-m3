@@ -1,6 +1,7 @@
 package com.anindra.messages.ui
 
 import java.io.File
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,8 +18,8 @@ class TranslucentBackdropSurfaceTest {
         val surface = source("java/com/anindra/messages/ui/TranslucentBackdropSurface.kt")
 
         assertTrue(surface.contains(".clip(shape)"))
-        assertTrue(surface.contains(".dynamicBackdropSource(backdropLayer)"))
-        assertTrue(surface.contains(".dynamicBackdropEffect(blurRadius)"))
+        assertFalse(surface.contains(".dynamicBackdropSource(backdropLayer)"))
+        assertTrue(surface.contains(".dynamicBackdropEffect(blurRadius, backdropLayer)"))
         assertTrue(surface.contains("tint.copy(alpha = surfaceAlpha)"))
     }
 

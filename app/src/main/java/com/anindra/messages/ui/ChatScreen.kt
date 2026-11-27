@@ -2084,14 +2084,17 @@ fun ChatScreen(
             }
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .dynamicBackdropSource(DynamicBackdropLayer.SHEET_CONTENT)
+        ) {
             val revealed = remember { mutableStateListOf<Long>() }
             CompositionLocalProvider(LocalDensity provides zoomedDensity) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
                     .onGloballyPositioned { coordinates ->
                         val top = coordinates.positionInRoot().y.roundToInt()
                         val bottom = top + coordinates.size.height
@@ -3020,8 +3023,10 @@ private fun ChatFabMenuItem(
         Box(
             modifier = Modifier
                 .clip(CircleShape)
-                .dynamicBackdropSource(DynamicBackdropLayer.FLOATING_CONTENT)
-                .dynamicBackdropEffect(32.dp)
+                .dynamicBackdropEffect(
+                    25.dp,
+                    DynamicBackdropLayer.SHEET_FLOATING_CONTENT
+                )
         ) {
             Box(
                 Modifier
