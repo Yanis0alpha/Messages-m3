@@ -91,6 +91,7 @@ import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
 import com.anindra.messages.ui.PersistentConversationSheet
 import com.anindra.messages.ui.PersistentConversationSheetLayout
+import com.anindra.messages.ui.shouldShowPersistentConversationSheet
 import com.anindra.messages.ui.AddPeopleScreen
 import com.anindra.messages.ui.ContactDetailsScreen
 import com.anindra.messages.ui.NotificationSettingsScreen
@@ -2098,8 +2099,12 @@ open class MainActivity : FragmentActivity() {
                 val sheetConversationAddress = sheetConversation?.address.orEmpty()
                     .takeUnless { it == sheetConversationTitle }
                     .orEmpty()
-                val persistentSheetVisible = useNewUi && chatUsesSheet &&
-                    navRoute in setOf("list", "chat", "settings")
+                val persistentSheetVisible = shouldShowPersistentConversationSheet(
+                    useNewUi = useNewUi,
+                    chatUsesSheet = chatUsesSheet,
+                    navRoute = navRoute,
+                    topLevelDestination = topLevelDestination
+                )
                 val persistentConversationPeekHeight = PersistentConversationSheetLayout.peekHeight(
                     LocalConfiguration.current.screenHeightDp.dp
                 )

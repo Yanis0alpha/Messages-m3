@@ -158,6 +158,44 @@ class PersistentConversationSheetTest {
     }
 
     @Test
+    fun changingToArchivesOrSettingsClosesAndHidesTheReducedConversation() {
+        assertTrue(
+            shouldShowPersistentConversationSheet(
+                useNewUi = true,
+                chatUsesSheet = true,
+                navRoute = "list",
+                topLevelDestination = TopLevelDestination.MESSAGES
+            )
+        )
+        assertFalse(
+            shouldShowPersistentConversationSheet(
+                useNewUi = true,
+                chatUsesSheet = true,
+                navRoute = "list",
+                topLevelDestination = TopLevelDestination.ARCHIVED
+            )
+        )
+        assertFalse(
+            shouldShowPersistentConversationSheet(
+                useNewUi = true,
+                chatUsesSheet = true,
+                navRoute = "settings",
+                topLevelDestination = TopLevelDestination.SETTINGS
+            )
+        )
+
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val navigation = activity.substringAfter(
+            "val navigateTopLevel: (TopLevelDestination) -> Unit"
+        ).substringBefore("val chatUsesSheet")
+        assertTrue(navigation.contains("vm.saveDraftAndMaybeTrash"))
+        assertTrue(navigation.contains("TopLevelDestination.ARCHIVED"))
+        assertTrue(navigation.contains("navRoute = \"list\""))
+        assertTrue(navigation.contains("TopLevelDestination.SETTINGS -> navRoute = \"settings\""))
+        assertTrue(activity.contains("shouldShowPersistentConversationSheet("))
+    }
+
+    @Test
     fun persistentPeekNavigationAndFabFormAVerticalStack() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")

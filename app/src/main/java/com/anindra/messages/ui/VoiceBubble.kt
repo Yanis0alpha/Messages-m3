@@ -61,10 +61,22 @@ import com.anindra.messages.ui.theme.selectedBubble
 import com.anindra.messages.voice.VoiceNotePolicy
 import com.anindra.messages.voice.VoicePlayback
 
+internal object VoiceBubbleLayout {
+    const val ARCH_LEFT_ROTATION_DEGREES = -90f
+    val MIN_WIDTH = 280.dp
+    val MAX_WIDTH = 300.dp
+    val THIN_PROGRESS_STROKE = 4.dp
+    val THIN_PROGRESS_HEIGHT = 10.dp
+    val PROGRESS_GAP = 4.dp
+    val STOP_INDICATOR_SIZE = 4.dp
+    val BASELINE_WAVELENGTH = 40.dp
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private class ExpressiveVoiceControlShape(
     private val morph: Morph,
-    private val progress: Float
+    private val progress: Float,
+    private val rotationDegrees: Float
 ) : Shape {
     override fun createOutline(
         size: Size,
@@ -74,6 +86,13 @@ private class ExpressiveVoiceControlShape(
         val path = morph.toPath(progress.coerceIn(0f, 1f))
         path.transform(Matrix().apply { scale(x = size.width, y = size.height) })
         path.translate(size.center - path.getBounds().center)
+        path.transform(
+            Matrix().apply {
+                translate(size.center.x, size.center.y)
+                rotateZ(rotationDegrees)
+                translate(-size.center.x, -size.center.y)
+            }
+        )
         return Outline.Generic(path)
     }
 }
@@ -123,9 +142,15 @@ internal fun VoiceBubble(
         label = "voiceBubbleControlMorph"
     )
     val controlShape = remember(controlMorph, controlMorphProgress) {
-        ExpressiveVoiceControlShape(controlMorph, controlMorphProgress)
+        ExpressiveVoiceControlShape(
+            morph = controlMorph,
+            progress = controlMorphProgress,
+            rotationDegrees = VoiceBubbleLayout.ARCH_LEFT_ROTATION_DEGREES
+        )
     }
-    val strokeWidth = with(LocalDensity.current) { 7.dp.toPx() }
+    val strokeWidth = with(LocalDensity.current) {
+        VoiceBubbleLayout.THIN_PROGRESS_STROKE.toPx()
+    }
     val progressStroke = remember(strokeWidth) {
         Stroke(width = strokeWidth, cap = StrokeCap.Round)
     }
@@ -143,7 +168,12 @@ internal fun VoiceBubble(
         color = if (isSelected) cs.selectedBubble else if (isMe) cs.outgoingBubble else cs.incomingBubble,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
-            .widthIn(max = 260.dp)
+            // Outgoing bubbles stay right-aligned, so the extra width grows
+            // toward the left without moving their trailing edge.
+            .widthIn(
+                min = VoiceBubbleLayout.MIN_WIDTH,
+                max = VoiceBubbleLayout.MAX_WIDTH
+            )
             .combinedClickable(onClick = {}, onLongClick = onLongPress)
     ) {
         Column(Modifier.padding(horizontal = 6.dp, vertical = 6.dp)) {
@@ -173,16 +203,16 @@ internal fun VoiceBubble(
                     progress = { animatedProgress },
                     modifier = Modifier
                         .weight(1f)
-                        .height(28.dp)
+                        .height(VoiceBubbleLayout.THIN_PROGRESS_HEIGHT)
                         .padding(horizontal = 8.dp),
                     color = accent,
                     trackColor = accent.copy(alpha = 0.24f),
                     stroke = progressStroke,
                     trackStroke = progressStroke,
-                    gapSize = 5.dp,
-                    stopSize = 5.dp,
+                    gapSize = VoiceBubbleLayout.PROGRESS_GAP,
+                    stopSize = VoiceBubbleLayout.STOP_INDICATOR_SIZE,
                     amplitude = { if (reduceMotion) 0f else 1f },
-                    wavelength = 30.dp
+                    wavelength = VoiceBubbleLayout.BASELINE_WAVELENGTH
                 )
                 Surface(
                     shape = CircleShape,
