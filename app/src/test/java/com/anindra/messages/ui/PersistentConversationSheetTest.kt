@@ -1,8 +1,11 @@
 package com.anindra.messages.ui
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetValue
 import androidx.compose.ui.unit.dp
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,6 +37,39 @@ class PersistentConversationSheetTest {
         assertTrue(
             sheet.contains("alpha = surfaceAlpha")
         )
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Test
+    fun aSettledDownwardDragClosesTheOpenConversation() {
+        assertTrue(
+            shouldClosePersistentConversation(
+                conversationOpen = true,
+                collapseArmed = true,
+                currentValue = SheetValue.PartiallyExpanded,
+                targetValue = SheetValue.PartiallyExpanded,
+                animationRunning = false
+            )
+        )
+        assertFalse(
+            shouldClosePersistentConversation(
+                conversationOpen = true,
+                collapseArmed = true,
+                currentValue = SheetValue.PartiallyExpanded,
+                targetValue = SheetValue.PartiallyExpanded,
+                animationRunning = true
+            )
+        )
+
+        val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        assertTrue(sheet.contains("snapshotFlow {"))
+        assertTrue(sheet.contains("sheetState.isAnimationRunning"))
+        assertTrue(sheet.contains("}.collect { (currentValue, targetValue, animationRunning) ->"))
+        assertTrue(sheet.contains("expandedConversation = false"))
+        assertTrue(sheet.contains("rememberUpdatedState(onCollapsed)"))
+        assertTrue(sheet.contains("latestOnCollapsed()"))
+        assertTrue(activity.contains("onCollapsed = leaveChatByGesture"))
     }
 
     @Test

@@ -31,7 +31,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 internal object PersistentConversationSheetLayout {
@@ -56,6 +59,18 @@ internal object PersistentConversationSheetLayout {
 
     fun peekHeight(containerHeight: Dp): Dp = containerHeight * PEEK_FRACTION
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun shouldClosePersistentConversation(
+    conversationOpen: Boolean,
+    collapseArmed: Boolean,
+    currentValue: SheetValue,
+    targetValue: SheetValue,
+    animationRunning: Boolean
+): Boolean = conversationOpen && collapseArmed &&
+    currentValue == SheetValue.PartiallyExpanded &&
+    targetValue == SheetValue.PartiallyExpanded &&
+    !animationRunning
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -73,6 +88,7 @@ internal fun PersistentConversationSheet(
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var sheetPosition by remember { mutableStateOf(Offset.Zero) }
     var expandedConversation by remember { mutableStateOf(false) }
+    val latestOnCollapsed by rememberUpdatedState(onCollapsed)
 
     LaunchedEffect(conversationOpen) {
         if (conversationOpen) {
@@ -85,17 +101,33 @@ internal fun PersistentConversationSheet(
             }
         }
     }
-    LaunchedEffect(sheetState.currentValue, conversationOpen, expandedConversation) {
-        if (conversationOpen && expandedConversation &&
-            sheetState.currentValue == SheetValue.PartiallyExpanded &&
-            !sheetState.isAnimationRunning
-        ) {
-            onCollapsed()
+    LaunchedEffect(sheetState, conversationOpen, expandedConversation) {
+        snapshotFlow {
+            Triple(
+                sheetState.currentValue,
+                sheetState.targetValue,
+                sheetState.isAnimationRunning
+            )
+        }.collect { (currentValue, targetValue, animationRunning) ->
+            val settledCollapsed = shouldClosePersistentConversation(
+                conversationOpen = conversationOpen,
+                collapseArmed = expandedConversation,
+                currentValue = currentValue,
+                targetValue = targetValue,
+                animationRunning = animationRunning
+            )
+            if (settledCollapsed) {
+                // Disarm before changing the route so a final sheet-state
+                // emission cannot persist/close the same conversation twice.
+                expandedConversation = false
+                latestOnCollapsed()
+            }
+            android.util.Log.d(
+                "PersistentChatSheet",
+                "state=$currentValue target=$targetValue " +
+                    "running=$animationRunning conversationOpen=$conversationOpen"
+            )
         }
-        android.util.Log.d(
-            "PersistentChatSheet",
-            "state=${sheetState.currentValue} conversationOpen=$conversationOpen"
-        )
     }
 
     BackHandler(
