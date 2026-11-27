@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">設定卡片模糊</string>
     <string name="settings_card_blur_subtitle">模糊彩色設定卡片後方的表現力背景</string>
     <string name="settings_card_opacity_title">設定卡片不透明度</string>
+    <string name="settings_category_appearance">外觀</string>
+    <string name="settings_category_organization">整理</string>
+    <string name="settings_category_privacy_security">隱私與安全</string>
+    <string name="settings_category_data">資料</string>
     <string name="settings_archiving_title">封存</string>
     <string name="settings_archiving_subtitle">允許封存對話</string>
     <string name="settings_pinned_title">置頂對話</string>

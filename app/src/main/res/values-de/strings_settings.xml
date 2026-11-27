@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">Unschärfe der Einstellungskarten</string>
     <string name="settings_card_blur_subtitle">Expressiven Hintergrund hinter farbigen Einstellungskarten weichzeichnen</string>
     <string name="settings_card_opacity_title">Deckkraft der Einstellungskarten</string>
+    <string name="settings_category_appearance">Darstellung</string>
+    <string name="settings_category_organization">Organisation</string>
+    <string name="settings_category_privacy_security">Datenschutz und Sicherheit</string>
+    <string name="settings_category_data">Daten</string>
     <string name="settings_archiving_title">Archivierung</string>
     <string name="settings_archiving_subtitle">Archivieren von Unterhaltungen ermöglichen</string>
     <string name="settings_pinned_title">Angeheftete Unterhaltungen</string>

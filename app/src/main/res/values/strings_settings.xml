@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">Settings card blur</string>
     <string name="settings_card_blur_subtitle">Blur the expressive background behind colored Settings cards</string>
     <string name="settings_card_opacity_title">Settings card opacity</string>
+    <string name="settings_category_appearance">Appearance</string>
+    <string name="settings_category_organization">Organization</string>
+    <string name="settings_category_privacy_security">Privacy and security</string>
+    <string name="settings_category_data">Data</string>
     <string name="settings_archiving_title">Archiving</string>
     <string name="settings_archiving_subtitle">Allow archiving conversations</string>
     <string name="settings_pinned_title">Pinned conversations</string>

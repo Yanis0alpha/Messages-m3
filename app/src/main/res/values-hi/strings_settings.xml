@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">सेटिंग कार्ड धुंधलापन</string>
     <string name="settings_card_blur_subtitle">रंगीन सेटिंग कार्ड के पीछे की अभिव्यंजक पृष्ठभूमि धुंधली करें</string>
     <string name="settings_card_opacity_title">सेटिंग कार्ड अपारदर्शिता</string>
+    <string name="settings_category_appearance">रूप-रंग</string>
+    <string name="settings_category_organization">संगठन</string>
+    <string name="settings_category_privacy_security">निजता और सुरक्षा</string>
+    <string name="settings_category_data">डेटा</string>
     <string name="settings_archiving_title">आर्काइव</string>
     <string name="settings_archiving_subtitle">संवाद संग्रहीत करने की अनुमति दें</string>
     <string name="settings_pinned_title">पिन किए गए संवाद</string>

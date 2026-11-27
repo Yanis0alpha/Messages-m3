@@ -34,11 +34,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Inbox
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.MarkEmailRead
 import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Opacity
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.SimCard
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -80,6 +95,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalFocusManager
@@ -433,29 +449,38 @@ fun SettingsScreen(
                 LocalSettingsRowSearchQuery provides settingsQuery
             ) {
                 if (hasSettingsMatches) {
+                    SettingsCategoryHeader(stringResource(R.string.conversations_messages))
                     SettingsGroup {
                 SettingsRow(
                     position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_notif_title),
+                    icon = Icons.Rounded.Notifications,
                     onClick = { openSystemNotificationSettings(context) }
                 )
                 SettingsRow(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.settings_mark_read_title),
+                    icon = Icons.Rounded.MarkEmailRead,
                     onClick = { markReadDialog = true }
                 )
                 // Android owns this one: its per-app Bubbles page already carries
                 // the same All / Selected / Nothing choice, and mirroring it here
                 // meant two places deciding the same thing.
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.LAST,
                     title = stringResource(R.string.settings_bubbles_title),
+                    icon = Icons.Rounded.ChatBubble,
                     onClick = { openSystemBubbleSettings(context) }
                 )
+                    }
+
+                SettingsCategoryHeader(stringResource(R.string.settings_category_appearance))
+                SettingsGroup {
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_theme_title),
                     subtitle = themeLabel(themeMode, context),
+                    icon = Icons.Rounded.Palette,
                     onClick = { themeDialog = true }
                 )
                 val opacityTitle = stringResource(
@@ -469,6 +494,7 @@ fun SettingsScreen(
                     position = RowPosition.MIDDLE,
                     title = opacityTitle,
                     subtitle = opacityValue,
+                    icon = Icons.Rounded.Opacity,
                     preview = {
                         Slider(
                             state = translucentSurfaceOpacitySlider,
@@ -493,6 +519,7 @@ fun SettingsScreen(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.settings_card_blur_title),
                     subtitle = stringResource(R.string.settings_card_blur_subtitle),
+                    icon = Icons.Rounded.BlurOn,
                     checked = settingsCardBlurEnabled,
                     onChecked = { enabled ->
                         settingsCardBlurEnabled = enabled
@@ -505,9 +532,10 @@ fun SettingsScreen(
                     settingsCardOpacity
                 )
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.LAST,
                     title = cardOpacityTitle,
                     subtitle = cardOpacityValue,
+                    icon = Icons.Rounded.Opacity,
                     preview = {
                         Slider(
                             state = settingsCardOpacitySlider,
@@ -528,6 +556,10 @@ fun SettingsScreen(
                         )
                     }
                 )
+                    }
+
+                SettingsCategoryHeader(stringResource(R.string.settings_category_organization))
+                SettingsGroup {
                 val selectedSub = sims.firstOrNull { it.subscriptionId == vm.settings.simSubscriptionId }
                 val currentSimLabel = if (selectedSub == null) {
                     context.getString(R.string.sim_default)
@@ -535,9 +567,10 @@ fun SettingsScreen(
                     simSettingsLabel(context, selectedSub)
                 }
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_pin_sim_card),
                     subtitle = currentSimLabel,
+                    icon = Icons.Rounded.SimCard,
                     onClick = {
                         val hasPerm = context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
                             PackageManager.PERMISSION_GRANTED
@@ -552,17 +585,26 @@ fun SettingsScreen(
                 SettingsRow(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.settings_inbox_title),
+                    icon = Icons.Rounded.Inbox,
                     onClick = onOpenInbox
                 )
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.LAST,
                     title = stringResource(R.string.settings_scheduled_title),
                     subtitle = scheduledCount,
+                    icon = Icons.Rounded.Schedule,
                     onClick = onOpenScheduled
                 )
+                    }
+
+                SettingsCategoryHeader(
+                    stringResource(R.string.settings_category_privacy_security)
+                )
+                SettingsGroup {
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_privacy_title),
+                    icon = Icons.Rounded.Shield,
                     checked = privacyMode,
                     onChecked = {
                         privacyMode = it
@@ -573,6 +615,7 @@ fun SettingsScreen(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.settings_applock_title),
                     subtitle = stringResource(R.string.settings_applock_subtitle),
+                    icon = Icons.Rounded.Lock,
                     checked = appLock,
                     onChecked = { enable ->
                         verifyForAppLockChange(context) { verdict ->
@@ -594,16 +637,23 @@ fun SettingsScreen(
                 SettingsRow(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.settings_trash_title),
+                    icon = Icons.Rounded.Delete,
                     onClick = onOpenTrash
                 )
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.LAST,
                     title = stringResource(R.string.conversations_spam_blocked),
+                    icon = Icons.Rounded.Block,
                     onClick = onOpenSpamBlocked
                 )
+                    }
+
+                SettingsCategoryHeader(stringResource(R.string.settings_category_data))
+                SettingsGroup {
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_backup_title),
+                    icon = Icons.Rounded.Backup,
                     enabled = !privacyMode,
                     onClick = {
                         pinMode = PinDialogMode.SET
@@ -613,14 +663,20 @@ fun SettingsScreen(
                     }
                 )
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.LAST,
                     title = stringResource(R.string.settings_import_title),
                     subtitle = stringResource(R.string.settings_import_subtitle),
+                    icon = Icons.Rounded.Restore,
                     onClick = { importSourceDialog = true }
                 )
+                    }
+
+                SettingsCategoryHeader(stringResource(R.string.settings_advanced_title))
+                SettingsGroup {
                 SettingsRow(
-                    position = RowPosition.MIDDLE,
+                    position = RowPosition.FIRST,
                     title = stringResource(R.string.settings_advanced_title),
+                    icon = Icons.Rounded.Tune,
                     subtitle = stringResource(R.string.settings_advanced_subtitle),
                     onClick = onOpenAdvanced
                 )
@@ -634,6 +690,7 @@ fun SettingsScreen(
                         appInfo.versionName,
                         appInfo.versionCode
                     ),
+                    icon = Icons.Rounded.Info,
                     onClick = onOpenAbout
                 )
                     }
@@ -1316,6 +1373,17 @@ internal fun hexColor(c: androidx.compose.ui.graphics.Color): String = "#%02X%02
 )
 
 @Composable
+fun SettingsCategoryHeader(title: String) {
+    if (LocalSettingsRowSearchQuery.current.isNotBlank()) return
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
 fun SettingsGroup(content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(SettingsLayout.ROW_GAP)) {
         content()
@@ -1417,10 +1485,12 @@ internal fun ImportRadioGroup(
  * ones between them nearly square, which makes a gap-separated run of cards
  * read as one group.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsRow(
     title: String,
     subtitle: String? = null,
+    icon: ImageVector? = null,
     checked: Boolean? = null,
     onChecked: ((Boolean) -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -1489,6 +1559,24 @@ fun SettingsRow(
                         vertical = 12.dp
                     )
             ) {
+                if (icon != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .alpha(contentAlpha)
+                            .clip(MaterialShapes.Cookie6Sided.toShape())
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                }
                 Column(Modifier.weight(1f).alpha(contentAlpha)) {
                     Text(
                         text = title,

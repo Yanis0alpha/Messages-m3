@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">設定カードのぼかし</string>
     <string name="settings_card_blur_subtitle">色付きの設定カードの背後にある背景をぼかします</string>
     <string name="settings_card_opacity_title">設定カードの不透明度</string>
+    <string name="settings_category_appearance">外観</string>
+    <string name="settings_category_organization">整理</string>
+    <string name="settings_category_privacy_security">プライバシーとセキュリティ</string>
+    <string name="settings_category_data">データ</string>
     <string name="settings_archiving_title">アーカイブ</string>
     <string name="settings_archiving_subtitle">会話のアーカイブを許可</string>
     <string name="settings_pinned_title">ピン留めされた会話</string>

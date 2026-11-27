@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">Desfoque dos cartões de Configurações</string>
     <string name="settings_card_blur_subtitle">Desfoca o fundo expressivo atrás dos cartões coloridos</string>
     <string name="settings_card_opacity_title">Opacidade dos cartões de Configurações</string>
+    <string name="settings_category_appearance">Aparência</string>
+    <string name="settings_category_organization">Organização</string>
+    <string name="settings_category_privacy_security">Privacidade e segurança</string>
+    <string name="settings_category_data">Dados</string>
     <string name="settings_archiving_title">Arquivamento</string>
     <string name="settings_archiving_subtitle">Permitir arquivar conversas</string>
     <string name="settings_pinned_title">Conversas fixadas</string>

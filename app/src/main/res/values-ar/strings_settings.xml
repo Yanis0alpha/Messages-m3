@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">تمويه بطاقات الإعدادات</string>
     <string name="settings_card_blur_subtitle">تمويه الخلفية التعبيرية خلف بطاقات الإعدادات الملونة</string>
     <string name="settings_card_opacity_title">عتامة بطاقات الإعدادات</string>
+    <string name="settings_category_appearance">المظهر</string>
+    <string name="settings_category_organization">التنظيم</string>
+    <string name="settings_category_privacy_security">الخصوصية والأمان</string>
+    <string name="settings_category_data">البيانات</string>
     <string name="settings_archiving_title">الأرشفة</string>
     <string name="settings_archiving_subtitle">السماح بأرشفة المحادثات</string>
     <string name="settings_pinned_title">المحادثات المثبّتة</string>

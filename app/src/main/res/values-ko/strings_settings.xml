@@ -74,6 +74,10 @@
     <string name="settings_card_blur_title">설정 카드 흐림</string>
     <string name="settings_card_blur_subtitle">색상이 있는 설정 카드 뒤의 배경을 흐리게 표시합니다</string>
     <string name="settings_card_opacity_title">설정 카드 불투명도</string>
+    <string name="settings_category_appearance">디자인</string>
+    <string name="settings_category_organization">정리</string>
+    <string name="settings_category_privacy_security">개인정보 보호 및 보안</string>
+    <string name="settings_category_data">데이터</string>
     <string name="settings_archiving_title">보관</string>
     <string name="settings_archiving_subtitle">대화 보관 허용</string>
     <string name="settings_pinned_title">고정된 대화</string>
