@@ -6,7 +6,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The About screen's three outgoing actions all end in a URL, and a wrong one
+ * The About screen's outgoing actions all end in a URL, and a wrong one
  * is invisible in review: the screen still opens, the browser still launches,
  * and the wrong page appears.
  *
@@ -17,30 +17,33 @@ class AboutLinksTest {
 
     @Test
     fun theRepositoryAndItsIssueFormAreTheDestinations() {
-        assertEquals("https://github.com/an1ndra/Messages", AboutLinks.REPO_URL)
+        assertEquals("https://github.com/Yanis0alpha/Messages-m3", AboutLinks.REPO_URL)
         assertEquals(
-            "https://github.com/an1ndra/Messages/issues/new",
+            "https://github.com/Yanis0alpha/Messages-m3/issues/new",
             AboutLinks.issuesUrl
         )
+        assertEquals("https://github.com/an1ndra/Messages", AboutLinks.UPSTREAM_REPO_URL)
     }
 
     @Test
     fun theDeveloperChipPointsAtTheProfile() {
-        assertEquals("https://github.com/an1ndra", AboutLinks.PROFILE_URL)
+        assertEquals("https://github.com/Yanis0alpha", AboutLinks.PROFILE_URL)
+        assertEquals("Yanis0alpha", AboutLinks.DEVELOPER)
+        assertEquals("an1ndra", AboutLinks.UPSTREAM_DEVELOPER)
     }
 
     @Test
     fun theIssueTitleNamesTheBuildThatReported() {
         val title = AboutLinks.issueTitle("1.0.31")
         assertTrue("title should name the version: $title", title.contains("1.0.31"))
-        assertTrue("title should say it came from Messages: $title", title.startsWith("Messages "))
+        assertTrue("title should name the fork: $title", title.startsWith("Messages M3 "))
     }
 
     @Test
     fun aBlankBodyLeavesTheFormEmpty() {
         assertEquals(
-            "https://github.com/an1ndra/Messages/issues/new?title=Messages%201.0.31",
-            AboutLinks.issueUrl("Messages 1.0.31", "")
+            "https://github.com/Yanis0alpha/Messages-m3/issues/new?title=Messages%20M3%201.0.31",
+            AboutLinks.issueUrl("Messages M3 1.0.31", "")
         )
     }
 

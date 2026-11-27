@@ -105,6 +105,16 @@ class AboutRowPlacementTest {
     }
 
     @Test
+    fun forkIdentityCreditsBothMaintainerAndOriginalProject() {
+        val screen = source("ui/AboutScreen.kt")
+        assertTrue(screen.contains("R.string.about_fork_name"))
+        assertTrue(screen.contains("MaterialShapes.Cookie9Sided.toShape()"))
+        assertTrue(screen.contains("AboutLinks.DEVELOPER"))
+        assertTrue(screen.contains("AboutLinks.UPSTREAM_DEVELOPER"))
+        assertTrue(screen.contains("openAboutUrl(context, AboutLinks.UPSTREAM_REPO_URL)"))
+    }
+
+    @Test
     fun sharePassesBothDownloadLinksInTemplateOrder() {
         val screen = source("ui/AboutScreen.kt")
         assertTrue(

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name_placeholder">پیام‌ها</string>
-    <string name="translation_help">ترجمه‌ها با همیاری جامعه انجام می‌شود و ممکن است خطا داشته باشد. اگر ترجمه‌ای نادرست یا ناقص یافتید، برای بهبود آن یک issue جدید در GitHub به نشانی github.com/an1ndra/Messages باز کنید.</string>
+    <string name="translation_help">ترجمه‌ها با همیاری جامعه انجام می‌شود و ممکن است خطا داشته باشد. اگر ترجمه‌ای نادرست یا ناقص یافتید، برای بهبود آن یک issue جدید در GitHub به نشانی github.com/Yanis0alpha/Messages-m3 باز کنید.</string>
     <!-- App strings split into separate feature files for easier translation:
          - strings_main.xml: app name, lock, permissions
          - strings_conversations.xml: conversation list, new chat

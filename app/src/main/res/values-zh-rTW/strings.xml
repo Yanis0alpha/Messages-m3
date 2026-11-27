@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name_placeholder">Messages</string>
-    <string name="translation_help">翻譯由社群提供，可能含有錯誤。若發現翻譯不精確或缺少翻譯，請在 github.com/an1ndra/Messages 開啟新的 GitHub issue 以協助改善。</string>
+    <string name="translation_help">翻譯由社群提供，可能含有錯誤。若發現翻譯不精確或缺少翻譯，請在 github.com/Yanis0alpha/Messages-m3 開啟新的 GitHub issue 以協助改善。</string>
     <!-- App strings split into separate feature files for easier translation:
          - strings_main.xml: app name, lock, permissions
          - strings_conversations.xml: conversation list, new chat

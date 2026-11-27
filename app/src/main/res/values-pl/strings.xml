@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name_placeholder">Wiadomości</string>
-    <string name="translation_help">Tłumaczenia są tworzone przez społeczność i mogą zawierać błędy. Jeśli znajdziesz niedokładne lub brakujące tłumaczenie, otwórz nowe zgłoszenie na GitHubie pod adresem github.com/an1ndra/Messages, aby pomóc je poprawić.</string>
+    <string name="translation_help">Tłumaczenia są tworzone przez społeczność i mogą zawierać błędy. Jeśli znajdziesz niedokładne lub brakujące tłumaczenie, otwórz nowe zgłoszenie na GitHubie pod adresem github.com/Yanis0alpha/Messages-m3, aby pomóc je poprawić.</string>
     <!-- App strings split into separate feature files for easier translation:
          - strings_main.xml: app name, lock, permissions
          - strings_conversations.xml: conversation list, new chat

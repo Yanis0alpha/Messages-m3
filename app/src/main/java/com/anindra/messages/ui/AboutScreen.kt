@@ -9,6 +9,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,8 +23,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Button
@@ -31,6 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,15 +49,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
-import com.anindra.messages.ui.theme.AppMarkBlue
 
 /**
  * Every destination the About screen can reach, in one place.
@@ -57,13 +66,18 @@ import com.anindra.messages.ui.theme.AppMarkBlue
  * diff but fails the unit test.
  */
 internal object AboutLinks {
-    const val REPO_URL = "https://github.com/an1ndra/Messages"
-    /** The developer chip opens this, so the credit is also a way to reach them. */
-    const val PROFILE_URL = "https://github.com/an1ndra"
-    /** Where the signed APKs live, for anyone who does not use a store. */
+    const val FORK_NAME = "Messages M3"
+    const val REPO_URL = "https://github.com/Yanis0alpha/Messages-m3"
+    /** The maintainer chip opens this, so the credit is also a way to reach them. */
+    const val PROFILE_URL = "https://github.com/Yanis0alpha"
+    const val DEVELOPER = "Yanis0alpha"
+
+    /** The fork keeps an explicit, reachable credit to the project it builds on. */
+    const val UPSTREAM_REPO_URL = "https://github.com/an1ndra/Messages"
+    const val UPSTREAM_DEVELOPER = "an1ndra"
+    /** Until the fork publishes releases, downloads remain clearly labelled as upstream. */
     const val RELEASE_URL = "https://github.com/an1ndra/Messages/releases/latest"
     const val FDROID_URL = "https://f-droid.org/packages/com.anindra.messages/"
-    const val DEVELOPER = "an1ndra"
 
     /**
      * GitHub silently drops an issue form's prefill when the body is longer
@@ -101,7 +115,7 @@ internal object AboutLinks {
      * title is read next to everybody else's English reports.
      */
     fun issueTitle(versionName: String): String =
-        "Messages $versionName on Android ${Build.VERSION.RELEASE}"
+        "$FORK_NAME $versionName on Android ${Build.VERSION.RELEASE}"
 
     fun issueUrl(title: String, body: String): String {
         val base = "$issuesUrl?title=${queryValue(title)}"
@@ -252,24 +266,38 @@ internal fun AboutScreen(
                     position = RowPosition.FIRST,
                     title = stringResource(R.string.about_star_title),
                     subtitle = stringResource(R.string.about_star_subtitle),
+                    icon = Icons.Rounded.Star,
                     onClick = { openAboutUrl(context, AboutLinks.REPO_URL) }
                 )
                 SettingsRow(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.about_issue_title),
                     subtitle = stringResource(R.string.about_issue_subtitle),
+                    icon = Icons.Rounded.BugReport,
                     onClick = { issueDialog = true }
                 )
                 SettingsRow(
                     position = RowPosition.MIDDLE,
                     title = stringResource(R.string.about_share_title),
                     subtitle = stringResource(R.string.about_share_subtitle),
+                    icon = Icons.Rounded.Share,
                     onClick = { shareApp(context, chooserTitle, shareIntro) }
+                )
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.about_upstream_title),
+                    subtitle = stringResource(
+                        R.string.about_upstream_subtitle,
+                        AboutLinks.UPSTREAM_DEVELOPER
+                    ),
+                    icon = Icons.Rounded.Code,
+                    onClick = { openAboutUrl(context, AboutLinks.UPSTREAM_REPO_URL) }
                 )
                 SettingsRow(
                     position = RowPosition.LAST,
                     title = stringResource(R.string.about_licences_title),
                     subtitle = stringResource(R.string.about_licences_subtitle),
+                    icon = Icons.Rounded.Info,
                     onClick = { licencesDialog = true }
                 )
             }
@@ -393,10 +421,12 @@ internal fun AboutScreen(
     }
 }
 
-/** Plate and glyph size of the launcher icon on the About screen. */
-private val ICON_PLATE = 136.dp
-private val ICON_GLYPH = 88.dp
+/** Expressive mark dimensions for the fork identity on the About screen. */
+private val ICON_FRAME = 152.dp
+private val ICON_PLATE = 124.dp
+private val ICON_GLYPH = 76.dp
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun Identity(
     versionName: String,
@@ -406,7 +436,8 @@ internal fun Identity(
     LaunchedEffect(Unit) {
         android.util.Log.d(
             "AboutIcon",
-            "plate=${ICON_PLATE.value}dp glyph=${ICON_GLYPH.value}dp"
+            "frame=${ICON_FRAME.value}dp plate=${ICON_PLATE.value}dp " +
+                "glyph=${ICON_GLYPH.value}dp fork=${AboutLinks.FORK_NAME}"
         )
     }
     Column(
@@ -414,23 +445,51 @@ internal fun Identity(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier
-                .size(ICON_PLATE)
-                .clip(RoundedCornerShape(38.dp))
-                .background(AppMarkBlue),
+            modifier = Modifier.size(ICON_FRAME),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_about_app),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(ICON_GLYPH)
+            Box(
+                modifier = Modifier
+                    .size(140.dp)
+                    .rotate(-8f)
+                    .clip(MaterialShapes.Cookie9Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer)
             )
+            Box(
+                modifier = Modifier
+                    .size(ICON_PLATE)
+                    .clip(MaterialShapes.Cookie6Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_about_app),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(ICON_GLYPH)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-2).dp, y = (-2).dp)
+                    .size(44.dp)
+                    .clip(MaterialShapes.Cookie6Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.about_fork_badge),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
         }
         Spacer(Modifier.height(18.dp))
         Text(
-            stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineSmall
+            stringResource(R.string.about_fork_name),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary
         )
         Spacer(Modifier.height(4.dp))
         Text(
@@ -449,8 +508,8 @@ internal fun Identity(
         Spacer(Modifier.height(16.dp))
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.clickable(onClick = onDeveloperClick)
         ) {
             Row(
