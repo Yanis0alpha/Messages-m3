@@ -17,9 +17,8 @@ class TranslucentBackdropSurfaceTest {
         val surface = source("java/com/anindra/messages/ui/TranslucentBackdropSurface.kt")
 
         assertTrue(surface.contains(".clip(shape)"))
-        assertTrue(surface.contains("BackdropCaptureGuard()"))
-        assertTrue(surface.contains("DynamicBackdropBlur("))
-        assertTrue(surface.contains("blurRadius = blurRadius"))
+        assertTrue(surface.contains(".dynamicBackdropSource(backdropLayer)"))
+        assertTrue(surface.contains(".dynamicBackdropEffect(blurRadius)"))
         assertTrue(surface.contains("tint.copy(alpha = surfaceAlpha)"))
     }
 

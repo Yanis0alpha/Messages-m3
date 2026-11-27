@@ -113,9 +113,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -133,7 +131,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -248,9 +245,7 @@ fun ConversationsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val backdropRoot = LocalView.current.rootView
     val translucentSurfaceAlpha = LocalTranslucentSurfaceAlpha.current
-    var actionSheetPosition by remember { mutableStateOf(Offset.Zero) }
     val syncDone by vm.initialSyncDone.collectAsState()
     val syncProgress by vm.initialSyncProgress.collectAsState()
     // live SMS access state (re-checked on resume)
@@ -1009,16 +1004,9 @@ fun ConversationsScreen(
                 Modifier
                     .fillMaxWidth()
                     .clip(actionSheetShape)
-                    .onGloballyPositioned { coordinates ->
-                        val current = coordinates.positionInWindow()
-                        if (actionSheetPosition != current) actionSheetPosition = current
-                    }
+                    .dynamicBackdropSource(DynamicBackdropLayer.SHEET)
+                    .dynamicBackdropEffect()
             ) {
-                DynamicBackdropBlur(
-                    backgroundRoot = backdropRoot,
-                    samplePosition = actionSheetPosition,
-                    modifier = Modifier.matchParentSize()
-                )
                 Box(
                     Modifier
                         .matchParentSize()
@@ -1488,6 +1476,7 @@ internal fun HomeShapeBackdrop() {
     Box(
         Modifier
             .fillMaxSize()
+            .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
             .background(colors.background)
     ) {
         Box(
@@ -1847,6 +1836,7 @@ internal fun StartChatFab(
     TranslucentBackdropSurface(
         shape = RoundedCornerShape(16.dp),
         tint = cs.startChatContainer,
+        backdropLayer = DynamicBackdropLayer.FLOATING_CONTENT,
         modifier = Modifier
             .height(collapsedSize)
             .then(

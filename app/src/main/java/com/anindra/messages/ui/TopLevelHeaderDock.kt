@@ -34,13 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -125,9 +120,6 @@ internal fun TopLevelHeaderDock(
     modifier: Modifier = Modifier,
     topContent: @Composable BoxScope.() -> Unit
 ) {
-    val backgroundRoot = LocalView.current.rootView
-    val captureGuard = remember { BackdropCaptureGuard() }
-    var dockPosition by remember { mutableStateOf(Offset.Zero) }
     val dockShape = RoundedCornerShape(
         bottomStart = TopLevelHeaderDockLayout.BOTTOM_CORNER,
         bottomEnd = TopLevelHeaderDockLayout.BOTTOM_CORNER
@@ -145,21 +137,9 @@ internal fun TopLevelHeaderDock(
             Modifier
                 .fillMaxSize()
                 .clip(dockShape)
-                .onGloballyPositioned { coordinates ->
-                    val current = coordinates.positionInWindow()
-                    if (dockPosition != current) dockPosition = current
-                }
-                .drawWithContent {
-                    if (!captureGuard.active) drawContent()
-                }
+                .dynamicBackdropSource(DynamicBackdropLayer.HEADER)
+                .dynamicBackdropEffect(32.dp)
         ) {
-            DynamicBackdropBlur(
-                backgroundRoot = backgroundRoot,
-                samplePosition = dockPosition,
-                captureGuard = captureGuard,
-                blurRadius = 32.dp,
-                modifier = Modifier.matchParentSize()
-            )
             Box(
                 Modifier
                     .matchParentSize()

@@ -87,7 +87,7 @@ import com.anindra.messages.sms.NotificationHelper
 import com.anindra.messages.data.ForwardPlan
 import com.anindra.messages.sms.SmsSender
 import com.anindra.messages.share.ShareText
-import com.anindra.messages.ui.BackdropCaptureGuard
+import com.anindra.messages.ui.DynamicBackdropHost
 import com.anindra.messages.ui.ChatScreen
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
@@ -2506,15 +2506,11 @@ onOpenAccessibility = { navRoute = "accessibility" },
                     }
                 }
 
-                CompositionLocalProvider(
-                    LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha,
-                    LocalContentColor provides MaterialTheme.colorScheme.onBackground
-                ) {
-                    // A shared guard lets the sheet's software capture cache the
-                    // navigation with all of its content omitted until another
-                    // state change invalidates it. Each glass excludes only itself.
-                    val navigationCaptureGuard = remember { BackdropCaptureGuard() }
-                    val persistentSheetCaptureGuard = remember { BackdropCaptureGuard() }
+                DynamicBackdropHost {
+                    CompositionLocalProvider(
+                        LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha,
+                        LocalContentColor provides MaterialTheme.colorScheme.onBackground
+                    ) {
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
                         if (twoPaneLayout) {
                             androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
@@ -2543,7 +2539,6 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .padding(bottom = topLevelNavigationBottomOffset),
-                                sharedCaptureGuard = navigationCaptureGuard,
                                 applyNavigationBarsPadding = !persistentSheetVisible
                             )
                         }
@@ -2553,7 +2548,6 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 conversationTitle = sheetConversationTitle,
                                 conversationAddress = sheetConversationAddress,
                                 onCollapsed = leaveChatByGesture,
-                                captureGuard = persistentSheetCaptureGuard,
                                 peekHeight = persistentConversationPeekHeight,
                                 visible = persistentSheetVisible,
                                 conversationKey = chatId,
@@ -2587,6 +2581,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                             }
                         }
                     }
+                }
                 }
             }
         }

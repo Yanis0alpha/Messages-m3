@@ -24,19 +24,10 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -76,14 +67,9 @@ internal fun MessagesNavigationBar(
     selectedDestination: TopLevelDestination,
     onDestinationSelected: (TopLevelDestination) -> Unit,
     modifier: Modifier = Modifier,
-    sharedCaptureGuard: BackdropCaptureGuard? = null,
     applyNavigationBarsPadding: Boolean = true
 ) {
-    val backgroundRoot = LocalView.current.rootView
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
-    val localCaptureGuard = remember { BackdropCaptureGuard() }
-    val captureGuard = sharedCaptureGuard ?: localCaptureGuard
-    var barPosition by remember { mutableStateOf(Offset.Zero) }
     val barShape = RoundedCornerShape(32.dp)
     val items = listOf(
         TopLevelNavigationItem(
@@ -129,23 +115,9 @@ internal fun MessagesNavigationBar(
                     .fillMaxWidth()
                     .height(80.dp)
                     .clip(barShape)
-                    .onGloballyPositioned { coordinates ->
-                        val current = coordinates.positionInWindow()
-                        if (barPosition != current) barPosition = current
-                    }
-                    // A same-window capture would otherwise draw this bar into
-                    // its own backdrop. Skip it only during that nested draw.
-                    .drawWithContent {
-                        if (!captureGuard.active) drawContent()
-                    }
+                    .dynamicBackdropSource(DynamicBackdropLayer.NAVIGATION)
+                    .dynamicBackdropEffect(32.dp)
             ) {
-                DynamicBackdropBlur(
-                    backgroundRoot = backgroundRoot,
-                    samplePosition = barPosition,
-                    captureGuard = captureGuard,
-                    blurRadius = 32.dp,
-                    modifier = Modifier.matchParentSize()
-                )
                 Box(
                     Modifier
                         .matchParentSize()

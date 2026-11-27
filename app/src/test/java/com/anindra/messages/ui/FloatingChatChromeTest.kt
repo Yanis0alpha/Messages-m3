@@ -73,7 +73,7 @@ class FloatingChatChromeTest {
         assertTrue(toolbar.contains("shape = MaterialShapes.Gem.toShape()"))
         assertTrue(toolbar.contains("shape = MaterialShapes.Cookie6Sided.toShape()"))
         assertTrue(toolbar.contains("actions.forEachIndexed"))
-        assertTrue(toolbar.contains("val backdropRoot = LocalView.current.rootView"))
+        assertFalse(toolbar.contains("val backdropRoot = LocalView.current.rootView"))
         assertTrue(toolbar.contains("ChatFabMenuItem("))
         assertTrue(toolbar.contains("containerColor = Color.Transparent"))
         assertTrue(toolbar.contains("shadowElevation = 0.dp"))
@@ -115,7 +115,7 @@ class FloatingChatChromeTest {
         assertTrue(toolbar.contains("Arrangement.spacedBy(4.dp)"))
         assertTrue(toolbar.contains("ChatFabMenuItem("))
         assertFalse(toolbar.contains("DropdownMenuItem("))
-        assertTrue(toolbar.contains("val backdropRoot = LocalView.current.rootView"))
+        assertFalse(toolbar.contains("val backdropRoot = LocalView.current.rootView"))
         assertTrue(toolbar.contains("var itemOrder = 0"))
         assertTrue(toolbar.split("order = itemOrder++").size - 1 >= 7)
         assertTrue(fabMenuItem.contains("LocalReduceMotion.current"))
@@ -129,9 +129,12 @@ class FloatingChatChromeTest {
         assertTrue(fabMenuItem.contains("right = size.width"))
         assertFalse(fabMenuItem.contains(".layout {"))
         assertFalse(fabMenuItem.contains("placeable.place("))
-        assertTrue(fabMenuItem.contains("if (visible) {"))
-        assertTrue(fabMenuItem.contains("DynamicBackdropBlur("))
-        assertTrue(fabMenuItem.contains("blurRadius = 32.dp"))
+        assertTrue(
+            fabMenuItem.contains(
+                ".dynamicBackdropSource(DynamicBackdropLayer.FLOATING_CONTENT)"
+            )
+        )
+        assertTrue(fabMenuItem.contains(".dynamicBackdropEffect(32.dp)"))
         assertTrue(fabMenuItem.contains("shape = CircleShape"))
         assertTrue(fabMenuItem.contains("color = Color.Transparent"))
         assertTrue(fabMenuItem.contains("LocalTranslucentSurfaceAlpha.current"))

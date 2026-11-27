@@ -57,16 +57,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -156,7 +152,6 @@ internal fun PersistentConversationSheet(
     conversationTitle: String,
     conversationAddress: String,
     onCollapsed: () -> Unit,
-    captureGuard: BackdropCaptureGuard,
     peekHeight: Dp,
     visible: Boolean = true,
     conversationKey: Long = 0L,
@@ -167,9 +162,7 @@ internal fun PersistentConversationSheet(
     val scaffoldState = rememberBottomSheetScaffoldState()
     val sheetState = scaffoldState.bottomSheetState
     val scope = rememberCoroutineScope()
-    val backgroundRoot = LocalView.current.rootView
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
-    var sheetPosition by remember { mutableStateOf(Offset.Zero) }
     var expandedConversation by remember { mutableStateOf(false) }
     var sheetMode by remember { mutableStateOf(PersistentConversationSheetMode.ACTIVE) }
     var handleActionsVisible by remember { mutableStateOf(false) }
@@ -377,25 +370,15 @@ internal fun PersistentConversationSheet(
                         .fillMaxWidth()
                         .height(sheetHeight)
                         .clip(sheetShape)
+                        .dynamicBackdropSource(DynamicBackdropLayer.SHEET)
+                        .dynamicBackdropEffect(ChatSheetLayout.BACKGROUND_BLUR_RADIUS)
                         .onGloballyPositioned { coordinates ->
-                            val current = coordinates.positionInWindow()
-                            if (sheetPosition != current) sheetPosition = current
                             val currentTopInRoot = coordinates.positionInRoot().y
                             if (sheetTopInRoot != currentTopInRoot) {
                                 sheetTopInRoot = currentTopInRoot
                             }
                         }
-                        .drawWithContent {
-                            if (!captureGuard.active) drawContent()
-                        }
                 ) {
-                    DynamicBackdropBlur(
-                        backgroundRoot = backgroundRoot,
-                        samplePosition = sheetPosition,
-                        captureGuard = captureGuard,
-                        blurRadius = ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
-                        modifier = Modifier.matchParentSize()
-                    )
                     Box(
                         Modifier
                             .matchParentSize()

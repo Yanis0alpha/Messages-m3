@@ -25,9 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -39,13 +36,15 @@ import com.anindra.messages.data.SwipeAction
 import com.anindra.messages.data.DatabaseCompatibility
 import com.anindra.messages.ui.AttachAction
 import com.anindra.messages.ui.AttachmentCarousel
-import com.anindra.messages.ui.BackdropCaptureGuard
 import com.anindra.messages.ui.AttachmentCarouselItem
 import com.anindra.messages.ui.BubblePosition
 import com.anindra.messages.ui.ChatBubble
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.DialogText
 import com.anindra.messages.ui.DynamicBackdropBlur
+import com.anindra.messages.ui.DynamicBackdropHost
+import com.anindra.messages.ui.DynamicBackdropLayer
+import com.anindra.messages.ui.dynamicBackdropSource
 import com.anindra.messages.ui.HomeShapeBackdrop
 import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
 import com.anindra.messages.ui.ReactionBar
@@ -139,44 +138,41 @@ private fun HomeShapeBackdropPreview() {
 @Composable
 private fun DynamicBackdropBlurPreview() {
     MessagesTheme(mode = "system") {
-        val backgroundRoot = LocalView.current.rootView
-        val captureGuard = remember { BackdropCaptureGuard() }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        DynamicBackdropHost {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(88.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .drawWithContent {
-                        if (!captureGuard.active) drawContent()
-                    }
+                    .height(180.dp)
             ) {
-                DynamicBackdropBlur(
-                    backgroundRoot = backgroundRoot,
-                    samplePosition = Offset.Zero,
-                    captureGuard = captureGuard,
-                    modifier = Modifier.matchParentSize()
-                )
                 Box(
                     Modifier
                         .matchParentSize()
-                        .background(
-                            MaterialTheme.colorScheme.surface.copy(
-                                alpha = LocalTranslucentSurfaceAlpha.current
+                        .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                )
+                Box(
+                    Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                        .height(88.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                ) {
+                    DynamicBackdropBlur(modifier = Modifier.matchParentSize())
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(
+                                    alpha = LocalTranslucentSurfaceAlpha.current
+                                )
                             )
-                        )
-                )
-                androidx.compose.material3.Text(
-                    "Dynamic glass",
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                    )
+                    androidx.compose.material3.Text(
+                        "Dynamic glass",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
         }
     }
@@ -187,31 +183,29 @@ private fun DynamicBackdropBlurPreview() {
 @Composable
 private fun PersistentConversationSheetPreview() {
     MessagesTheme(mode = "system") {
-        val navigationCaptureGuard = remember { BackdropCaptureGuard() }
-        val sheetCaptureGuard = remember { BackdropCaptureGuard() }
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            HomeShapeBackdrop()
-            MessagesNavigationBar(
-                selectedDestination = TopLevelDestination.MESSAGES,
-                onDestinationSelected = {},
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 80.dp),
-                sharedCaptureGuard = navigationCaptureGuard,
-                applyNavigationBarsPadding = false
-            )
-            PersistentConversationSheet(
-                conversationOpen = false,
-                conversationTitle = "",
-                conversationAddress = "",
-                onCollapsed = {},
-                captureGuard = sheetCaptureGuard,
-                peekHeight = 80.dp
-            ) { }
+        DynamicBackdropHost {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                HomeShapeBackdrop()
+                MessagesNavigationBar(
+                    selectedDestination = TopLevelDestination.MESSAGES,
+                    onDestinationSelected = {},
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp),
+                    applyNavigationBarsPadding = false
+                )
+                PersistentConversationSheet(
+                    conversationOpen = false,
+                    conversationTitle = "",
+                    conversationAddress = "",
+                    onCollapsed = {},
+                    peekHeight = 80.dp
+                ) { }
+            }
         }
     }
 }

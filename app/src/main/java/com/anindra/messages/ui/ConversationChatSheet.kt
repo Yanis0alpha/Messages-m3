@@ -25,12 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
@@ -58,11 +56,7 @@ internal fun ConversationChatSheet(
     val scope = rememberCoroutineScope()
     var dismissing by remember { mutableStateOf(false) }
     var dismissed by remember { mutableStateOf(false) }
-    // Captured before ModalBottomSheet enters its dialog window: this is the
-    // inbox/navigation tree that the glass samples, never the sheet itself.
-    val backgroundRoot = LocalView.current.rootView
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
-    var sheetPosition by remember { mutableStateOf(Offset.Zero) }
 
     fun finishDismiss(action: () -> Unit) {
         if (!dismissed) {
@@ -108,10 +102,10 @@ internal fun ConversationChatSheet(
                     .fillMaxWidth()
                     .height(sheetHeight)
                     .clip(sheetShape)
+                    .dynamicBackdropSource(DynamicBackdropLayer.SHEET)
+                    .dynamicBackdropEffect(ChatSheetLayout.BACKGROUND_BLUR_RADIUS)
                     .onGloballyPositioned { coordinates ->
-                        val current = coordinates.positionInWindow()
-                        if (sheetPosition != current) sheetPosition = current
-                        val top = current.y.roundToInt()
+                        val top = coordinates.positionInWindow().y.roundToInt()
                         val bottom = top + coordinates.size.height
                         android.util.Log.d(
                             "ChatSheetBounds",
@@ -119,12 +113,6 @@ internal fun ConversationChatSheet(
                         )
                     }
             ) {
-                DynamicBackdropBlur(
-                    backgroundRoot = backgroundRoot,
-                    samplePosition = sheetPosition,
-                    blurRadius = ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
-                    modifier = Modifier.matchParentSize()
-                )
                 Box(
                     Modifier
                         .matchParentSize()

@@ -48,54 +48,33 @@ class ConversationChatSheetTest {
         val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
         assertTrue(sheet.contains("LocalTranslucentSurfaceAlpha.current"))
         assertTrue(sheet.contains("SCRIM_ALPHA = 0.18f"))
-        assertTrue(sheet.contains("DynamicBackdropBlur("))
-        assertTrue(blur.contains("RenderEffect.createBlurEffect("))
-        assertTrue(blur.contains("backgroundRoot.draw(canvas)"))
-        assertTrue(blur.contains("AndroidView("))
-        assertTrue(blur.contains("blurView.follow(samplePosition)"))
-        assertTrue(blur.contains("getLocationOnScreen(ownLocation)"))
+        assertTrue(sheet.contains(".dynamicBackdropSource(DynamicBackdropLayer.SHEET)"))
+        assertTrue(sheet.contains(".dynamicBackdropEffect(ChatSheetLayout.BACKGROUND_BLUR_RADIUS)"))
+        assertTrue(blur.contains("rememberHazeState()"))
+        assertTrue(blur.contains("hazeSource(state = state"))
+        assertTrue(blur.contains("hazeEffect("))
+        assertTrue(blur.contains("HazeInputScale.Fixed(0.66f)"))
         assertTrue(sheet.contains(".height(sheetHeight)"))
         assertTrue(sheet.contains(".clip(sheetShape)"))
         assertTrue(sheet.contains("coordinates.positionInWindow()"))
         assertTrue(sheet.contains("containerColor = Color.Transparent"))
-        assertFalse(blur.contains("FLAG_BLUR_BEHIND"))
-        assertFalse(blur.contains("setBackgroundBlurRadius"))
         assertTrue(sheet.contains("alpha = surfaceAlpha"))
+        assertTrue(activity.contains("DynamicBackdropHost {"))
         assertTrue(activity.contains("translucentBackground = chatUsesSheet"))
         assertTrue(chat.contains("if (translucentBackground)"))
         assertTrue(chat.contains("Color.Transparent"))
     }
 
     @Test
-    fun sameWindowGlassNeverRedrawsARecordingRenderNode() {
+    fun liveGlassDoesNotCaptureRootBitmapsAfterTheFrame() {
         val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
-        assertTrue(blur.contains("backgroundRoot.rootView === rootView"))
-        assertTrue(blur.contains("scheduleSameWindowCapture()"))
-        assertTrue(blur.contains("post {"))
-        assertTrue(blur.contains("Bitmap.createBitmap("))
-        assertFalse(blur.contains("PixelCopy.request("))
-        assertTrue(blur.contains("captureSameWindowWithoutGlass("))
-        assertTrue(blur.contains("val captureCanvas = Canvas(next)"))
-        assertTrue(blur.contains("backgroundRoot.draw(captureCanvas)"))
-        assertTrue(blur.contains("snapshot?.let { canvas.drawBitmap"))
-        assertTrue(blur.contains("catch (_: IllegalStateException)"))
-        val capture = blur.substringAfter("private fun captureSameWindowWithoutGlass")
-            .substringBefore("private fun completeSameWindowCapture")
-        assertTrue(capture.contains("captureGuard?.active = true"))
-        assertTrue(capture.contains("captureGuard?.active = false"))
-        assertTrue(
-            capture.indexOf("captureGuard?.active = true") <
-                capture.indexOf("backgroundRoot.draw(captureCanvas)")
-        )
-        assertTrue(
-            capture.indexOf("backgroundRoot.draw(captureCanvas)") <
-                capture.indexOf("captureGuard?.active = false")
-        )
-        val onDraw = blur.substringAfter("override fun onDraw(canvas: Canvas)")
-        assertTrue(
-            onDraw.indexOf("if (sharesWindowWithBackdrop())") <
-                onDraw.indexOf("backgroundRoot.draw(canvas)")
-        )
+        assertFalse(blur.contains("AndroidView("))
+        assertFalse(blur.contains("Bitmap.createBitmap("))
+        assertFalse(blur.contains("backgroundRoot.draw("))
+        assertFalse(blur.contains("post {"))
+        assertFalse(blur.contains("samplePosition"))
+        assertTrue(blur.contains("One hardware-accelerated backdrop graph"))
+        assertTrue(blur.contains("same Compose frame"))
     }
 
     @Test
@@ -140,9 +119,9 @@ class ConversationChatSheetTest {
         val sheet = conversations.substringAfter("if (sheetConvo != null)")
             .substringBefore("permanentDeleteTarget?.let")
         assertTrue(sheet.contains("containerColor = Color.Transparent"))
-        assertTrue(sheet.contains("DynamicBackdropBlur("))
-        assertTrue(sheet.contains("actionSheetPosition"))
-        assertTrue(sheet.contains("coordinates.positionInWindow()"))
+        assertTrue(sheet.contains(".dynamicBackdropSource(DynamicBackdropLayer.SHEET)"))
+        assertTrue(sheet.contains(".dynamicBackdropEffect()"))
+        assertFalse(sheet.contains("actionSheetPosition"))
         assertTrue(conversations.contains("LocalTranslucentSurfaceAlpha.current"))
         assertTrue(sheet.contains("alpha = translucentSurfaceAlpha"))
         assertTrue(sheet.contains("BottomSheetDefaults.DragHandle()"))

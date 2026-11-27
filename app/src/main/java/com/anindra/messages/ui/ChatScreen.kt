@@ -202,7 +202,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.AnnotatedString
@@ -216,7 +215,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
@@ -2093,6 +2091,7 @@ fun ChatScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
                     .onGloballyPositioned { coordinates ->
                         val top = coordinates.positionInRoot().y.roundToInt()
                         val bottom = top + coordinates.size.height
@@ -2629,7 +2628,6 @@ internal fun MessageSelectionToolbar(
     onLockUnlock: () -> Unit
 ) {
     var overflow by remember { mutableStateOf(false) }
-    val backdropRoot = LocalView.current.rootView
     val actions = buildList {
         if (SelectionToolbar.showCopy(count)) {
             add(
@@ -2774,7 +2772,6 @@ internal fun MessageSelectionToolbar(
                                 ChatFabMenuItem(
                                     order = itemOrder++,
                                     expanded = overflow,
-                                    backgroundRoot = backdropRoot,
                                     text = stringResource(R.string.chat_select_all),
                                     icon = {
                                         Icon(
@@ -2789,8 +2786,7 @@ internal fun MessageSelectionToolbar(
                                     ChatFabMenuItem(
                                         order = itemOrder++,
                                         expanded = overflow,
-                                        backgroundRoot = backdropRoot,
-                                        text = stringResource(R.string.chat_select_text),
+                                            text = stringResource(R.string.chat_select_text),
                                         icon = {
                                             Icon(
                                                 Icons.Rounded.TextFields,
@@ -2805,8 +2801,7 @@ internal fun MessageSelectionToolbar(
                                     ChatFabMenuItem(
                                         order = itemOrder++,
                                         expanded = overflow,
-                                        backgroundRoot = backdropRoot,
-                                        text = stringResource(
+                                            text = stringResource(
                                             SelectionToolbar.saveLabelRes(saveTarget, saveCount)
                                         ),
                                         icon = {
@@ -2823,8 +2818,7 @@ internal fun MessageSelectionToolbar(
                                     ChatFabMenuItem(
                                         order = itemOrder++,
                                         expanded = overflow,
-                                        backgroundRoot = backdropRoot,
-                                        text = stringResource(R.string.chat_share),
+                                            text = stringResource(R.string.chat_share),
                                         icon = {
                                             Icon(
                                                 Icons.Rounded.Share,
@@ -2837,8 +2831,7 @@ internal fun MessageSelectionToolbar(
                                     ChatFabMenuItem(
                                         order = itemOrder++,
                                         expanded = overflow,
-                                        backgroundRoot = backdropRoot,
-                                        text = stringResource(R.string.chat_view_details),
+                                            text = stringResource(R.string.chat_view_details),
                                         icon = {
                                             Icon(
                                                 Icons.Rounded.Info,
@@ -2851,8 +2844,7 @@ internal fun MessageSelectionToolbar(
                                     ChatFabMenuItem(
                                         order = itemOrder++,
                                         expanded = overflow,
-                                        backgroundRoot = backdropRoot,
-                                        text = stringResource(
+                                            text = stringResource(
                                             SelectionToolbar.lockLabelRes(allLocked)
                                         ),
                                         icon = {
@@ -2971,7 +2963,6 @@ internal fun ChatSearchBar(
 private fun ChatFabMenuItem(
     order: Int,
     expanded: Boolean,
-    backgroundRoot: android.view.View,
     text: String,
     icon: @Composable () -> Unit,
     onClick: () -> Unit,
@@ -2980,7 +2971,6 @@ private fun ChatFabMenuItem(
     val reduceMotion = LocalReduceMotion.current
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var visible by remember { mutableStateOf(false) }
-    var pillPosition by remember { mutableStateOf(Offset.Zero) }
 
     LaunchedEffect(expanded, order, reduceMotion) {
         if (!expanded) {
@@ -3030,21 +3020,9 @@ private fun ChatFabMenuItem(
         Box(
             modifier = Modifier
                 .clip(CircleShape)
-                .onGloballyPositioned { coordinates ->
-                    val current = coordinates.positionInWindow()
-                    if (pillPosition != current) pillPosition = current
-                }
+                .dynamicBackdropSource(DynamicBackdropLayer.FLOATING_CONTENT)
+                .dynamicBackdropEffect(32.dp)
         ) {
-            // Attach each backdrop sampler only when its stagger begins. This
-            // avoids launching every pill's root capture on the opening frame.
-            if (visible) {
-                DynamicBackdropBlur(
-                    backgroundRoot = backgroundRoot,
-                    samplePosition = pillPosition,
-                    blurRadius = 32.dp,
-                    modifier = Modifier.matchParentSize()
-                )
-            }
             Box(
                 Modifier
                     .matchParentSize()
@@ -3099,7 +3077,6 @@ internal fun ChatTopBar(
     onSearch: () -> Unit
 ) {
     val context = LocalContext.current
-    val backdropRoot = LocalView.current.rootView
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
@@ -3248,7 +3225,6 @@ internal fun ChatTopBar(
                         ChatFabMenuItem(
                             order = itemOrder++,
                             expanded = menuOpen,
-                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_search),
                             icon = {
                                 Icon(
@@ -3262,7 +3238,6 @@ internal fun ChatTopBar(
                         ChatFabMenuItem(
                             order = itemOrder++,
                             expanded = menuOpen,
-                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_add_people),
                             icon = {
                                 Icon(
@@ -3276,7 +3251,6 @@ internal fun ChatTopBar(
                         ChatFabMenuItem(
                             order = itemOrder++,
                             expanded = menuOpen,
-                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_details),
                             icon = {
                                 Icon(
@@ -3293,7 +3267,6 @@ internal fun ChatTopBar(
                                 ChatFabMenuItem(
                                     order = itemOrder++,
                                     expanded = menuOpen,
-                                    backgroundRoot = backdropRoot,
                                     text = simLabel,
                                     icon = {
                                         Icon(
@@ -3323,7 +3296,6 @@ internal fun ChatTopBar(
                         ChatFabMenuItem(
                             order = itemOrder++,
                             expanded = menuOpen,
-                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_archive),
                             icon = {
                                 Icon(
@@ -3337,7 +3309,6 @@ internal fun ChatTopBar(
                         ChatFabMenuItem(
                             order = itemOrder++,
                             expanded = menuOpen,
-                            backgroundRoot = backdropRoot,
                             text = stringResource(R.string.chat_delete),
                             icon = {
                                 Icon(
@@ -3352,7 +3323,6 @@ internal fun ChatTopBar(
                             ChatFabMenuItem(
                                 order = itemOrder++,
                                 expanded = menuOpen,
-                                backgroundRoot = backdropRoot,
                                 text = stringResource(
                                     if (numberIsBlocked) {
                                         R.string.chat_unblock_number

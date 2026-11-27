@@ -1081,7 +1081,11 @@ fun SettingsScreen(
 @Composable
 internal fun SettingsExpressiveBackdrop() {
     val colors = MaterialTheme.colorScheme
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+    ) {
         Box(
             Modifier
                 .align(Alignment.TopStart)

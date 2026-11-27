@@ -240,12 +240,15 @@ class PersistentConversationSheetTest {
     }
 
     @Test
-    fun navigationAndSheetCapturesCannotHideEachOther() {
+    fun navigationAndSheetShareOrderedDynamicBackdropLayers() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
-        assertTrue(activity.contains("val navigationCaptureGuard = remember"))
-        assertTrue(activity.contains("val persistentSheetCaptureGuard = remember"))
-        assertTrue(activity.contains("sharedCaptureGuard = navigationCaptureGuard"))
-        assertTrue(activity.contains("captureGuard = persistentSheetCaptureGuard"))
+        val navigation = source("java/com/anindra/messages/ui/MessagesNavigationBar.kt")
+        val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
+        assertTrue(activity.contains("DynamicBackdropHost {"))
+        assertTrue(
+            navigation.contains(".dynamicBackdropSource(DynamicBackdropLayer.NAVIGATION)")
+        )
+        assertTrue(sheet.contains(".dynamicBackdropSource(DynamicBackdropLayer.SHEET)"))
     }
 
     @Test

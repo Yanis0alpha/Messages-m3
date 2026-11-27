@@ -93,6 +93,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.libphone)
     implementation(libs.coil.compose)
+    implementation(libs.haze)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.glance.preview)
     testImplementation("junit:junit:4.13.2")
