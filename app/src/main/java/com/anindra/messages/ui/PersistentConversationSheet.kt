@@ -1,19 +1,33 @@
 package com.anindra.messages.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Chat
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.toShape
@@ -50,6 +65,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
+import com.anindra.messages.ui.theme.LocalReduceMotion
+import com.anindra.messages.ui.theme.Motion
+import com.anindra.messages.ui.theme.motionSpring
+import com.anindra.messages.ui.theme.motionTween
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -60,14 +79,29 @@ internal object PersistentConversationSheetLayout {
     fun peekHeight(containerHeight: Dp): Dp = containerHeight * PEEK_FRACTION
 }
 
+private enum class PersistentConversationSheetMode {
+    ACTIVE,
+    MINIMIZE_REQUESTED,
+    MINIMIZED
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+private data class PersistentSheetSnapshot(
+    val currentValue: SheetValue,
+    val targetValue: SheetValue,
+    val animationRunning: Boolean,
+    val mode: PersistentConversationSheetMode
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun shouldClosePersistentConversation(
     conversationOpen: Boolean,
     collapseArmed: Boolean,
+    keepConversationOpen: Boolean,
     currentValue: SheetValue,
     targetValue: SheetValue,
     animationRunning: Boolean
-): Boolean = conversationOpen && collapseArmed &&
+): Boolean = conversationOpen && collapseArmed && !keepConversationOpen &&
     currentValue == SheetValue.PartiallyExpanded &&
     targetValue == SheetValue.PartiallyExpanded &&
     !animationRunning
@@ -88,14 +122,19 @@ internal fun PersistentConversationSheet(
     val surfaceAlpha = LocalTranslucentSurfaceAlpha.current
     var sheetPosition by remember { mutableStateOf(Offset.Zero) }
     var expandedConversation by remember { mutableStateOf(false) }
+    var sheetMode by remember { mutableStateOf(PersistentConversationSheetMode.ACTIVE) }
+    var handleActionsVisible by remember { mutableStateOf(false) }
     val latestOnCollapsed by rememberUpdatedState(onCollapsed)
 
     LaunchedEffect(conversationOpen) {
         if (conversationOpen) {
+            sheetMode = PersistentConversationSheetMode.ACTIVE
             sheetState.expand()
             expandedConversation = true
         } else {
             expandedConversation = false
+            sheetMode = PersistentConversationSheetMode.ACTIVE
+            handleActionsVisible = false
             if (sheetState.currentValue == SheetValue.Expanded) {
                 sheetState.partialExpand()
             }
@@ -103,29 +142,55 @@ internal fun PersistentConversationSheet(
     }
     LaunchedEffect(sheetState, conversationOpen, expandedConversation) {
         snapshotFlow {
-            Triple(
-                sheetState.currentValue,
-                sheetState.targetValue,
-                sheetState.isAnimationRunning
+            PersistentSheetSnapshot(
+                currentValue = sheetState.currentValue,
+                targetValue = sheetState.targetValue,
+                animationRunning = sheetState.isAnimationRunning,
+                mode = sheetMode
             )
-        }.collect { (currentValue, targetValue, animationRunning) ->
-            val settledCollapsed = shouldClosePersistentConversation(
-                conversationOpen = conversationOpen,
-                collapseArmed = expandedConversation,
-                currentValue = currentValue,
-                targetValue = targetValue,
-                animationRunning = animationRunning
-            )
-            if (settledCollapsed) {
-                // Disarm before changing the route so a final sheet-state
-                // emission cannot persist/close the same conversation twice.
-                expandedConversation = false
-                latestOnCollapsed()
+        }.collect { snapshot ->
+            val settledCollapsed =
+                snapshot.currentValue == SheetValue.PartiallyExpanded &&
+                    snapshot.targetValue == SheetValue.PartiallyExpanded &&
+                    !snapshot.animationRunning
+            val settledExpanded =
+                snapshot.currentValue == SheetValue.Expanded &&
+                    snapshot.targetValue == SheetValue.Expanded &&
+                    !snapshot.animationRunning
+
+            when {
+                settledCollapsed &&
+                    snapshot.mode == PersistentConversationSheetMode.MINIMIZE_REQUESTED -> {
+                    // Keep the route and ChatScreen composition alive behind
+                    // the 10% peek until the user pulls the sheet up again.
+                    sheetMode = PersistentConversationSheetMode.MINIMIZED
+                }
+                settledExpanded &&
+                    snapshot.mode == PersistentConversationSheetMode.MINIMIZED -> {
+                    sheetMode = PersistentConversationSheetMode.ACTIVE
+                    handleActionsVisible = false
+                }
+                shouldClosePersistentConversation(
+                    conversationOpen = conversationOpen,
+                    collapseArmed = expandedConversation,
+                    keepConversationOpen =
+                        snapshot.mode != PersistentConversationSheetMode.ACTIVE,
+                    currentValue = snapshot.currentValue,
+                    targetValue = snapshot.targetValue,
+                    animationRunning = snapshot.animationRunning
+                ) -> {
+                    // A physical downward dismissal still behaves exactly like
+                    // Android Back and can close/persist the conversation once.
+                    expandedConversation = false
+                    handleActionsVisible = false
+                    latestOnCollapsed()
+                }
             }
             android.util.Log.d(
                 "PersistentChatSheet",
-                "state=$currentValue target=$targetValue " +
-                    "running=$animationRunning conversationOpen=$conversationOpen"
+                "state=${snapshot.currentValue} target=${snapshot.targetValue} " +
+                    "running=${snapshot.animationRunning} mode=${snapshot.mode} " +
+                    "conversationOpen=$conversationOpen"
             )
         }
     }
@@ -139,13 +204,17 @@ internal fun PersistentConversationSheet(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val sheetHeight = maxHeight * PersistentConversationSheetLayout.EXPANDED_FRACTION
         val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-        val toggleLabel = stringResource(
-            if (sheetState.currentValue == SheetValue.Expanded) {
-                R.string.common_close
-            } else {
-                R.string.access_open_conversation
-            }
-        )
+        val handleLabel = if (conversationOpen) {
+            stringResource(R.string.conversation_sheet_actions)
+        } else {
+            stringResource(
+                if (sheetState.currentValue == SheetValue.Expanded) {
+                    R.string.common_close
+                } else {
+                    R.string.access_open_conversation
+                }
+            )
+        }
 
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
@@ -188,11 +257,14 @@ internal fun PersistentConversationSheet(
                             )
                     )
                     Column(Modifier.fillMaxSize()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(ChatSheetLayout.DRAG_HANDLE_HEIGHT)
-                                .clickable {
+                        PersistentConversationSheetHandle(
+                            conversationOpen = conversationOpen,
+                            actionsVisible = handleActionsVisible,
+                            handleLabel = handleLabel,
+                            onHandleClick = {
+                                if (conversationOpen) {
+                                    handleActionsVisible = true
+                                } else {
                                     scope.launch {
                                         if (sheetState.currentValue == SheetValue.Expanded) {
                                             sheetState.partialExpand()
@@ -201,11 +273,20 @@ internal fun PersistentConversationSheet(
                                         }
                                     }
                                 }
-                                .semantics { contentDescription = toggleLabel },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            BottomSheetDefaults.DragHandle()
-                        }
+                            },
+                            onClose = {
+                                handleActionsVisible = false
+                                sheetMode = PersistentConversationSheetMode.ACTIVE
+                                expandedConversation = false
+                                latestOnCollapsed()
+                            },
+                            onMinimize = {
+                                handleActionsVisible = false
+                                sheetMode =
+                                    PersistentConversationSheetMode.MINIMIZE_REQUESTED
+                                scope.launch { sheetState.partialExpand() }
+                            }
+                        )
                         Box(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             contentAlignment = Alignment.Center
@@ -220,6 +301,152 @@ internal fun PersistentConversationSheet(
                 }
             }
         ) { }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PersistentConversationSheetHandle(
+    conversationOpen: Boolean,
+    actionsVisible: Boolean,
+    handleLabel: String,
+    onHandleClick: () -> Unit,
+    onClose: () -> Unit,
+    onMinimize: () -> Unit
+) {
+    val showActions = conversationOpen && actionsVisible
+    val reduceMotion = LocalReduceMotion.current
+    val enterSpec = motionSpring<Float>(reduceMotion)
+    val exitSpec = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
+    val handleInteraction = if (showActions) {
+        Modifier
+    } else {
+        Modifier
+            .clickable(onClick = onHandleClick)
+            .semantics { contentDescription = handleLabel }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(ChatSheetLayout.DRAG_HANDLE_HEIGHT)
+            .then(handleInteraction),
+        contentAlignment = Alignment.Center
+    ) {
+        AnimatedContent(
+            targetState = showActions,
+            transitionSpec = {
+                (fadeIn(enterSpec) +
+                    scaleIn(initialScale = 0.35f, animationSpec = enterSpec))
+                    .togetherWith(
+                        fadeOut(exitSpec) +
+                            scaleOut(targetScale = 0.35f, animationSpec = exitSpec)
+                    )
+            },
+            contentAlignment = Alignment.Center,
+            label = "persistentConversationHandleActions"
+        ) { actions ->
+            if (actions) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(
+                        ConnectedButtonGroupLayout.GAP
+                    ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PersistentSheetActionButton(
+                        index = 0,
+                        label = stringResource(R.string.common_close),
+                        primaryAction = true,
+                        onClick = onClose
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    PersistentSheetActionButton(
+                        index = 1,
+                        label = stringResource(R.string.conversation_sheet_minimize),
+                        primaryAction = false,
+                        onClick = onMinimize
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            } else {
+                BottomSheetDefaults.DragHandle()
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersistentSheetActionButton(
+    index: Int,
+    label: String,
+    primaryAction: Boolean,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val reduceMotion = LocalReduceMotion.current
+    val startCorner by animateDpAsState(
+        targetValue = ConnectedButtonGroupLayout.startCorner(
+            index = index,
+            count = 2,
+            selected = false,
+            pressed = pressed
+        ),
+        animationSpec = motionSpring(reduceMotion),
+        label = "persistentSheetActionStartCorner"
+    )
+    val endCorner by animateDpAsState(
+        targetValue = ConnectedButtonGroupLayout.endCorner(
+            index = index,
+            count = 2,
+            selected = false,
+            pressed = pressed
+        ),
+        animationSpec = motionSpring(reduceMotion),
+        label = "persistentSheetActionEndCorner"
+    )
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.height(ConnectedButtonGroupLayout.HEIGHT),
+        shape = RoundedCornerShape(
+            topStart = startCorner,
+            topEnd = endCorner,
+            bottomEnd = endCorner,
+            bottomStart = startCorner
+        ),
+        color = if (primaryAction) colors.primaryContainer else colors.secondaryContainer,
+        contentColor = if (primaryAction) {
+            colors.onPrimaryContainer
+        } else {
+            colors.onSecondaryContainer
+        },
+        interactionSource = interactionSource
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            icon()
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1
+            )
+        }
     }
 }
 

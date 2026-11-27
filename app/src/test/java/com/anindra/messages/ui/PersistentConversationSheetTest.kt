@@ -46,6 +46,7 @@ class PersistentConversationSheetTest {
             shouldClosePersistentConversation(
                 conversationOpen = true,
                 collapseArmed = true,
+                keepConversationOpen = false,
                 currentValue = SheetValue.PartiallyExpanded,
                 targetValue = SheetValue.PartiallyExpanded,
                 animationRunning = false
@@ -55,6 +56,7 @@ class PersistentConversationSheetTest {
             shouldClosePersistentConversation(
                 conversationOpen = true,
                 collapseArmed = true,
+                keepConversationOpen = false,
                 currentValue = SheetValue.PartiallyExpanded,
                 targetValue = SheetValue.PartiallyExpanded,
                 animationRunning = true
@@ -65,11 +67,48 @@ class PersistentConversationSheetTest {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         assertTrue(sheet.contains("snapshotFlow {"))
         assertTrue(sheet.contains("sheetState.isAnimationRunning"))
-        assertTrue(sheet.contains("}.collect { (currentValue, targetValue, animationRunning) ->"))
+        assertTrue(sheet.contains("}.collect { snapshot ->"))
         assertTrue(sheet.contains("expandedConversation = false"))
         assertTrue(sheet.contains("rememberUpdatedState(onCollapsed)"))
         assertTrue(sheet.contains("latestOnCollapsed()"))
         assertTrue(activity.contains("onCollapsed = leaveChatByGesture"))
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Test
+    fun handleMorphsIntoCloseAndMinimizeActions() {
+        assertFalse(
+            shouldClosePersistentConversation(
+                conversationOpen = true,
+                collapseArmed = true,
+                keepConversationOpen = true,
+                currentValue = SheetValue.PartiallyExpanded,
+                targetValue = SheetValue.PartiallyExpanded,
+                animationRunning = false
+            )
+        )
+
+        val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
+        val strings = source("res/values/strings_conversations.xml")
+        val french = source("res/values-fr/strings_conversations.xml")
+        val close = sheet.substringAfter("onClose = {")
+            .substringBefore("onMinimize = {")
+        val minimize = sheet.substringAfter("onMinimize = {")
+            .substringBefore("}\n                        )")
+
+        assertTrue(sheet.contains("PersistentConversationSheetHandle("))
+        assertTrue(sheet.contains("AnimatedContent("))
+        assertTrue(sheet.contains("ConnectedButtonGroupLayout.GAP"))
+        assertTrue(sheet.contains("R.string.common_close"))
+        assertTrue(sheet.contains("R.string.conversation_sheet_minimize"))
+        assertTrue(sheet.contains("PersistentConversationSheetMode.MINIMIZE_REQUESTED"))
+        assertTrue(sheet.contains("PersistentConversationSheetMode.MINIMIZED"))
+        assertTrue(sheet.contains("scope.launch { sheetState.partialExpand() }"))
+        assertTrue(close.contains("expandedConversation = false"))
+        assertTrue(close.contains("latestOnCollapsed()"))
+        assertFalse(minimize.contains("latestOnCollapsed()"))
+        assertTrue(strings.contains("name=\"conversation_sheet_minimize\">Minimize"))
+        assertTrue(french.contains("name=\"conversation_sheet_minimize\">Minimiser"))
     }
 
     @Test
