@@ -34,6 +34,9 @@ class TranslucentBackdropSurfaceTest {
 
         assertTrue(conversationRow.contains("TranslucentBackdropSurface("))
         assertTrue(conversationRow.contains("tint = pinnedTint"))
+        assertTrue(conversationRow.contains("MaterialTheme.colorScheme.secondaryContainer"))
+        assertTrue(conversationRow.contains("MaterialTheme.colorScheme.primaryContainer"))
+        assertTrue(conversationRow.contains("MaterialTheme.colorScheme.tertiaryContainer"))
         assertTrue(startChat.contains("TranslucentBackdropSurface("))
         assertTrue(startChat.contains("tint = cs.startChatContainer"))
         assertTrue(newChat.contains("TranslucentBackdropSurface("))

@@ -2085,6 +2085,19 @@ open class MainActivity : FragmentActivity() {
                 }
                 val chatUsesSheet = !twoPaneLayout && !bubbleMode
                 val newChatUsesSheet = !twoPaneLayout && !bubbleMode
+                val sheetConversation by remember(chatId) {
+                    vm.conversationById(chatId)
+                }.collectAsState(initial = null)
+                val sheetConversationTitle = sheetConversation?.let { conversation ->
+                    conversation.groupTitle.ifBlank {
+                        conversation.name.ifBlank {
+                            conversation.display.ifBlank { conversation.address }
+                        }
+                    }
+                }.orEmpty()
+                val sheetConversationAddress = sheetConversation?.address.orEmpty()
+                    .takeUnless { it == sheetConversationTitle }
+                    .orEmpty()
                 val persistentSheetVisible = useNewUi && chatUsesSheet &&
                     navRoute in setOf("list", "chat", "settings")
                 val persistentConversationPeekHeight = PersistentConversationSheetLayout.peekHeight(
@@ -2486,6 +2499,8 @@ onOpenAccessibility = { navRoute = "accessibility" },
                         if (persistentSheetVisible) {
                             PersistentConversationSheet(
                                 conversationOpen = navRoute == "chat",
+                                conversationTitle = sheetConversationTitle,
+                                conversationAddress = sheetConversationAddress,
                                 onCollapsed = leaveChatByGesture,
                                 captureGuard = persistentSheetCaptureGuard,
                                 peekHeight = persistentConversationPeekHeight

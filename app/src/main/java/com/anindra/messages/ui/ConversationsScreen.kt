@@ -1524,10 +1524,12 @@ internal fun ConversationRow(
     LaunchedEffect(convo.id, position) {
         android.util.Log.d("SegmentedList", "kind=conversation position=$position")
     }
+    // Light dynamic Material You containers keep contact cards colorful while
+    // the shared backdrop blur still shows through at the configured opacity.
     val pinnedTint = when {
-        selected && selectionMode -> MaterialTheme.colorScheme.surfaceContainerHighest
-        convo.pinned && settings.pinnedEnabled -> MaterialTheme.colorScheme.surfaceContainer
-        else -> MaterialTheme.colorScheme.surfaceContainerLow
+        selected && selectionMode -> MaterialTheme.colorScheme.tertiaryContainer
+        convo.pinned && settings.pinnedEnabled -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.secondaryContainer
     }
     TranslucentBackdropSurface(
         shape = segmentedListShape(position),

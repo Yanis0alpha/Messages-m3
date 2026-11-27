@@ -3,6 +3,7 @@ package com.anindra.messages.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalView
@@ -65,6 +68,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
@@ -88,6 +92,12 @@ internal object PersistentConversationSheetLayout {
 private enum class PersistentConversationSheetMode {
     ACTIVE,
     MINIMIZE_REQUESTED,
+    MINIMIZED
+}
+
+private enum class PersistentConversationHandleMode {
+    HANDLE,
+    ACTIONS,
     MINIMIZED
 }
 
@@ -116,6 +126,8 @@ internal fun shouldClosePersistentConversation(
 @Composable
 internal fun PersistentConversationSheet(
     conversationOpen: Boolean,
+    conversationTitle: String,
+    conversationAddress: String,
     onCollapsed: () -> Unit,
     captureGuard: BackdropCaptureGuard,
     peekHeight: Dp,
@@ -130,18 +142,29 @@ internal fun PersistentConversationSheet(
     var expandedConversation by remember { mutableStateOf(false) }
     var sheetMode by remember { mutableStateOf(PersistentConversationSheetMode.ACTIVE) }
     var handleActionsVisible by remember { mutableStateOf(false) }
+    var showMinimizedSummary by remember { mutableStateOf(false) }
     var actionCountdownSeconds by remember { mutableIntStateOf(0) }
+    val conversationContentProgress by animateFloatAsState(
+        targetValue = if (showMinimizedSummary) 0f else 1f,
+        animationSpec = motionTween(
+            LocalReduceMotion.current,
+            Motion.DURATION_SHORT4
+        ),
+        label = "persistentConversationContent"
+    )
     val latestOnCollapsed by rememberUpdatedState(onCollapsed)
 
     LaunchedEffect(conversationOpen) {
         if (conversationOpen) {
             sheetMode = PersistentConversationSheetMode.ACTIVE
+            showMinimizedSummary = false
             sheetState.expand()
             expandedConversation = true
         } else {
             expandedConversation = false
             sheetMode = PersistentConversationSheetMode.ACTIVE
             handleActionsVisible = false
+            showMinimizedSummary = false
             if (sheetState.currentValue == SheetValue.Expanded) {
                 sheetState.partialExpand()
             }
@@ -182,17 +205,24 @@ internal fun PersistentConversationSheet(
                     snapshot.targetValue == SheetValue.Expanded &&
                     !snapshot.animationRunning
 
+            if (snapshot.mode == PersistentConversationSheetMode.MINIMIZED) {
+                showMinimizedSummary =
+                    snapshot.targetValue != SheetValue.Expanded
+            }
+
             when {
                 settledCollapsed &&
                     snapshot.mode == PersistentConversationSheetMode.MINIMIZE_REQUESTED -> {
                     // Keep the route and ChatScreen composition alive behind
                     // the 10% peek until the user pulls the sheet up again.
                     sheetMode = PersistentConversationSheetMode.MINIMIZED
+                    showMinimizedSummary = true
                 }
                 settledExpanded &&
                     snapshot.mode == PersistentConversationSheetMode.MINIMIZED -> {
                     sheetMode = PersistentConversationSheetMode.ACTIVE
                     handleActionsVisible = false
+                    showMinimizedSummary = false
                 }
                 shouldClosePersistentConversation(
                     conversationOpen = conversationOpen,
@@ -207,6 +237,7 @@ internal fun PersistentConversationSheet(
                     // Android Back and can close/persist the conversation once.
                     expandedConversation = false
                     handleActionsVisible = false
+                    showMinimizedSummary = false
                     latestOnCollapsed()
                 }
             }
@@ -229,7 +260,9 @@ internal fun PersistentConversationSheet(
         val sheetHeight = maxHeight * PersistentConversationSheetLayout.EXPANDED_FRACTION
         val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         val openConversationLabel = stringResource(R.string.access_open_conversation)
-        val handleLabel = if (conversationOpen) {
+        val handleLabel = if (showMinimizedSummary) {
+            openConversationLabel
+        } else if (conversationOpen) {
             stringResource(R.string.conversation_sheet_actions)
         } else {
             stringResource(
@@ -242,6 +275,7 @@ internal fun PersistentConversationSheet(
         }
         val restoreMinimizedConversation: () -> Unit = {
             handleActionsVisible = false
+            showMinimizedSummary = false
             scope.launch {
                 // Keep MINIMIZE_REQUESTED/MINIMIZED armed while expanding so
                 // the old partial anchor cannot be mistaken for a close.
@@ -294,7 +328,10 @@ internal fun PersistentConversationSheet(
                         PersistentConversationSheetHandle(
                             conversationOpen = conversationOpen,
                             actionsVisible = handleActionsVisible,
+                            minimizedSummaryVisible = showMinimizedSummary,
                             countdownSeconds = actionCountdownSeconds,
+                            conversationTitle = conversationTitle,
+                            conversationAddress = conversationAddress,
                             handleLabel = handleLabel,
                             onHandleClick = {
                                 if (conversationOpen &&
@@ -317,12 +354,14 @@ internal fun PersistentConversationSheet(
                             },
                             onClose = {
                                 handleActionsVisible = false
+                                showMinimizedSummary = false
                                 sheetMode = PersistentConversationSheetMode.ACTIVE
                                 expandedConversation = false
                                 latestOnCollapsed()
                             },
                             onMinimize = {
                                 handleActionsVisible = false
+                                showMinimizedSummary = true
                                 sheetMode =
                                     PersistentConversationSheetMode.MINIMIZE_REQUESTED
                                 scope.launch { sheetState.partialExpand() }
@@ -333,16 +372,37 @@ internal fun PersistentConversationSheet(
                             contentAlignment = Alignment.Center
                         ) {
                             if (conversationOpen) {
-                                content()
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            alpha = conversationContentProgress
+                                            val scale = 0.98f +
+                                                (0.02f * conversationContentProgress)
+                                            scaleX = scale
+                                            scaleY = scale
+                                        }
+                                        .then(
+                                            if (showMinimizedSummary) {
+                                                Modifier.clearAndSetSemantics { }
+                                            } else {
+                                                Modifier
+                                            }
+                                        )
+                                ) {
+                                    // Keep ChatScreen composed so a minimized
+                                    // conversation retains its draft and scroll.
+                                    content()
+                                }
                             } else {
                                 PersistentConversationEmptyState()
                             }
                         }
                     }
-                    if (sheetMode == PersistentConversationSheetMode.MINIMIZED) {
-                        // The whole visible 10% peek is a restore target. It
-                        // intentionally sits above ChatScreen so a tap cannot
-                        // trigger a partly visible SMS action instead.
+                    if (showMinimizedSummary) {
+                        // During the collapse and in the final 10% peek, the
+                        // complete visible sheet restores this conversation.
+                        // It also blocks taps on the fading ChatScreen below.
                         Box(
                             Modifier
                                 .matchParentSize()
@@ -363,17 +423,26 @@ internal fun PersistentConversationSheet(
 private fun PersistentConversationSheetHandle(
     conversationOpen: Boolean,
     actionsVisible: Boolean,
+    minimizedSummaryVisible: Boolean,
     countdownSeconds: Int,
+    conversationTitle: String,
+    conversationAddress: String,
     handleLabel: String,
     onHandleClick: () -> Unit,
     onClose: () -> Unit,
     onMinimize: () -> Unit
 ) {
-    val showActions = conversationOpen && actionsVisible
+    val handleMode = when {
+        conversationOpen && minimizedSummaryVisible ->
+            PersistentConversationHandleMode.MINIMIZED
+        conversationOpen && actionsVisible ->
+            PersistentConversationHandleMode.ACTIONS
+        else -> PersistentConversationHandleMode.HANDLE
+    }
     val reduceMotion = LocalReduceMotion.current
     val enterSpec = motionSpring<Float>(reduceMotion)
     val exitSpec = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
-    val handleInteraction = if (showActions) {
+    val handleInteraction = if (handleMode == PersistentConversationHandleMode.ACTIONS) {
         Modifier
     } else {
         Modifier
@@ -389,7 +458,7 @@ private fun PersistentConversationSheetHandle(
         contentAlignment = Alignment.Center
     ) {
         AnimatedContent(
-            targetState = showActions,
+            targetState = handleMode,
             transitionSpec = {
                 (fadeIn(enterSpec) +
                     scaleIn(initialScale = 0.35f, animationSpec = enterSpec))
@@ -400,69 +469,113 @@ private fun PersistentConversationSheetHandle(
             },
             contentAlignment = Alignment.Center,
             label = "persistentConversationHandleActions"
-        ) { actions ->
-            if (actions) {
-                val visibleCountdown = countdownSeconds.coerceAtLeast(1)
-                val countdownLabel = stringResource(
-                    R.string.conversation_sheet_actions_timeout,
-                    visibleCountdown
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+        ) { mode ->
+            when (mode) {
+                PersistentConversationHandleMode.ACTIONS -> {
+                    val visibleCountdown = countdownSeconds.coerceAtLeast(1)
+                    val countdownLabel = stringResource(
+                        R.string.conversation_sheet_actions_timeout,
+                        visibleCountdown
+                    )
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(
-                            ConnectedButtonGroupLayout.GAP
-                        ),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        PersistentSheetActionButton(
-                            index = 0,
-                            label = stringResource(R.string.common_close),
-                            primaryAction = true,
-                            onClick = onClose
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(
+                                ConnectedButtonGroupLayout.GAP
+                            ),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            PersistentSheetActionButton(
+                                index = 0,
+                                label = stringResource(R.string.common_close),
+                                primaryAction = true,
+                                onClick = onClose
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            PersistentSheetActionButton(
+                                index = 1,
+                                label = stringResource(R.string.conversation_sheet_minimize),
+                                primaryAction = false,
+                                onClick = onMinimize
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
-                        PersistentSheetActionButton(
-                            index = 1,
-                            label = stringResource(R.string.conversation_sheet_minimize),
-                            primaryAction = false,
-                            onClick = onMinimize
+                        Surface(
+                            modifier = Modifier
+                                .size(ConnectedButtonGroupLayout.HEIGHT)
+                                .clearAndSetSemantics {
+                                    contentDescription = countdownLabel
+                                },
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.KeyboardArrowDown,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    Surface(
-                        modifier = Modifier
-                            .size(ConnectedButtonGroupLayout.HEIGHT)
-                            .clearAndSetSemantics {
-                                contentDescription = countdownLabel
-                            },
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(
-                                text = visibleCountdown.toString(),
-                                style = MaterialTheme.typography.labelLarge
-                            )
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = visibleCountdown.toString(),
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
                         }
                     }
                 }
-            } else {
-                BottomSheetDefaults.DragHandle()
+                PersistentConversationHandleMode.MINIMIZED -> {
+                    MinimizedConversationPill(
+                        title = conversationTitle,
+                        address = conversationAddress
+                    )
+                }
+                PersistentConversationHandleMode.HANDLE -> {
+                    BottomSheetDefaults.DragHandle()
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun MinimizedConversationPill(title: String, address: String) {
+    val label = buildList {
+        if (title.isNotBlank()) add(title)
+        if (address.isNotBlank() && address != title) add(address)
+    }.joinToString("  ·  ")
+
+    Surface(
+        modifier = Modifier
+            .height(ConnectedButtonGroupLayout.HEIGHT)
+            .widthIn(max = 280.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.Chat,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
