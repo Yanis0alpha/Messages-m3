@@ -69,8 +69,9 @@ class BubbleBackTest {
         )
         assertTrue(
             "the chat always registers its leave-chat Back handler",
-            src("java/com/anindra/messages/ui/ChatScreen.kt")
-                .contains("BackHandler(enabled = backHandled, onBack = ::leaveChat)")
+            src("java/com/anindra/messages/ui/ChatScreen.kt").contains(
+                "BackHandler(enabled = interactionEnabled && backHandled, onBack = ::leaveChat)"
+            )
         )
         // The list is composed behind the chat even while the chat shows, so
         // its own handler was the one that swallowed the bubble's Back once the

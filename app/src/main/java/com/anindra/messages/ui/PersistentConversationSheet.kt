@@ -61,6 +61,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.positionInWindow
@@ -154,6 +155,10 @@ internal fun PersistentConversationSheet(
     onCollapsed: () -> Unit,
     captureGuard: BackdropCaptureGuard,
     peekHeight: Dp,
+    visible: Boolean = true,
+    conversationKey: Long = 0L,
+    onMinimizedStateChanged: (Boolean) -> Unit = {},
+    onRestoreConversation: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val scaffoldState = rememberBottomSheetScaffoldState()
@@ -169,14 +174,18 @@ internal fun PersistentConversationSheet(
     var actionCountdownSeconds by remember { mutableIntStateOf(0) }
     var sheetTopInRoot by remember { mutableFloatStateOf(0f) }
     val latestOnCollapsed by rememberUpdatedState(onCollapsed)
+    val latestOnMinimizedStateChanged by rememberUpdatedState(onMinimizedStateChanged)
+    val latestOnRestoreConversation by rememberUpdatedState(onRestoreConversation)
 
-    LaunchedEffect(conversationOpen) {
+    LaunchedEffect(conversationOpen, conversationKey) {
         if (conversationOpen) {
+            latestOnMinimizedStateChanged(false)
             sheetMode = PersistentConversationSheetMode.ACTIVE
             showMinimizedSummary = false
             sheetState.expand()
             expandedConversation = true
         } else {
+            latestOnMinimizedStateChanged(false)
             expandedConversation = false
             sheetMode = PersistentConversationSheetMode.ACTIVE
             handleActionsVisible = false
@@ -233,12 +242,14 @@ internal fun PersistentConversationSheet(
                     // the 10% peek until the user pulls the sheet up again.
                     sheetMode = PersistentConversationSheetMode.MINIMIZED
                     showMinimizedSummary = true
+                    latestOnMinimizedStateChanged(true)
                 }
                 settledExpanded &&
                     snapshot.mode == PersistentConversationSheetMode.MINIMIZED -> {
                     sheetMode = PersistentConversationSheetMode.ACTIVE
                     handleActionsVisible = false
                     showMinimizedSummary = false
+                    latestOnMinimizedStateChanged(false)
                 }
                 shouldClosePersistentConversation(
                     conversationOpen = conversationOpen,
@@ -254,6 +265,7 @@ internal fun PersistentConversationSheet(
                     expandedConversation = false
                     handleActionsVisible = false
                     showMinimizedSummary = false
+                    latestOnMinimizedStateChanged(false)
                     latestOnCollapsed()
                 }
             }
@@ -272,7 +284,19 @@ internal fun PersistentConversationSheet(
         scope.launch { sheetState.partialExpand() }
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            // A minimized conversation remains measured and composed while
+            // another top-level destination is in front. Not placing this
+            // subtree hides it completely without losing chat/draft/scroll state.
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) {
+                    if (visible) placeable.placeRelative(0, 0)
+                }
+            }
+    ) {
         val sheetHeight = maxHeight * PersistentConversationSheetLayout.EXPANDED_FRACTION
         val density = LocalDensity.current
         val expandedTopPx = with(density) { (maxHeight - sheetHeight).toPx() }
@@ -320,6 +344,7 @@ internal fun PersistentConversationSheet(
         val restoreMinimizedConversation: () -> Unit = {
             handleActionsVisible = false
             showMinimizedSummary = false
+            latestOnRestoreConversation()
             scope.launch {
                 // Keep MINIMIZE_REQUESTED/MINIMIZED armed while expanding so
                 // the old partial anchor cannot be mistaken for a close.
@@ -405,6 +430,7 @@ internal fun PersistentConversationSheet(
                                 showMinimizedSummary = false
                                 sheetMode = PersistentConversationSheetMode.ACTIVE
                                 expandedConversation = false
+                                latestOnMinimizedStateChanged(false)
                                 latestOnCollapsed()
                             },
                             onMinimize = {
@@ -412,6 +438,10 @@ internal fun PersistentConversationSheet(
                                 showMinimizedSummary = true
                                 sheetMode =
                                     PersistentConversationSheetMode.MINIMIZE_REQUESTED
+                                // Retain the chat before the collapse animation
+                                // finishes, so an immediate tab change cannot
+                                // dispose the conversation midway through it.
+                                latestOnMinimizedStateChanged(true)
                                 scope.launch { sheetState.partialExpand() }
                             }
                         )

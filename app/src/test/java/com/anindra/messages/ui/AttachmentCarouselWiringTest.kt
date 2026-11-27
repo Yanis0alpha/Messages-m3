@@ -62,9 +62,15 @@ class AttachmentCarouselWiringTest {
 
     @Test
     fun backClosesCarouselBeforeLeavingChat() {
-        assertTrue(chat.contains("BackHandler(enabled = attachOpen) { attachOpen = false }"))
-        val leaveChat = chat.indexOf("BackHandler(enabled = backHandled, onBack = ::leaveChat)")
-        val carouselBack = chat.indexOf("BackHandler(enabled = attachOpen)")
+        assertTrue(
+            chat.contains(
+                "BackHandler(enabled = interactionEnabled && attachOpen) { attachOpen = false }"
+            )
+        )
+        val leaveChat = chat.indexOf(
+            "BackHandler(enabled = interactionEnabled && backHandled, onBack = ::leaveChat)"
+        )
+        val carouselBack = chat.indexOf("BackHandler(enabled = interactionEnabled && attachOpen)")
         assertTrue(carouselBack > leaveChat)
     }
 

@@ -158,7 +158,7 @@ class PersistentConversationSheetTest {
     }
 
     @Test
-    fun changingToArchivesOrSettingsClosesAndHidesTheReducedConversation() {
+    fun archivesAndSettingsHideButRetainTheMinimizedConversation() {
         assertTrue(
             shouldShowPersistentConversationSheet(
                 useNewUi = true,
@@ -188,10 +188,26 @@ class PersistentConversationSheetTest {
         val navigation = activity.substringAfter(
             "val navigateTopLevel: (TopLevelDestination) -> Unit"
         ).substringBefore("val chatUsesSheet")
+        val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
+        val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         assertTrue(navigation.contains("vm.saveDraftAndMaybeTrash"))
         assertTrue(navigation.contains("TopLevelDestination.ARCHIVED"))
         assertTrue(navigation.contains("navRoute = \"list\""))
         assertTrue(navigation.contains("TopLevelDestination.SETTINGS -> navRoute = \"settings\""))
+        assertTrue(navigation.contains("if (retainedMinimizedConversation)"))
+        assertTrue(activity.contains("val persistentSheetComposed = persistentSheetVisible ||"))
+        assertTrue(activity.contains("navRoute == \"chat\" || retainedMinimizedConversation"))
+        assertTrue(activity.contains("visible = persistentSheetVisible"))
+        assertTrue(activity.contains("conversationKey = chatId"))
+        assertTrue(activity.contains("retainedMinimizedConversation = it"))
+        assertTrue(activity.contains("onRestoreConversation = { navRoute = \"chat\" }"))
+        assertTrue(sheet.contains("latestOnRestoreConversation()"))
+        assertTrue(sheet.contains("if (visible) placeable.placeRelative(0, 0)"))
+        assertTrue(sheet.contains("latestOnMinimizedStateChanged(true)"))
+        assertTrue(activity.contains("chatContent(leaveChat, persistentSheetVisible)"))
+        assertTrue(chat.contains("interactionEnabled: Boolean = true"))
+        assertTrue(chat.contains("interactionEnabled && backHandled"))
+        assertTrue(chat.contains("if (!interactionEnabled) focusManager.clearFocus(force = true)"))
         assertTrue(activity.contains("shouldShowPersistentConversationSheet("))
     }
 

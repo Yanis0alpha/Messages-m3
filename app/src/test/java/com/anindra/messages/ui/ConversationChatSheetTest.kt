@@ -118,9 +118,9 @@ class ConversationChatSheetTest {
         assertTrue(activity.contains("target == \"chat\" && chatUsesSheet"))
         assertTrue(activity.contains("onDismissed = leaveChat"))
         assertTrue(activity.contains("onGestureDismiss = leaveChatByGesture"))
-        assertTrue(activity.contains("chatContent(requestDismiss)"))
+        assertTrue(activity.contains("chatContent(requestDismiss, true)"))
         assertTrue(activity.contains("PersistentConversationSheet("))
-        assertTrue(activity.contains("conversationOpen = navRoute == \"chat\""))
+        assertTrue(activity.contains("conversationOpen = persistentConversationOpen"))
         assertTrue(activity.contains("onCollapsed = leaveChatByGesture"))
         assertTrue(activity.contains("val showTopLevelNavigation = useNewUi"))
         assertTrue(activity.contains("(chatUsesSheet && navRoute == \"chat\")"))
@@ -166,7 +166,7 @@ class ConversationChatSheetTest {
     @Test
     fun expandedAndBubbleChatsKeepTheirDedicatedPane() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
-        assertTrue(activity.contains("\"chat\" -> chatContent(leaveChat)"))
+        assertTrue(activity.contains("\"chat\" -> chatContent(leaveChat, true)"))
     }
 
     @Test

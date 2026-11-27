@@ -2070,13 +2070,23 @@ open class MainActivity : FragmentActivity() {
                     windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
                 val listWeight = 0.4f
                 var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
+                var retainedMinimizedConversation by remember { mutableStateOf(false) }
 
                 val navigateTopLevel: (TopLevelDestination) -> Unit = { destination ->
                     if (navRoute == "chat") {
                         vm.saveDraftAndMaybeTrash(chatId, chatDraftSnapshot.trim())
                     }
                     when (destination) {
-                        TopLevelDestination.MESSAGES,
+                        TopLevelDestination.MESSAGES -> {
+                            topLevelDestination = destination
+                            // Returning to Messages reveals the same minimized
+                            // conversation instead of an empty persistent sheet.
+                            navRoute = if (retainedMinimizedConversation) {
+                                "chat"
+                            } else {
+                                "list"
+                            }
+                        }
                         TopLevelDestination.ARCHIVED -> {
                             topLevelDestination = destination
                             navRoute = "list"
@@ -2104,6 +2114,11 @@ open class MainActivity : FragmentActivity() {
                     chatUsesSheet = chatUsesSheet,
                     navRoute = navRoute,
                     topLevelDestination = topLevelDestination
+                )
+                val persistentConversationOpen =
+                    navRoute == "chat" || retainedMinimizedConversation
+                val persistentSheetComposed = persistentSheetVisible || (
+                    useNewUi && chatUsesSheet && retainedMinimizedConversation
                 )
                 val persistentConversationPeekHeight = PersistentConversationSheetLayout.peekHeight(
                     LocalConfiguration.current.screenHeightDp.dp
@@ -2139,7 +2154,8 @@ open class MainActivity : FragmentActivity() {
                     vm.saveDraftAndMaybeTrash(chatId, chatDraftSnapshot.trim())
                     leaveChat()
                 }
-                val chatContent: @Composable (() -> Unit) -> Unit = { chatBack ->
+                val chatContent: @Composable (() -> Unit, Boolean) -> Unit =
+                    { chatBack, interactionEnabled ->
                     ChatScreen(
                         vm = vm,
                         conversationId = chatId,
@@ -2151,6 +2167,7 @@ open class MainActivity : FragmentActivity() {
                         imeInsetsHandledByParent = chatUsesSheet && !useNewUi,
                         translucentBackground = chatUsesSheet,
                         backHandled = bubbleBackHandled,
+                        interactionEnabled = interactionEnabled,
                         onOpenConversationList = bubbleArrowOpensList,
                         onBack = chatBack,
                         onOpenDetails = {
@@ -2452,7 +2469,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                             }
                                         }
                                     )
-                                    "chat" -> chatContent(leaveChat)
+                                    "chat" -> chatContent(leaveChat, true)
                                     else -> androidx.compose.foundation.layout.Box(Modifier.fillMaxSize())
                                 }
                             }
@@ -2501,23 +2518,29 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 applyNavigationBarsPadding = !persistentSheetVisible
                             )
                         }
-                        if (persistentSheetVisible) {
+                        if (persistentSheetComposed) {
                             PersistentConversationSheet(
-                                conversationOpen = navRoute == "chat",
+                                conversationOpen = persistentConversationOpen,
                                 conversationTitle = sheetConversationTitle,
                                 conversationAddress = sheetConversationAddress,
                                 onCollapsed = leaveChatByGesture,
                                 captureGuard = persistentSheetCaptureGuard,
-                                peekHeight = persistentConversationPeekHeight
+                                peekHeight = persistentConversationPeekHeight,
+                                visible = persistentSheetVisible,
+                                conversationKey = chatId,
+                                onMinimizedStateChanged = {
+                                    retainedMinimizedConversation = it
+                                },
+                                onRestoreConversation = { navRoute = "chat" }
                             ) {
-                                chatContent(leaveChat)
+                                chatContent(leaveChat, persistentSheetVisible)
                             }
                         } else if (!useNewUi && chatUsesSheet && navRoute == "chat") {
                             ConversationChatSheet(
                                 onDismissed = leaveChat,
                                 onGestureDismiss = leaveChatByGesture
                             ) { requestDismiss ->
-                                chatContent(requestDismiss)
+                                chatContent(requestDismiss, true)
                             }
                         }
                         if (newChatUsesSheet && navRoute == "new") {

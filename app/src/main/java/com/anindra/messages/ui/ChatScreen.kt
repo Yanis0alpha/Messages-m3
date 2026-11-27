@@ -200,6 +200,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
@@ -852,6 +853,8 @@ fun ChatScreen(
      * bubble instead of the app swallowing the gesture (#441).
      */
     backHandled: Boolean = true,
+    /** Disable a retained off-screen chat without disposing its draft or scroll state. */
+    interactionEnabled: Boolean = true,
     /**
      * Where the toolbar arrow goes in a bubble whose Back is left to the
      * platform. Null keeps the arrow on [onBack].
@@ -865,6 +868,10 @@ fun ChatScreen(
     onInitialStagedMediaConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(interactionEnabled) {
+        if (!interactionEnabled) focusManager.clearFocus(force = true)
+    }
     val reduceMotion = LocalReduceMotion.current
     val toolbarFade = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
     val toolbarSlide = motionSpring<IntOffset>(reduceMotion)
@@ -1512,13 +1519,13 @@ fun ChatScreen(
 
     // Registered last so it is the innermost handler: while the preview is up,
     // back closes it instead of leaving the chat.
-    BackHandler(enabled = previewImage != null) { previewImage = null }
-    BackHandler(enabled = backHandled, onBack = ::leaveChat)
+    BackHandler(enabled = interactionEnabled && previewImage != null) { previewImage = null }
+    BackHandler(enabled = interactionEnabled && backHandled, onBack = ::leaveChat)
     // Registered after leave-chat so it wins: the last enabled handler is the
     // one Compose calls, and the attachment carousel is not a screen.
-    BackHandler(enabled = attachOpen) { attachOpen = false }
-    BackHandler(enabled = selectionActive) { clearSelection() }
-    BackHandler(enabled = searchOpen) {
+    BackHandler(enabled = interactionEnabled && attachOpen) { attachOpen = false }
+    BackHandler(enabled = interactionEnabled && selectionActive) { clearSelection() }
+    BackHandler(enabled = interactionEnabled && searchOpen) {
         searchOpen = false
         chatQuery = ""
     }
