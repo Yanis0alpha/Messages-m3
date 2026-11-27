@@ -60,6 +60,7 @@ internal fun Modifier.dynamicBackdropEffect(
             state = state,
             style = HazeStyle(
                 backgroundColor = fallback,
+                tints = emptyList(),
                 blurRadius = blurRadius,
                 noiseFactor = 0f
             )
