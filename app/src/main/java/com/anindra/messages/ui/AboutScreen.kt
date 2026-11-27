@@ -66,7 +66,7 @@ import com.anindra.messages.R
  * diff but fails the unit test.
  */
 internal object AboutLinks {
-    const val FORK_NAME = "Messages M3"
+    const val FORK_NAME = "M3 Expressive"
     const val REPO_URL = "https://github.com/Yanis0alpha/Messages-m3"
     /** The maintainer chip opens this, so the credit is also a way to reach them. */
     const val PROFILE_URL = "https://github.com/Yanis0alpha"
@@ -74,6 +74,7 @@ internal object AboutLinks {
 
     /** The fork keeps an explicit, reachable credit to the project it builds on. */
     const val UPSTREAM_REPO_URL = "https://github.com/an1ndra/Messages"
+    const val UPSTREAM_ABOUT_URL = "$UPSTREAM_REPO_URL#readme"
     const val UPSTREAM_DEVELOPER = "an1ndra"
     /** Until the fork publishes releases, downloads remain clearly labelled as upstream. */
     const val RELEASE_URL = "https://github.com/an1ndra/Messages/releases/latest"
@@ -285,20 +286,20 @@ internal fun AboutScreen(
                 )
                 SettingsRow(
                     position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.about_licences_title),
+                    subtitle = stringResource(R.string.about_licences_subtitle),
+                    icon = Icons.Rounded.Info,
+                    onClick = { licencesDialog = true }
+                )
+                SettingsRow(
+                    position = RowPosition.LAST,
                     title = stringResource(R.string.about_upstream_title),
                     subtitle = stringResource(
                         R.string.about_upstream_subtitle,
                         AboutLinks.UPSTREAM_DEVELOPER
                     ),
                     icon = Icons.Rounded.Code,
-                    onClick = { openAboutUrl(context, AboutLinks.UPSTREAM_REPO_URL) }
-                )
-                SettingsRow(
-                    position = RowPosition.LAST,
-                    title = stringResource(R.string.about_licences_title),
-                    subtitle = stringResource(R.string.about_licences_subtitle),
-                    icon = Icons.Rounded.Info,
-                    onClick = { licencesDialog = true }
+                    onClick = { openAboutUrl(context, AboutLinks.UPSTREAM_ABOUT_URL) }
                 )
             }
 

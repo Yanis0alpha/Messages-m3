@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="about_fork_name">Messages M3</string>
-    <string name="about_upstream_title">Proyecto original</string>
-    <string name="about_upstream_subtitle">Basado en Messages de %1$s · Ver el proyecto original</string>
+    <string name="about_fork_name">M3 Expressive</string>
+    <string name="about_upstream_title">Aplicación original</string>
+    <string name="about_upstream_subtitle">Messages de %1$s · Abrir su página Acerca de</string>
     <string name="about_description">Un fork Material 3 Expressive de Messages. Los SMS, las copias de seguridad y el historial permanecen privados en este teléfono.</string>
     <string name="about_developer_format">Mantenido por %1$s</string>
     <string name="about_diagnostics_body">Se abrirá un formulario de incidencia de GitHub en el navegador con un resumen y diagnósticos ya rellenados: versión, tema, notificaciones y datos de la SIM. El historial de mensajes, los contactos y tu número de teléfono nunca se incluyen.</string>
     <string name="about_issue_subtitle">Adjunta diagnósticos: datos de la app, ajustes y SIM. Nunca tus mensajes.</string>
     <string name="about_issue_title">Informar de un problema</string>
-    <string name="about_licences_intro">Messages M3 se basa en estos proyectos de código abierto.</string>
+    <string name="about_licences_intro">M3 Expressive se basa en estos proyectos de código abierto.</string>
     <string name="about_licences_subtitle">AndroidX · Compose · Coil · libphonenumber (Apache 2.0)</string>
     <string name="about_licences_title">Licencias de código abierto</string>
     <string name="about_open_failed">No hay ningún navegador para abrir este enlace.</string>
     <string name="about_open_with_diagnostics">Abrir con diagnósticos</string>
     <string name="about_open_without">Abrir sin ellos</string>
     <string name="about_share_subtitle">Comparte este fork expresivo con un amigo.</string>
-    <string name="about_share_text">Descubre Messages M3, un fork Material 3 Expressive de la aplicación SMS privada y sin conexión.\n\nDescargas del proyecto original:\nGitHub: %1$s\nF-Droid: %2$s</string>
-    <string name="about_share_title">Compartir Messages M3</string>
+    <string name="about_share_text">Descubre M3 Expressive, un fork Material 3 Expressive de la aplicación SMS privada y sin conexión.\n\nDescargas del proyecto original:\nGitHub: %1$s\nF-Droid: %2$s</string>
+    <string name="about_share_title">Compartir M3 Expressive</string>
     <string name="about_star_subtitle">¿Te gusta este fork? Añade una estrella a su repositorio para seguir el proyecto.</string>
-    <string name="about_star_title">Destacar Messages M3 en GitHub</string>
-    <string name="settings_about_title">Acerca de Messages M3</string>
+    <string name="about_star_title">Destacar M3 Expressive en GitHub</string>
+    <string name="settings_about_title">Acerca de M3 Expressive</string>
     <string name="settings_about_version">Versión %1$s (%2$d)</string>
     <string name="settings_general">Configuración general</string>
     <string name="settings_choose_theme">Elegir tema</string>

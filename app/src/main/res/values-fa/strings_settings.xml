@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="about_fork_name">Messages M3</string>
-    <string name="about_upstream_title">پروژهٔ اصلی</string>
-    <string name="about_upstream_subtitle">بر پایهٔ Messages از %1$s · مشاهدهٔ پروژهٔ اصلی</string>
+    <string name="about_fork_name">M3 Expressive</string>
+    <string name="about_upstream_title">برنامهٔ اصلی</string>
+    <string name="about_upstream_subtitle">Messages از %1$s · بازکردن صفحهٔ دربارهٔ اصلی</string>
     <string name="about_description">یک فورک Material 3 Expressive از Messages. پیامک‌ها، پشتیبان‌ها و تاریخچه روی این تلفن خصوصی می‌مانند.</string>
     <string name="about_developer_format">نگهداری توسط %1$s</string>
     <string name="about_diagnostics_body">یک فرم GitHub در مرورگر شما با خلاصه و اطلاعات عیب‌یابی از پیش پر شده باز می‌شود: نسخه برنامه، پوسته، اعلان‌ها و مشخصات سیم‌کارت. تاریخچه پیام‌ها، مخاطبان و شماره تلفن شما هرگز فرستاده نمی‌شوند.</string>
     <string name="about_issue_subtitle">اطلاعات عیب‌یابی پیوست می‌شود: اطلاعات برنامه، تنظیمات و سیم‌کارت. هرگز پیام‌های شما.</string>
     <string name="about_issue_title">گزارش یک مشکل</string>
-    <string name="about_licences_intro">Messages M3 بر این پروژه‌های متن‌باز ساخته شده است.</string>
+    <string name="about_licences_intro">M3 Expressive بر این پروژه‌های متن‌باز ساخته شده است.</string>
     <string name="about_licences_subtitle">AndroidX · Compose · Coil · libphonenumber (Apache 2.0)</string>
     <string name="about_licences_title">مجوزهای متن‌باز</string>
     <string name="about_open_failed">هیچ مرورگری برای باز کردن این پیوند موجود نیست.</string>
     <string name="about_open_with_diagnostics">باز کردن همراه با اطلاعات عیب‌یابی</string>
     <string name="about_open_without">باز کردن بدون آن</string>
     <string name="about_share_subtitle">این فورک زیبا را با یک دوست به اشتراک بگذارید.</string>
-    <string name="about_share_text">Messages M3 را ببینید؛ فورک Material 3 Expressive از برنامهٔ خصوصی و آفلاین پیامک.\n\nدریافت‌های پروژهٔ اصلی:\nGitHub: %1$s\nF-Droid: %2$s</string>
-    <string name="about_share_title">اشتراک‌گذاری Messages M3</string>
+    <string name="about_share_text">M3 Expressive را ببینید؛ فورک Material 3 Expressive از برنامهٔ خصوصی و آفلاین پیامک.\n\nدریافت‌های پروژهٔ اصلی:\nGitHub: %1$s\nF-Droid: %2$s</string>
+    <string name="about_share_title">اشتراک‌گذاری M3 Expressive</string>
     <string name="about_star_subtitle">این فورک را دوست دارید؟ برای دنبال‌کردن پروژه به مخزن آن ستاره بدهید.</string>
-    <string name="about_star_title">ستاره‌دادن به Messages M3</string>
-    <string name="settings_about_title">دربارهٔ Messages M3</string>
+    <string name="about_star_title">ستاره‌دادن به M3 Expressive</string>
+    <string name="settings_about_title">دربارهٔ M3 Expressive</string>
     <string name="settings_about_version">نسخه %1$s (%2$d)</string>
     <string name="settings_general">تنظیمات عمومی</string>
     <string name="settings_choose_theme">انتخاب پوسته</string>

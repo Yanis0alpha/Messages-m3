@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="about_fork_name">Messages M3</string>
-    <string name="about_upstream_title">المشروع الأصلي</string>
-    <string name="about_upstream_subtitle">مبني على Messages من %1$s · عرض المشروع الأصلي</string>
+    <string name="about_fork_name">M3 Expressive</string>
+    <string name="about_upstream_title">التطبيق الأصلي</string>
+    <string name="about_upstream_subtitle">Messages من %1$s · فتح صفحة حول الأصلية</string>
     <string name="about_description">نسخة متفرعة بتصميم Material 3 Expressive من Messages. تبقى رسائل SMS والنسخ الاحتياطية والسجل خاصة على هذا الهاتف.</string>
     <string name="about_developer_format">صيانة %1$s</string>
     <string name="about_diagnostics_body">سيُفتح نموذج مشكلة على GitHub في المتصفح مع ملخص مُعبأ مسبقًا وبيانات التشخيص: إصدار التطبيق والمظهر والإشعارات وتفاصيل SIM. لا تُرفق سجل الرسائل أو جهات الاتصال أو رقم هاتفك أبدًا.</string>
     <string name="about_issue_subtitle">يُرفق بيانات التشخيص: معلومات التطبيق والإعدادات وSIM. لا تُرفق رسائلك أبدًا.</string>
     <string name="about_issue_title">الإبلاغ عن مشكلة</string>
-    <string name="about_licences_intro">يعتمد Messages M3 على هذه المشاريع مفتوحة المصدر.</string>
+    <string name="about_licences_intro">يعتمد M3 Expressive على هذه المشاريع مفتوحة المصدر.</string>
     <string name="about_licences_subtitle">AndroidX · Compose · Coil · libphonenumber (Apache 2.0)</string>
     <string name="about_licences_title">تراخيص المصادر المفتوحة</string>
     <string name="about_open_failed">لا يوجد متصفح لفتح هذا الرابط.</string>
     <string name="about_open_with_diagnostics">فتح مع بيانات التشخيص</string>
     <string name="about_open_without">فتح بدونها</string>
     <string name="about_share_subtitle">شارك هذه النسخة التعبيرية مع صديق.</string>
-    <string name="about_share_text">جرّب Messages M3، نسخة Material 3 Expressive من تطبيق SMS الخاص الذي يعمل دون اتصال.\n\nتنزيلات المشروع الأصلي:\nGitHub: %1$s\nF-Droid: %2$s</string>
-    <string name="about_share_title">مشاركة Messages M3</string>
+    <string name="about_share_text">جرّب M3 Expressive، نسخة Material 3 Expressive من تطبيق SMS الخاص الذي يعمل دون اتصال.\n\nتنزيلات المشروع الأصلي:\nGitHub: %1$s\nF-Droid: %2$s</string>
+    <string name="about_share_title">مشاركة M3 Expressive</string>
     <string name="about_star_subtitle">هل أعجبتك هذه النسخة؟ أضف نجمة إلى مستودعها لمتابعة المشروع.</string>
-    <string name="about_star_title">إضافة نجمة إلى Messages M3</string>
-    <string name="settings_about_title">حول Messages M3</string>
+    <string name="about_star_title">إضافة نجمة إلى M3 Expressive</string>
+    <string name="settings_about_title">حول M3 Expressive</string>
     <string name="settings_about_version">الإصدار %1$s (%2$d)</string>
     <string name="settings_general">الإعدادات العامة</string>
     <string name="settings_choose_theme">اختر السمة</string>

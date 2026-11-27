@@ -23,6 +23,10 @@ class AboutLinksTest {
             AboutLinks.issuesUrl
         )
         assertEquals("https://github.com/an1ndra/Messages", AboutLinks.UPSTREAM_REPO_URL)
+        assertEquals(
+            "https://github.com/an1ndra/Messages#readme",
+            AboutLinks.UPSTREAM_ABOUT_URL
+        )
     }
 
     @Test
@@ -36,14 +40,14 @@ class AboutLinksTest {
     fun theIssueTitleNamesTheBuildThatReported() {
         val title = AboutLinks.issueTitle("1.0.31")
         assertTrue("title should name the version: $title", title.contains("1.0.31"))
-        assertTrue("title should name the fork: $title", title.startsWith("Messages M3 "))
+        assertTrue("title should name the fork: $title", title.startsWith("M3 Expressive "))
     }
 
     @Test
     fun aBlankBodyLeavesTheFormEmpty() {
         assertEquals(
-            "https://github.com/Yanis0alpha/Messages-m3/issues/new?title=Messages%20M3%201.0.31",
-            AboutLinks.issueUrl("Messages M3 1.0.31", "")
+            "https://github.com/Yanis0alpha/Messages-m3/issues/new?title=M3%20Expressive%201.0.31",
+            AboutLinks.issueUrl("M3 Expressive 1.0.31", "")
         )
     }
 

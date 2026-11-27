@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="about_fork_name">Messages M3</string>
-    <string name="about_upstream_title">मूल प्रोजेक्ट</string>
-    <string name="about_upstream_subtitle">%1$s के Messages पर आधारित · मूल प्रोजेक्ट देखें</string>
+    <string name="about_fork_name">M3 Expressive</string>
+    <string name="about_upstream_title">मूल ऐप</string>
+    <string name="about_upstream_subtitle">%1$s का Messages · इसका परिचय पेज खोलें</string>
     <string name="about_description">Messages का एक अभिव्यंजक Material 3 फ़ोर्क। SMS, बैकअप और इतिहास इस फ़ोन पर निजी रहते हैं।</string>
     <string name="about_developer_format">%1$s द्वारा अनुरक्षित</string>
     <string name="about_diagnostics_body">ब्राउज़र में एक GitHub इश्यू फ़ॉर्म खुलेगा जिसमें सारांश और डायग्नोस्टिक्स पहले से भरे होंगे: ऐप संस्करण, थीम, सूचनाएँ, SIM विवरण। संदेश इतिहास, संपर्क और आपका फ़ोन नंबर कभी शामिल नहीं होते।</string>
     <string name="about_issue_subtitle">डायग्नोस्टिक्स जोड़ता है: ऐप जानकारी, सेटिंग्स और SIM। आपके संदेश कभी नहीं।</string>
     <string name="about_issue_title">समस्या की रिपोर्ट करें</string>
-    <string name="about_licences_intro">Messages M3 इन ओपन-सोर्स प्रोजेक्ट पर बनाया गया है।</string>
+    <string name="about_licences_intro">M3 Expressive इन ओपन-सोर्स प्रोजेक्ट पर बनाया गया है।</string>
     <string name="about_licences_subtitle">AndroidX · Compose · Coil · libphonenumber (Apache 2.0)</string>
     <string name="about_licences_title">ओपन-सोर्स लाइसेंस</string>
     <string name="about_open_failed">यह लिंक खोलने के लिए कोई ब्राउज़र नहीं है।</string>
     <string name="about_open_with_diagnostics">डायग्नोस्टिक्स के साथ खोलें</string>
     <string name="about_open_without">बिना खोलें</string>
     <string name="about_share_subtitle">इस अभिव्यंजक फ़ोर्क को किसी मित्र के साथ साझा करें।</string>
-    <string name="about_share_text">Messages M3 देखें — निजी, ऑफ़लाइन SMS ऐप का Material 3 Expressive फ़ोर्क।\n\nमूल प्रोजेक्ट के डाउनलोड:\nGitHub: %1$s\nF-Droid: %2$s</string>
-    <string name="about_share_title">Messages M3 साझा करें</string>
+    <string name="about_share_text">M3 Expressive देखें — निजी, ऑफ़लाइन SMS ऐप का Material 3 Expressive फ़ोर्क।\n\nमूल प्रोजेक्ट के डाउनलोड:\nGitHub: %1$s\nF-Droid: %2$s</string>
+    <string name="about_share_title">M3 Expressive साझा करें</string>
     <string name="about_star_subtitle">यह फ़ोर्क पसंद है? प्रोजेक्ट को फ़ॉलो करने के लिए इसके रिपॉज़िटरी को स्टार दें।</string>
-    <string name="about_star_title">Messages M3 को स्टार दें</string>
-    <string name="settings_about_title">Messages M3 के बारे में</string>
+    <string name="about_star_title">M3 Expressive को स्टार दें</string>
+    <string name="settings_about_title">M3 Expressive के बारे में</string>
     <string name="settings_about_version">संस्करण %1$s (%2$d)</string>
     <string name="settings_general">सामान्य सेटिंग्स</string>
     <string name="settings_choose_theme">थीम चुनें</string>

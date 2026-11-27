@@ -111,7 +111,15 @@ class AboutRowPlacementTest {
         assertTrue(screen.contains("MaterialShapes.Cookie9Sided.toShape()"))
         assertTrue(screen.contains("AboutLinks.DEVELOPER"))
         assertTrue(screen.contains("AboutLinks.UPSTREAM_DEVELOPER"))
-        assertTrue(screen.contains("openAboutUrl(context, AboutLinks.UPSTREAM_REPO_URL)"))
+        assertTrue(screen.contains("openAboutUrl(context, AboutLinks.UPSTREAM_ABOUT_URL)"))
+        val licences = screen.indexOf("R.string.about_licences_title")
+        val originalApp = screen.indexOf("R.string.about_upstream_title")
+        assertTrue("the original app entry must stay at the very bottom", originalApp > licences)
+        assertTrue(
+            Regex(
+                """SettingsRow\(\s*position = RowPosition\.LAST,\s*title = stringResource\(R\.string\.about_upstream_title\)"""
+            ).containsMatchIn(screen)
+        )
     }
 
     @Test

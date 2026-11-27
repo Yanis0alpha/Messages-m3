@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="about_fork_name">Messages M3</string>
-    <string name="about_upstream_title">オリジナルプロジェクト</string>
-    <string name="about_upstream_subtitle">%1$s の Messages をベースにしています · 元のプロジェクトを見る</string>
+    <string name="about_fork_name">M3 Expressive</string>
+    <string name="about_upstream_title">オリジナルアプリ</string>
+    <string name="about_upstream_subtitle">%1$s の Messages · 元のアプリ情報ページを開く</string>
     <string name="about_description">Messages を Material 3 Expressive で再構築したフォークです。SMS、バックアップ、履歴はこの端末内で非公開に保たれます。</string>
     <string name="about_developer_format">メンテナー: %1$s</string>
     <string name="about_diagnostics_body">ブラウザでGitHubのIssueフォームが開き、概要と診断情報が入力済みになります: アプリのバージョン、テーマ、通知、SIM情報。メッセージ履歴、連絡先、電話番号は含まれません。</string>
     <string name="about_issue_subtitle">診断情報(アプリ情報・設定・SIM)を添付します。メッセージは含まれません。</string>
     <string name="about_issue_title">問題を報告</string>
-    <string name="about_licences_intro">Messages M3 は次のオープンソースプロジェクトを使用しています。</string>
+    <string name="about_licences_intro">M3 Expressive は次のオープンソースプロジェクトを使用しています。</string>
     <string name="about_licences_subtitle">AndroidX · Compose · Coil · libphonenumber (Apache 2.0)</string>
     <string name="about_licences_title">オープンソースライセンス</string>
     <string name="about_open_failed">このリンクを開けるブラウザがありません。</string>
     <string name="about_open_with_diagnostics">診断情報付きで開く</string>
     <string name="about_open_without">付けずに開く</string>
     <string name="about_share_subtitle">この表現豊かなフォークを友だちと共有しましょう。</string>
-    <string name="about_share_text">Messages M3 は、プライベートでオフラインの SMS アプリを Material 3 Expressive で再構築したフォークです。\n\nオリジナルプロジェクトのダウンロード:\nGitHub: %1$s\nF-Droid: %2$s</string>
-    <string name="about_share_title">Messages M3 を共有</string>
+    <string name="about_share_text">M3 Expressive は、プライベートでオフラインの SMS アプリを Material 3 Expressive で再構築したフォークです。\n\nオリジナルプロジェクトのダウンロード:\nGitHub: %1$s\nF-Droid: %2$s</string>
+    <string name="about_share_title">M3 Expressive を共有</string>
     <string name="about_star_subtitle">このフォークが気に入ったら、リポジトリにスターを付けてください。</string>
-    <string name="about_star_title">Messages M3 にスターを付ける</string>
-    <string name="settings_about_title">Messages M3 について</string>
+    <string name="about_star_title">M3 Expressive にスターを付ける</string>
+    <string name="settings_about_title">M3 Expressive について</string>
     <string name="settings_about_version">バージョン %1$s (%2$d)</string>
     <string name="settings_general">一般設定</string>
     <string name="settings_choose_theme">テーマを選択</string>
