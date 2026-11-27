@@ -2028,6 +2028,33 @@ open class MainActivity : FragmentActivity() {
                     if (!bubbleMode) com.anindra.messages.sms.NotificationHelper
                         .retireBubbleForFullChat(this@MainActivity, id)
                 }
+                // #478: a phone keeps the list behind and the route stack over it. Expanded
+                // windows retain the list/detail split, including their dedicated Settings pane.
+                val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
+                val twoPaneLayout =
+                    windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+                val listWeight = 0.4f
+                val returnToSettingsRoot: () -> Unit = {
+                    if (useNewUi && !twoPaneLayout) {
+                        topLevelDestination = TopLevelDestination.SETTINGS
+                        navRoute = "list"
+                    } else {
+                        navRoute = "settings"
+                    }
+                }
+                LaunchedEffect(useNewUi, twoPaneLayout, navRoute, topLevelDestination) {
+                    // Migrate deep links and restored phone routes into the shared top-level shell.
+                    if (useNewUi && !twoPaneLayout && navRoute == "settings") {
+                        topLevelDestination = TopLevelDestination.SETTINGS
+                        navRoute = "list"
+                    } else if (
+                        useNewUi && twoPaneLayout && navRoute == "list" &&
+                        topLevelDestination == TopLevelDestination.SETTINGS
+                    ) {
+                        topLevelDestination = TopLevelDestination.MESSAGES
+                        navRoute = "settings"
+                    }
+                }
                 androidx.activity.compose.BackHandler(
                     enabled = if (bubbleMode) {
                         bubbleBackHandled && navRoute != "chat"
@@ -2045,15 +2072,16 @@ open class MainActivity : FragmentActivity() {
                         "details" -> navRoute = "chat"
                         "add-people" -> navRoute = "details"
                         "transfer-log" -> navRoute = "advanced"
-                        "trash" -> navRoute = "settings"
-                        "inbox" -> navRoute = "settings"
+                        "trash" -> returnToSettingsRoot()
+                        "inbox" -> returnToSettingsRoot()
                         "notif-settings" -> navRoute = "advanced"
                         "auto-delete" -> navRoute = "advanced"
                         "links" -> navRoute = "advanced"
-                        "advanced" -> navRoute = "settings"
-                        "about" -> navRoute = "settings"
+                        "advanced" -> returnToSettingsRoot()
+                        "about" -> returnToSettingsRoot()
                         "accessibility" -> navRoute = "advanced"
-                        "spam" -> navRoute = "settings"
+                        "spam" -> returnToSettingsRoot()
+                        "scheduled" -> returnToSettingsRoot()
                         else -> navRoute = "list"
                     }
                 }
@@ -2066,14 +2094,6 @@ open class MainActivity : FragmentActivity() {
                 val navSlide = motionTween<IntOffset>(reduceMotion, Motion.DURATION_MEDIUM2)
                 val navFade = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
 
-                // #478: a phone keeps the list behind and the route stack over
-                // it, the way it always has. At an expanded width the two become
-                // peers: the list keeps its own column and the route stack gets
-                // the rest, so opening a chat no longer throws the list away.
-                val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
-                val twoPaneLayout =
-                    windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
-                val listWeight = 0.4f
                 var chatDraftSnapshot by remember(chatId) { mutableStateOf("") }
                 var retainedMinimizedConversation by remember { mutableStateOf(false) }
 
@@ -2096,7 +2116,15 @@ open class MainActivity : FragmentActivity() {
                             topLevelDestination = destination
                             navRoute = "list"
                         }
-                        TopLevelDestination.SETTINGS -> navRoute = "settings"
+                        TopLevelDestination.SETTINGS -> {
+                            if (twoPaneLayout) {
+                                // Expanded layouts keep Settings in the detail pane.
+                                navRoute = "settings"
+                            } else {
+                                topLevelDestination = destination
+                                navRoute = "list"
+                            }
+                        }
                     }
                 }
                 val chatUsesSheet = !twoPaneLayout && !bubbleMode
@@ -2226,6 +2254,13 @@ open class MainActivity : FragmentActivity() {
                         onNewChat = { navRoute = "new" },
                         selectedDestination = topLevelDestination,
                         onDestinationSelected = navigateTopLevel,
+                        settingsScrollState = settingsScroll,
+                        onOpenSettingsTrash = { navRoute = "trash" },
+                        onOpenSettingsAdvanced = { navRoute = "advanced" },
+                        onOpenSettingsSpamBlocked = { navRoute = "spam" },
+                        onOpenSettingsInbox = { navRoute = "inbox" },
+                        onOpenSettingsScheduled = { navRoute = "scheduled" },
+                        onOpenSettingsAbout = { navRoute = "about" },
                         showNavigationBar = showTopLevelNavigation,
                         bottomControlsClearance = topLevelControlsClearance,
                         applyNavigationBarsPadding = !persistentSheetVisible,
@@ -2386,12 +2421,12 @@ open class MainActivity : FragmentActivity() {
                                     )
                                     "inbox" -> InboxSettingsScreen(
                                         vm = vm,
-                                        onBack = { navRoute = "settings" },
+                                        onBack = returnToSettingsRoot,
                                         scrollState = inboxScroll
                                     )
                                     "advanced" -> if (useNewUi) AdvancedSettingsScreen(
                                         vm = vm,
-                                        onBack = { navRoute = "settings" },
+                                        onBack = returnToSettingsRoot,
 onOpenAccessibility = { navRoute = "accessibility" },
                                         onOpenNotifications = { navRoute = "notif-settings" },
                                         onOpenAutoDelete = { navRoute = "auto-delete" },
@@ -2401,7 +2436,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                         scrollState = advancedScroll
                                     ) else com.anindra.messages.ui.legacy.AdvancedSettingsScreen(
                                         vm = vm,
-                                        onBack = { navRoute = "settings" },
+                                        onBack = returnToSettingsRoot,
                                         onOpenAccessibility = { navRoute = "accessibility" },
                                         onOpenMmsCheck = { navRoute = "mms-check" },
                                         onOpenTransferLog = { navRoute = "transfer-log" },
@@ -2415,13 +2450,14 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                     )
                                     "about" -> AboutScreen(
                                         requestDiagnostics = { onReady -> vm.diagnosticsReport(onReady) },
-                                        onBack = { navRoute = "settings" },
+                                        onBack = returnToSettingsRoot,
                                         scrollState = aboutScroll
                                     )
                                     "scheduled" -> ScheduledMessagesScreen(
                                         vm = vm,
-                                        onBack = { navRoute = "settings" },
+                                        onBack = returnToSettingsRoot,
                                         onOpenChat = { id ->
+                                            topLevelDestination = TopLevelDestination.MESSAGES
                                             chatId = id
                                             chatSearchQuery = null
                                             navRoute = "chat"
@@ -2463,14 +2499,19 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                     )
                                     "trash" -> TrashScreen(
                                         vm = vm,
-                                        onBack = { navRoute = "settings" },
+                                        onBack = returnToSettingsRoot,
                                         conversationListState = trashConversationList,
                                         messageListState = trashMessageList
                                     )
                                     "spam" -> SpamBlockedScreen(
                                         vm = vm,
-                                        onBack = { navRoute = "settings" },
-                                        onOpenConversation = { navRoute = "chat"; chatId = it; chatSearchQuery = null },
+                                        onBack = returnToSettingsRoot,
+                                        onOpenConversation = {
+                                            topLevelDestination = TopLevelDestination.MESSAGES
+                                            navRoute = "chat"
+                                            chatId = it
+                                            chatSearchQuery = null
+                                        },
                                         conversationListState = spamConversationList,
                                         messageListState = spamMessageList
                                     )

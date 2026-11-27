@@ -142,8 +142,8 @@ class AboutRowPlacementTest {
             "BackHandler(onBack = onBack)" in screen
         )
         assertTrue(
-            "the root dispatcher must map the route as well",
-            Regex(""""about" -> navRoute = "settings"""").containsMatchIn(mainActivity)
+            "the root dispatcher must return to the shared Settings destination",
+            mainActivity.contains("\"about\" -> returnToSettingsRoot()")
         )
     }
 
@@ -191,7 +191,7 @@ class AboutRowPlacementTest {
         )
         assertTrue(
             "back returns to Settings, where the row lives",
-            Regex("""onBack = \{ navRoute = "settings" \},\s*scrollState = aboutScroll""")
+            Regex("""onBack = returnToSettingsRoot,\s*scrollState = aboutScroll""")
                 .containsMatchIn(mainActivity)
         )
     }

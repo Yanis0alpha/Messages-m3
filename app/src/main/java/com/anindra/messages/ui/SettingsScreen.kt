@@ -119,15 +119,33 @@ fun SettingsScreen(
     onOpenScheduled: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     scrollState: ScrollState = rememberScrollState(),
-    bottomOverlayClearance: Dp = TopLevelNavigationBarClearance
+    bottomOverlayClearance: Dp = TopLevelNavigationBarClearance,
+    modifier: Modifier = Modifier,
+    embeddedTopLevel: Boolean = false,
+    externalQuery: String? = null,
+    onExternalQueryChange: (String) -> Unit = {},
+    externalSearchFocused: Boolean? = null,
+    onExternalSearchFocusChanged: (Boolean) -> Unit = {}
 ) {
-    var settingsQuery by remember { mutableStateOf("") }
-    var settingsSearchFocused by remember { mutableStateOf(false) }
+    var localSettingsQuery by remember { mutableStateOf("") }
+    var localSettingsSearchFocused by remember { mutableStateOf(false) }
+    val settingsQuery = externalQuery ?: localSettingsQuery
+    val settingsSearchFocused = externalSearchFocused ?: localSettingsSearchFocused
+    val updateSettingsQuery: (String) -> Unit = { value ->
+        if (externalQuery == null) localSettingsQuery = value else onExternalQueryChange(value)
+    }
+    val updateSettingsSearchFocus: (Boolean) -> Unit = { focused ->
+        if (externalSearchFocused == null) {
+            localSettingsSearchFocused = focused
+        } else {
+            onExternalSearchFocusChanged(focused)
+        }
+    }
     val focusManager = LocalFocusManager.current
     BackHandler {
         if (settingsSearchFocused || settingsQuery.isNotBlank()) {
-            settingsQuery = ""
-            settingsSearchFocused = false
+            updateSettingsQuery("")
+            updateSettingsSearchFocus(false)
             focusManager.clearFocus()
         } else {
             onBack()
@@ -292,14 +310,23 @@ fun SettingsScreen(
     }
 
     Scaffold(
-        // Google Messages paints the settings sheet a step lighter than the rest
-        // of the app and insets the rows into it: page #1E1F20, row #131314.
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = modifier,
+        // As a top-level tab, Settings shares Messages' persistent expressive backdrop. Standalone
+        // legacy/deep-link use keeps the original page colour and owns its complete chrome.
+        containerColor = if (embeddedTopLevel) {
+            Color.Transparent
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // Both glass docks are overlays: rows can travel behind the header and
         // the navigation while their blurred silhouettes remain visible.
     ) { padding ->
-        val pageColor = MaterialTheme.colorScheme.surfaceContainer
+        val pageColor = if (embeddedTopLevel) {
+            MaterialTheme.colorScheme.background
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
         val rowColor = MaterialTheme.colorScheme.background
         // The settings sheet's two colours are pixels with no text equivalent, so
         // report them the way SettingsRowShape reports the corners: a regression
@@ -360,11 +387,13 @@ fun SettingsScreen(
         DynamicBackdropMotionTracker { scrollState.value }
 
         Box(Modifier.padding(padding).fillMaxSize()) {
-            // Blur the static shapes once, keep their crisp copy visible between cards, and let
-            // moving cards copy the cached blurred layer instead of running one Gaussian each.
-            SettingsExpressiveBackdrop()
-            SettingsBlurredBackdropSource()
-            SettingsExpressiveBackdrop(registerAsSource = false)
+            if (!embeddedTopLevel) {
+                // Standalone Settings owns its backdrop. Embedded Settings uses the persistent
+                // Messages backdrop and the cache placed beside it by ConversationsScreen.
+                SettingsExpressiveBackdrop()
+                SettingsBlurredBackdropSource()
+                SettingsExpressiveBackdrop(registerAsSource = false)
+            }
 
             Column(
                 Modifier
@@ -573,19 +602,21 @@ fun SettingsScreen(
                 )
             }
 
-            TopLevelHeaderDock(
-                title = stringResource(R.string.navigation_settings),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .zIndex(1f)
-            ) {
-                TopLevelDockSearchField(
-                    query = settingsQuery,
-                    onQueryChange = { settingsQuery = it },
-                    placeholder = stringResource(R.string.settings_search_hint),
-                    onFocusChanged = { settingsSearchFocused = it },
-                    onClear = { settingsQuery = "" }
-                )
+            if (!embeddedTopLevel) {
+                TopLevelHeaderDock(
+                    title = stringResource(R.string.navigation_settings),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .zIndex(1f)
+                ) {
+                    TopLevelDockSearchField(
+                        query = settingsQuery,
+                        onQueryChange = updateSettingsQuery,
+                        placeholder = stringResource(R.string.settings_search_hint),
+                        onFocusChanged = updateSettingsSearchFocus,
+                        onClear = { updateSettingsQuery("") }
+                    )
+                }
             }
         }
     }
@@ -1163,7 +1194,7 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
 
 /** One full-screen Gaussian pass reused by every moving Settings card. */
 @Composable
-private fun SettingsBlurredBackdropSource() {
+internal fun SettingsBlurredBackdropSource() {
     Box(
         Modifier
             .fillMaxSize()

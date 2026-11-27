@@ -65,6 +65,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -171,6 +172,13 @@ fun ConversationsScreen(
     onNewChat: () -> Unit,
     selectedDestination: TopLevelDestination,
     onDestinationSelected: (TopLevelDestination) -> Unit,
+    settingsScrollState: ScrollState = rememberScrollState(),
+    onOpenSettingsTrash: () -> Unit = {},
+    onOpenSettingsAdvanced: () -> Unit = {},
+    onOpenSettingsSpamBlocked: () -> Unit = {},
+    onOpenSettingsInbox: () -> Unit = {},
+    onOpenSettingsScheduled: () -> Unit = {},
+    onOpenSettingsAbout: () -> Unit = {},
     showNavigationBar: Boolean = true,
     bottomControlsClearance: Dp = TopLevelNavigationBarClearance,
     applyNavigationBarsPadding: Boolean = true,
@@ -245,7 +253,11 @@ fun ConversationsScreen(
     var query by remember { mutableStateOf("") }
     var searchScope by remember { mutableStateOf(SearchScope.All) }
     val showArchived = displayedDestination == TopLevelDestination.ARCHIVED
+    val showSettings = displayedDestination == TopLevelDestination.SETTINGS
     val requestedArchived = selectedDestination == TopLevelDestination.ARCHIVED
+    val requestedSettings = selectedDestination == TopLevelDestination.SETTINGS
+    var settingsQuery by rememberSaveable { mutableStateOf("") }
+    var settingsSearchFocused by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -344,21 +356,35 @@ fun ConversationsScreen(
             if (scrolling) userScrolledAway = !(index == 0 && offset == 0)
         }
     }
-    BackHandler(enabled = backHandled && selectionActive) {
+    BackHandler(enabled = backHandled && (showSettings || requestedSettings)) {
+        if (settingsSearchFocused || settingsQuery.isNotBlank()) {
+            settingsQuery = ""
+            settingsSearchFocused = false
+            focusManager.clearFocus()
+        } else {
+            onDestinationSelected(TopLevelDestination.MESSAGES)
+        }
+    }
+    val conversationBackEnabled = backHandled && !showSettings && !requestedSettings
+    BackHandler(enabled = conversationBackEnabled && selectionActive) {
         selectedIds = emptySet()
     }
-    BackHandler(enabled = backHandled && !selectionActive && searching) {
+    BackHandler(enabled = conversationBackEnabled && !selectionActive && searching) {
         searching = false
         query = ""
         searchScope = SearchScope.All
         focusManager.clearFocus()
     }
-    BackHandler(enabled = backHandled && !selectionActive && !searching && showArchived) {
+    BackHandler(
+        enabled = conversationBackEnabled && !selectionActive && !searching && showArchived
+    ) {
         onDestinationSelected(TopLevelDestination.MESSAGES)
     }
     // One Back from the inbox closes the app: no "press again to exit", which
     // only ever made the first press look like it did nothing.
-    BackHandler(enabled = backHandled && !selectionActive && !searching && !showArchived) {
+    BackHandler(
+        enabled = conversationBackEnabled && !selectionActive && !searching && !showArchived
+    ) {
         (context as? Activity)?.finish()
     }
 
@@ -558,7 +584,34 @@ fun ConversationsScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
+        // One persistent expressive background for all three destinations. Its hidden blurred
+        // copy is kept warm across tab changes, while this final crisp copy stays visible.
         HomeShapeBackdrop()
+        SettingsBlurredBackdropSource()
+        HomeShapeBackdrop(registerAsSource = false)
+        if (showSettings) {
+            SettingsScreen(
+                vm = vm,
+                onBack = { onDestinationSelected(TopLevelDestination.MESSAGES) },
+                onOpenTrash = onOpenSettingsTrash,
+                onOpenAdvanced = onOpenSettingsAdvanced,
+                onOpenSpamBlocked = onOpenSettingsSpamBlocked,
+                onOpenInbox = onOpenSettingsInbox,
+                onOpenScheduled = onOpenSettingsScheduled,
+                onOpenAbout = onOpenSettingsAbout,
+                scrollState = settingsScrollState,
+                bottomOverlayClearance = bottomControlsClearance,
+                modifier = Modifier.graphicsLayer {
+                    scaleX = topLevelContentScale.value
+                    scaleY = topLevelContentScale.value
+                },
+                embeddedTopLevel = true,
+                externalQuery = settingsQuery,
+                onExternalQueryChange = { settingsQuery = it },
+                externalSearchFocused = settingsSearchFocused,
+                onExternalSearchFocusChanged = { settingsSearchFocused = it }
+            )
+        } else {
         Scaffold(
             modifier = Modifier.graphicsLayer {
                 scaleX = topLevelContentScale.value
@@ -855,20 +908,33 @@ fun ConversationsScreen(
             }
         }
     }
+        }
 
         TopLevelHeaderDock(
             title = stringResource(
-                if (requestedArchived) {
-                    R.string.conversations_archived
-                } else {
-                    R.string.conversations_messages
+                when {
+                    requestedSettings -> R.string.navigation_settings
+                    requestedArchived -> R.string.conversations_archived
+                    else -> R.string.conversations_messages
                 }
             ),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(1f)
         ) {
-            if (selectionActive) {
+            if (requestedSettings) {
+                TopLevelDockSearchField(
+                    query = settingsQuery,
+                    onQueryChange = { settingsQuery = it },
+                    placeholder = stringResource(R.string.settings_search_hint),
+                    onFocusChanged = { settingsSearchFocused = it },
+                    onClear = {
+                        settingsQuery = ""
+                        settingsSearchFocused = false
+                        focusManager.clearFocus()
+                    }
+                )
+            } else if (selectionActive) {
                 ConversationSelectionBar(
                     selectedCount = selectedIds.size,
                     archivingEnabled = rowSettings.archivingEnabled,
@@ -909,7 +975,7 @@ fun ConversationsScreen(
     // Middle of the bottom edge, over the list: the FAB slot would place it at
     // the end and pad it, which is not the middle of the screen.
     AnimatedVisibility(
-        visible = backToTop && !showArchived,
+        visible = backToTop && !showArchived && !showSettings,
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .then(
@@ -1490,12 +1556,18 @@ fun SwipeAction.a11yLabelRes(unread: Boolean): Int = when (this) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun HomeShapeBackdrop() {
+internal fun HomeShapeBackdrop(registerAsSource: Boolean = true) {
     val colors = MaterialTheme.colorScheme
     Box(
         Modifier
             .fillMaxSize()
-            .dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+            .then(
+                if (registerAsSource) {
+                    Modifier.dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+                } else {
+                    Modifier
+                }
+            )
             .background(colors.background)
     ) {
         Box(
