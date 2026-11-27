@@ -90,6 +90,11 @@ internal object PersistentConversationSheetLayout {
     const val ACTION_TIMEOUT_SECONDS = 3
     const val ACTION_TICK_MS = 1_000L
     const val DISMISS_PREVIEW_THRESHOLD = 0.5f
+    const val DISMISS_CONTENT_ROTATION = -2.5f
+    const val EMPTY_STATE_INITIAL_SCALE = 0.72f
+    const val EMPTY_STATE_INITIAL_ROTATION = 8f
+    val DISMISS_CONTENT_TRAVEL = 20.dp
+    val EMPTY_STATE_TRAVEL = 24.dp
 
     fun peekHeight(containerHeight: Dp): Dp = containerHeight * PEEK_FRACTION
 }
@@ -113,7 +118,8 @@ internal fun shouldShowPersistentConversationSheet(
 private enum class PersistentConversationSheetMode {
     ACTIVE,
     MINIMIZE_REQUESTED,
-    MINIMIZED
+    MINIMIZED,
+    RESTORE_REQUESTED
 }
 
 private enum class PersistentConversationHandleMode {
@@ -242,7 +248,13 @@ internal fun PersistentConversationSheet(
                     latestOnMinimizedStateChanged(true)
                 }
                 settledExpanded &&
-                    snapshot.mode == PersistentConversationSheetMode.MINIMIZED -> {
+                    (snapshot.mode == PersistentConversationSheetMode.MINIMIZED ||
+                        snapshot.mode == PersistentConversationSheetMode.RESTORE_REQUESTED) -> {
+                    // A native swipe-up has no click callback, so perform the
+                    // same route hand-off as the minimized pill exactly once.
+                    if (snapshot.mode == PersistentConversationSheetMode.MINIMIZED) {
+                        latestOnRestoreConversation()
+                    }
                     sheetMode = PersistentConversationSheetMode.ACTIVE
                     handleActionsVisible = false
                     showMinimizedSummary = false
@@ -309,20 +321,20 @@ internal fun PersistentConversationSheet(
             collapseProgress >= PersistentConversationSheetLayout.DISMISS_PREVIEW_THRESHOLD
         val conversationContentProgress by animateFloatAsState(
             targetValue = if (showMinimizedSummary || dragDismissPreviewVisible) 0f else 1f,
-            animationSpec = motionTween(
-                LocalReduceMotion.current,
-                Motion.DURATION_SHORT4
-            ),
+            animationSpec = motionSpring(LocalReduceMotion.current),
             label = "persistentConversationContent"
         )
         val emptyStateProgress by animateFloatAsState(
             targetValue = if (dragDismissPreviewVisible) 1f else 0f,
-            animationSpec = motionTween(
-                LocalReduceMotion.current,
-                Motion.DURATION_SHORT4
-            ),
+            animationSpec = motionSpring(LocalReduceMotion.current),
             label = "persistentConversationEmptyState"
         )
+        val dismissTravelPx = with(density) {
+            PersistentConversationSheetLayout.DISMISS_CONTENT_TRAVEL.toPx()
+        }
+        val emptyStateTravelPx = with(density) {
+            PersistentConversationSheetLayout.EMPTY_STATE_TRAVEL.toPx()
+        }
         val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         val openConversationLabel = stringResource(R.string.access_open_conversation)
         val handleLabel = if (showMinimizedSummary) {
@@ -342,12 +354,11 @@ internal fun PersistentConversationSheet(
             handleActionsVisible = false
             showMinimizedSummary = false
             latestOnRestoreConversation()
-            scope.launch {
-                // Keep MINIMIZE_REQUESTED/MINIMIZED armed while expanding so
-                // the old partial anchor cannot be mistaken for a close.
-                sheetState.expand()
-                sheetMode = PersistentConversationSheetMode.ACTIVE
-            }
+            // Keep a non-active mode armed while expanding so the old partial
+            // anchor cannot be mistaken for a close. The settled-state observer
+            // returns it to ACTIVE without firing the route callback twice.
+            sheetMode = PersistentConversationSheetMode.RESTORE_REQUESTED
+            scope.launch { sheetState.expand() }
         }
 
         BottomSheetScaffold(
@@ -451,11 +462,24 @@ internal fun PersistentConversationSheet(
                                     Modifier
                                         .fillMaxSize()
                                         .graphicsLayer {
-                                            alpha = conversationContentProgress
-                                            val scale = 0.98f +
-                                                (0.02f * conversationContentProgress)
-                                            scaleX = scale
-                                            scaleY = scale
+                                            val contentProgress =
+                                                conversationContentProgress.coerceIn(0f, 1f)
+                                            val dismissProgress =
+                                                emptyStateProgress.coerceIn(0f, 1f)
+                                            alpha = contentProgress
+                                            // A downward close must not zoom the SMS.
+                                            // Keep the subtle scale only for the
+                                            // explicit Minimize action.
+                                            val minimizeScale = if (showMinimizedSummary) {
+                                                0.98f + (0.02f * contentProgress)
+                                            } else {
+                                                1f
+                                            }
+                                            scaleX = minimizeScale
+                                            scaleY = minimizeScale
+                                            rotationZ = PersistentConversationSheetLayout
+                                                .DISMISS_CONTENT_ROTATION * dismissProgress
+                                            translationY = dismissTravelPx * dismissProgress
                                         }
                                         .then(
                                             if (showMinimizedSummary ||
@@ -474,7 +498,20 @@ internal fun PersistentConversationSheet(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .graphicsLayer { alpha = emptyStateProgress }
+                                        .graphicsLayer {
+                                            val progress = emptyStateProgress.coerceIn(0f, 1f)
+                                            alpha = progress
+                                            val scale = PersistentConversationSheetLayout
+                                                .EMPTY_STATE_INITIAL_SCALE + (
+                                                (1f - PersistentConversationSheetLayout
+                                                    .EMPTY_STATE_INITIAL_SCALE) * progress
+                                            )
+                                            scaleX = scale
+                                            scaleY = scale
+                                            rotationZ = PersistentConversationSheetLayout
+                                                .EMPTY_STATE_INITIAL_ROTATION * (1f - progress)
+                                            translationY = emptyStateTravelPx * (1f - progress)
+                                        }
                                         .then(
                                             if (dragDismissPreviewVisible) {
                                                 Modifier

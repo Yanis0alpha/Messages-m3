@@ -2560,7 +2560,13 @@ onOpenAccessibility = { navRoute = "accessibility" },
                                 onMinimizedStateChanged = {
                                     retainedMinimizedConversation = it
                                 },
-                                onRestoreConversation = { navRoute = "chat" }
+                                onRestoreConversation = {
+                                    // A retained chat always belongs to Messages.
+                                    // Reset a previously selected Archive tab before
+                                    // expanding so closing the chat returns to inbox.
+                                    topLevelDestination = TopLevelDestination.MESSAGES
+                                    navRoute = "chat"
+                                }
                             ) {
                                 chatContent(leaveChat, persistentSheetVisible)
                             }

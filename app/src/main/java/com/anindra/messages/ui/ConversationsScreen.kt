@@ -591,52 +591,9 @@ fun ConversationsScreen(
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize().nestedScroll(pullToReveal)) {
 
-            TopLevelHeaderDock(
-                title = stringResource(
-                    if (requestedArchived) {
-                        R.string.conversations_archived
-                    } else {
-                        R.string.conversations_messages
-                    }
-                )
-            ) {
-                if (selectionActive) {
-                    ConversationSelectionBar(
-                        selectedCount = selectedIds.size,
-                        archivingEnabled = rowSettings.archivingEnabled,
-                        onClear = { selectedIds = emptySet() },
-                        onDelete = { trashSelection() },
-                        onArchive = { archiveSelection() },
-                        onSelectAll = {
-                            selectedIds = ConversationSelection.selectAll(displayed.map { it.id })
-                        }
-                    )
-                } else {
-                    TopLevelDockSearchField(
-                        query = query,
-                        onQueryChange = {
-                            query = it
-                            searching = true
-                        },
-                        placeholder = stringResource(
-                            if (requestedArchived) {
-                                R.string.conversations_archived_search
-                            } else {
-                                R.string.conversations_search
-                            }
-                        ),
-                        onFocusChanged = { focused ->
-                            if (focused) searching = true
-                        },
-                        onClear = {
-                            query = ""
-                            searching = false
-                            searchScope = SearchScope.All
-                            focusManager.clearFocus()
-                        }
-                    )
-                }
-            }
+            // The dock is drawn outside the zooming Scaffold below. This
+            // spacer keeps list content clear of it without scaling the header.
+            Spacer(Modifier.height(TopLevelHeaderDockLayout.HEIGHT))
 
             // Part of the same frame as the header swap on purpose: growing it
             // in afterwards moved the whole list a second time, which read as
@@ -888,6 +845,56 @@ fun ConversationsScreen(
             }
         }
     }
+
+        TopLevelHeaderDock(
+            title = stringResource(
+                if (requestedArchived) {
+                    R.string.conversations_archived
+                } else {
+                    R.string.conversations_messages
+                }
+            ),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(1f)
+        ) {
+            if (selectionActive) {
+                ConversationSelectionBar(
+                    selectedCount = selectedIds.size,
+                    archivingEnabled = rowSettings.archivingEnabled,
+                    onClear = { selectedIds = emptySet() },
+                    onDelete = { trashSelection() },
+                    onArchive = { archiveSelection() },
+                    onSelectAll = {
+                        selectedIds = ConversationSelection.selectAll(displayed.map { it.id })
+                    }
+                )
+            } else {
+                TopLevelDockSearchField(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                        searching = true
+                    },
+                    placeholder = stringResource(
+                        if (requestedArchived) {
+                            R.string.conversations_archived_search
+                        } else {
+                            R.string.conversations_search
+                        }
+                    ),
+                    onFocusChanged = { focused ->
+                        if (focused) searching = true
+                    },
+                    onClear = {
+                        query = ""
+                        searching = false
+                        searchScope = SearchScope.All
+                        focusManager.clearFocus()
+                    }
+                )
+            }
+        }
 
     // Middle of the bottom edge, over the list: the FAB slot would place it at
     // the end and pad it, which is not the middle of the screen.

@@ -93,6 +93,15 @@ class MessagesNavigationBarTest {
         assertTrue(conversations.contains("scaleX = topLevelContentScale.value"))
         assertTrue(conversations.contains("scaleY = topLevelContentScale.value"))
         assertFalse(conversations.contains("alpha = topLevelContentAlpha.value"))
+        val scaledScaffold = conversations.substringAfter("Scaffold(")
+            .substringBefore("\n        TopLevelHeaderDock(")
+        assertFalse(scaledScaffold.contains("TopLevelHeaderDock("))
+        assertTrue(conversations.contains(".align(Alignment.TopCenter)\n                .zIndex(1f)"))
+        assertTrue(
+            conversations.contains(
+                "Spacer(Modifier.height(TopLevelHeaderDockLayout.HEIGHT))"
+            )
+        )
         assertTrue(conversations.contains("val shapeEntrance = remember { Animatable("))
         assertTrue(conversations.contains("targetValue = 8f"))
         assertTrue(conversations.contains("rotationZ = shapeRotation.value"))
