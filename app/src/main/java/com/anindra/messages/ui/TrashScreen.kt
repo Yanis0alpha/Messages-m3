@@ -5,7 +5,6 @@ import androidx.compose.runtime.rememberUpdatedState
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,8 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.AppViewModel
@@ -128,13 +125,13 @@ fun TrashScreen(
                 // label has to live on the icon or TalkBack has nothing to
                 // announce; left at its natural size to match the auto-delete
                 // clock beside it.
-                IconButton(onClick = { showEmptyTrashDialog = true }) {
-                    Icon(
-                        Icons.Rounded.Delete,
-                        contentDescription = stringResource(R.string.trash_empty),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
+                ExpressiveSettingsHeaderIconButton(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = stringResource(R.string.trash_empty),
+                    onClick = { showEmptyTrashDialog = true },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
         }
     ) { padding ->
@@ -292,33 +289,12 @@ fun TrashScreen(
 
 @Composable
 internal fun EmptyTrash(title: String, message: String) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(horizontal = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            Icons.Outlined.DeleteOutline,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
+    ExpressiveSettingsEmptyState(
+        icon = Icons.Outlined.DeleteOutline,
+        title = title,
+        message = message,
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Composable

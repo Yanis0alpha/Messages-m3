@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoDelete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -49,20 +47,19 @@ fun AutoDeleteDurationAction(
         stringResource(R.string.settings_retention_action_off)
     }
 
-    IconButton(onClick = { dialog = true }) {
-        Icon(
-            imageVector = Icons.Rounded.AutoDelete,
-            contentDescription = label,
-            tint = if (active) {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            } else {
-                IconTint.disabled(
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                    isSystemInDarkTheme()
-                )
-            }
-        )
-    }
+    ExpressiveSettingsHeaderIconButton(
+        imageVector = Icons.Rounded.AutoDelete,
+        contentDescription = label,
+        onClick = { dialog = true },
+        contentColor = if (active) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            IconTint.disabled(
+                MaterialTheme.colorScheme.onPrimaryContainer,
+                isSystemInDarkTheme()
+            )
+        }
+    )
 
     if (dialog) {
         AlertDialog(

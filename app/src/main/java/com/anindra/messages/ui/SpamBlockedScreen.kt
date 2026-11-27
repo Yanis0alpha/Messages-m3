@@ -3,7 +3,6 @@ package com.anindra.messages.ui
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Close
@@ -56,8 +54,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.AppViewModel
@@ -122,13 +118,13 @@ fun SpamBlockedScreen(
                 // Icon only, so the label has to live on the icon itself or
                 // TalkBack has nothing to announce. Left at its natural size to
                 // match the auto-delete clock beside it.
-                IconButton(onClick = { showEmptyDialog = true }) {
-                    Icon(
-                        Icons.Rounded.Delete,
-                        contentDescription = stringResource(R.string.spam_empty),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
+                ExpressiveSettingsHeaderIconButton(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = stringResource(R.string.spam_empty),
+                    onClick = { showEmptyDialog = true },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
         }
     ) { padding ->
@@ -315,7 +311,7 @@ internal fun MessagesTab(
     onRestore: (BlockedMessage) -> Unit
 ) {
     if (messages.isEmpty()) {
-        EmptyFolder(Icons.Outlined.DeleteOutline, stringResource(R.string.spam_blocked_messages_empty))
+        EmptyFolder(Icons.Rounded.ChatBubble, stringResource(R.string.spam_blocked_messages_empty))
         return
     }
     val context = LocalContext.current
@@ -399,25 +395,9 @@ internal fun MessagesTab(
 
 @Composable
 internal fun EmptyFolder(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(horizontal = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-    }
+    ExpressiveSettingsEmptyState(
+        icon = icon,
+        title = text,
+        modifier = Modifier.fillMaxSize()
+    )
 }

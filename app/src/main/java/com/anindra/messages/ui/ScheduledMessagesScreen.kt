@@ -3,7 +3,6 @@ package com.anindra.messages.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -126,9 +125,11 @@ fun ScheduledMessagesScreen(
         },
         actions = {
             if (!searching) {
-                IconButton(onClick = { searching = true }) {
-                    Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
-                }
+                ExpressiveSettingsHeaderIconButton(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = stringResource(R.string.icon_search),
+                    onClick = { searching = true }
+                )
             }
         }
     ) { padding ->
@@ -138,17 +139,14 @@ fun ScheduledMessagesScreen(
                 .fillMaxSize()
         ) {
             if (visible.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(
-                            if (scheduled.isEmpty()) R.string.settings_scheduled_none
-                            else R.string.settings_scheduled_no_match
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-                }
+                ExpressiveSettingsEmptyState(
+                    icon = if (scheduled.isEmpty()) Icons.Rounded.Schedule else Icons.Outlined.Search,
+                    title = stringResource(
+                        if (scheduled.isEmpty()) R.string.settings_scheduled_none
+                        else R.string.settings_scheduled_no_match
+                    ),
+                    modifier = Modifier.fillMaxSize()
+                )
             } else {
                 LazyColumn(
                     state = listState,

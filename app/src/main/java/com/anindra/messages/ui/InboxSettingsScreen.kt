@@ -351,9 +351,11 @@ internal fun InboxCategoryRulesScreen(
         title = stringResource(R.string.settings_inbox_rules_title),
         onBack = onBack,
         actions = {
-            IconButton(onClick = { adding = true }) {
-                Icon(Icons.Rounded.Add, stringResource(R.string.inbox_rules_add))
-            }
+            ExpressiveSettingsHeaderIconButton(
+                imageVector = Icons.Rounded.Add,
+                contentDescription = stringResource(R.string.inbox_rules_add),
+                onClick = { adding = true }
+            )
         }
     ) { padding ->
         Column(

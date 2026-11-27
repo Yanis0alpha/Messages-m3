@@ -103,6 +103,13 @@ class TranslucentBackdropSurfaceTest {
         val scheduled = source("java/com/anindra/messages/ui/ScheduledMessagesScreen.kt")
 
         assertTrue(chrome.contains("internal fun ExpressiveSettingsScaffold("))
+        assertTrue(chrome.contains("CenterAlignedTopAppBar("))
+        assertTrue(chrome.contains("titleContentColor = MaterialTheme.colorScheme.primary"))
+        assertTrue(chrome.contains("internal fun ExpressiveSettingsHeaderIconButton("))
+        assertTrue(chrome.contains("MaterialShapes.Cookie6Sided.toShape()"))
+        assertTrue(chrome.contains("internal fun ExpressiveSettingsEmptyState("))
+        assertTrue(chrome.contains("MaterialShapes.Cookie7Sided.toShape()"))
+        assertTrue(chrome.contains("val reduceMotion = LocalReduceMotion.current"))
         assertTrue(chrome.contains("SettingsExpressiveBackdrop()"))
         assertTrue(chrome.contains("SettingsBlurredBackdropSource()"))
         assertTrue(chrome.contains("SettingsExpressiveBackdrop(registerAsSource = false)"))
@@ -124,6 +131,14 @@ class TranslucentBackdropSurfaceTest {
         assertTrue(trash.contains("Icons.Rounded.ChatBubble"))
         assertTrue(spam.contains("Icons.Rounded.Block"))
         assertTrue(spam.contains("Icons.Rounded.ChatBubble"))
+        assertTrue(trash.contains("ExpressiveSettingsEmptyState("))
+        assertTrue(spam.contains("ExpressiveSettingsEmptyState("))
+        assertTrue(scheduled.contains("ExpressiveSettingsEmptyState("))
+        assertTrue(transfer.contains("ExpressiveSettingsEmptyState("))
+        assertTrue(trash.contains("ExpressiveSettingsHeaderIconButton("))
+        assertTrue(spam.contains("ExpressiveSettingsHeaderIconButton("))
+        assertTrue(scheduled.contains("ExpressiveSettingsHeaderIconButton("))
+        assertTrue(transfer.contains("ExpressiveSettingsHeaderIconButton("))
     }
 
     @Test

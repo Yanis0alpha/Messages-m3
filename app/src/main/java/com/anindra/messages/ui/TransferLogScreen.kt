@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
 import com.anindra.messages.data.TransferEntry
@@ -72,12 +70,13 @@ fun TransferLogScreen(
         onBack = onBack,
         actions = {
             if (entries.isNotEmpty()) {
-                IconButton(onClick = onClear) {
-                    Icon(
-                        Icons.Rounded.DeleteSweep,
-                        stringResource(R.string.transfer_log_clear)
-                    )
-                }
+                ExpressiveSettingsHeaderIconButton(
+                    imageVector = Icons.Rounded.DeleteSweep,
+                    contentDescription = stringResource(R.string.transfer_log_clear),
+                    onClick = onClear,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
         }
     ) { padding ->
@@ -110,33 +109,11 @@ fun TransferLogScreen(
 
 @Composable
 internal fun TransferLogEmpty(modifier: Modifier = Modifier) {
-    Column(
-        modifier.padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Rounded.History,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(34.dp)
-            )
-        }
-        Spacer(Modifier.height(16.dp))
-        Text(
-            stringResource(R.string.transfer_log_empty),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
+    ExpressiveSettingsEmptyState(
+        icon = Icons.Rounded.History,
+        title = stringResource(R.string.transfer_log_empty),
+        modifier = modifier
+    )
 }
 
 /**
