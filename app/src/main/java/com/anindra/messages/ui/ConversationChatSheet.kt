@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -97,10 +98,10 @@ internal fun ConversationChatSheet(
             ),
             tonalElevation = 6.dp,
             dragHandle = null,
-            // The sheet's Android window uses adjustNothing, so Material 3
-            // must reserve the IME itself. IME is zero while closed, keeping
-            // the sheet flush with the screen without adding a permanent gap.
-            contentWindowInsets = { WindowInsets.ime }
+            // Keep the 90% shell anchored to the real bottom of the window.
+            // Applying IME here would add the keyboard height to the sheet's
+            // measured surface and push its top past the 10% boundary.
+            contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
         ) {
             Box(
                 Modifier
@@ -150,7 +151,13 @@ internal fun ConversationChatSheet(
                         BottomSheetDefaults.DragHandle()
                     }
                     Box(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            // Shrink only the content above the keyboard. The
+                            // glass shell itself remains exactly 90% high and
+                            // anchored to the bottom edge of the window.
+                            .windowInsetsPadding(WindowInsets.ime),
                         propagateMinConstraints = true
                     ) {
                         content(requestDismiss)
