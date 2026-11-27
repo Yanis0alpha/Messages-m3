@@ -71,6 +71,9 @@
     <string name="settings_theme_title">انتخاب پوسته</string>
     <string name="settings_translucent_surface_opacity_title">کدری سطوح نیمه‌شفاف</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">تاری کارت‌های تنظیمات</string>
+    <string name="settings_card_blur_subtitle">پس‌زمینهٔ نمایشی پشت کارت‌های رنگی تنظیمات را تار می‌کند</string>
+    <string name="settings_card_opacity_title">کدری کارت‌های تنظیمات</string>
     <string name="settings_archiving_title">بایگانی</string>
     <string name="settings_archiving_subtitle">اجازه بایگانی گفتگوها</string>
     <string name="settings_pinned_title">گفتگوهای سنجاق‌شده</string>

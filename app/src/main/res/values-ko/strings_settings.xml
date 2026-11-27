@@ -71,6 +71,9 @@
     <string name="settings_theme_title">테마 선택</string>
     <string name="settings_translucent_surface_opacity_title">반투명 표면 불투명도</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">설정 카드 흐림</string>
+    <string name="settings_card_blur_subtitle">색상이 있는 설정 카드 뒤의 배경을 흐리게 표시합니다</string>
+    <string name="settings_card_opacity_title">설정 카드 불투명도</string>
     <string name="settings_archiving_title">보관</string>
     <string name="settings_archiving_subtitle">대화 보관 허용</string>
     <string name="settings_pinned_title">고정된 대화</string>

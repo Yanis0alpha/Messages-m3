@@ -71,6 +71,9 @@
     <string name="settings_theme_title">Elegir tema</string>
     <string name="settings_translucent_surface_opacity_title">Opacidad de las superficies translúcidas</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">Desenfoque de las tarjetas de Ajustes</string>
+    <string name="settings_card_blur_subtitle">Desenfoca el fondo expresivo detrás de las tarjetas de colores</string>
+    <string name="settings_card_opacity_title">Opacidad de las tarjetas de Ajustes</string>
     <string name="settings_archiving_title">Archivado</string>
     <string name="settings_archiving_subtitle">Permitir archivar conversaciones</string>
     <string name="settings_pinned_title">Conversaciones fijas</string>

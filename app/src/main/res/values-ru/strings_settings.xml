@@ -71,6 +71,9 @@
     <string name="settings_theme_title">Выбрать тему</string>
     <string name="settings_translucent_surface_opacity_title">Непрозрачность полупрозрачных поверхностей</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">Размытие карточек настроек</string>
+    <string name="settings_card_blur_subtitle">Размывает выразительный фон за цветными карточками настроек</string>
+    <string name="settings_card_opacity_title">Непрозрачность карточек настроек</string>
     <string name="settings_archiving_title">Архивирование</string>
     <string name="settings_archiving_subtitle">Разрешить архивирование переписок</string>
     <string name="settings_pinned_title">Закреплённые переписки</string>

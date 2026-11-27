@@ -176,6 +176,18 @@ fun SettingsScreen(
         trackRange = TranslucentSurfaceOpacity.MIN_PERCENT.toFloat()..
             TranslucentSurfaceOpacity.MAX_PERCENT.toFloat()
     )
+    var settingsCardBlurEnabled by remember(revision) {
+        mutableStateOf(vm.settings.settingsCardBlurEnabled)
+    }
+    var settingsCardOpacity by remember(revision) {
+        mutableIntStateOf(vm.settings.settingsCardOpacityPercent)
+    }
+    val settingsCardOpacitySlider = rememberSliderState(
+        value = settingsCardOpacity.toFloat(),
+        steps = TranslucentSurfaceOpacity.SLIDER_STEPS,
+        trackRange = TranslucentSurfaceOpacity.MIN_PERCENT.toFloat()..
+            TranslucentSurfaceOpacity.MAX_PERCENT.toFloat()
+    )
 
     var privacyMode by remember(revision) { mutableStateOf(vm.settings.privacyModeEnabled) }
     var appLock by remember(revision) { mutableStateOf(vm.settings.appLockEnabled) }
@@ -295,6 +307,8 @@ fun SettingsScreen(
         R.string.settings_bubbles_title,
         R.string.settings_theme_title,
         R.string.settings_translucent_surface_opacity_title,
+        R.string.settings_card_blur_title,
+        R.string.settings_card_opacity_title,
         R.string.settings_pin_sim_card,
         R.string.settings_inbox_title,
         R.string.settings_scheduled_title,
@@ -471,6 +485,45 @@ fun SettingsScreen(
                                 .semantics {
                                     contentDescription = opacityTitle
                                     stateDescription = opacityValue
+                                }
+                        )
+                    }
+                )
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.settings_card_blur_title),
+                    subtitle = stringResource(R.string.settings_card_blur_subtitle),
+                    checked = settingsCardBlurEnabled,
+                    onChecked = { enabled ->
+                        settingsCardBlurEnabled = enabled
+                        vm.settings.settingsCardBlurEnabled = enabled
+                    }
+                )
+                val cardOpacityTitle = stringResource(R.string.settings_card_opacity_title)
+                val cardOpacityValue = stringResource(
+                    R.string.settings_translucent_surface_opacity_value,
+                    settingsCardOpacity
+                )
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = cardOpacityTitle,
+                    subtitle = cardOpacityValue,
+                    preview = {
+                        Slider(
+                            state = settingsCardOpacitySlider,
+                            onValueChange = { value ->
+                                val percent = TranslucentSurfaceOpacity.fromSlider(value)
+                                settingsCardOpacitySlider.value = percent.toFloat()
+                                if (percent != settingsCardOpacity) {
+                                    settingsCardOpacity = percent
+                                    vm.settings.settingsCardOpacityPercent = percent
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = cardOpacityTitle
+                                    stateDescription = cardOpacityValue
                                 }
                         )
                     }
@@ -1197,6 +1250,7 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
 /** One full-screen Gaussian pass reused by every moving Settings card. */
 @Composable
 internal fun SettingsBlurredBackdropSource() {
+    if (!LocalSettingsCardBlurEnabled.current) return
     Box(
         Modifier
             .fillMaxSize()
@@ -1249,14 +1303,9 @@ fun GroupedRowCard(
  * configured translucency subtle in both light and dark themes.
  */
 @Composable
-internal fun settingsCardTint(seed: String): Color {
+internal fun settingsCardTint(): Color {
     val colors = MaterialTheme.colorScheme
-    val expressive = when (seed.hashCode().ushr(1) % 3) {
-        0 -> colors.primaryContainer
-        1 -> colors.secondaryContainer
-        else -> colors.tertiaryContainer
-    }
-    return lerp(expressive, colors.surfaceContainerLow, 0.18f)
+    return lerp(colors.primaryContainer, colors.surfaceContainerLow, 0.18f)
 }
 
 /** "#RRGGBB" for the SettingsColors log line; Compose channels are 0..1 floats. */
@@ -1384,7 +1433,9 @@ fun SettingsRow(
     if (!SettingsSearch.matches(rowSearchQuery, title)) return
     val effectivePosition = if (rowSearchQuery.isBlank()) position else RowPosition.SINGLE
     val contentAlpha = if (enabled) 1f else 0.38f
-    val cardTint = settingsCardTint(title)
+    val cardTint = settingsCardTint()
+    val cardBlurEnabled = LocalSettingsCardBlurEnabled.current
+    val cardAlpha = LocalSettingsCardAlpha.current
     val corners = rowCorners(effectivePosition)
     // Corner radii are pixels with no text equivalent, so publish them the way
     // the chat bubbles do (BubbleShape): a regression script can then assert a
@@ -1408,7 +1459,9 @@ fun SettingsRow(
         modifier = Modifier.fillMaxWidth(),
         blurRadius = 0.dp,
         backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
-        followMotion = true
+        followMotion = true,
+        blurEnabled = cardBlurEnabled,
+        tintAlpha = cardAlpha
     ) {
         Column(
             modifier = Modifier

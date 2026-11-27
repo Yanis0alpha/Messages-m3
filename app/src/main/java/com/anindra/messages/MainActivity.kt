@@ -107,6 +107,8 @@ import com.anindra.messages.ui.AboutScreen
 import com.anindra.messages.ui.SettingsScreen
 import com.anindra.messages.ui.MessagesNavigationBar
 import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
+import com.anindra.messages.ui.LocalSettingsCardAlpha
+import com.anindra.messages.ui.LocalSettingsCardBlurEnabled
 import com.anindra.messages.ui.TopLevelDestination
 import com.anindra.messages.ui.TopLevelDestinationTransition
 import com.anindra.messages.ui.TopLevelNavigationBarClearance
@@ -1847,6 +1849,12 @@ open class MainActivity : FragmentActivity() {
                 val translucentSurfaceAlpha = TranslucentSurfaceOpacity.alpha(
                     translucentSurfaceOpacity
                 )
+                val settingsCardBlurEnabled = settingsRevision.let {
+                    vm.settings.settingsCardBlurEnabled
+                }
+                val settingsCardAlpha = TranslucentSurfaceOpacity.alpha(
+                    settingsRevision.let { vm.settings.settingsCardOpacityPercent }
+                )
                 LaunchedEffect(translucentSurfaceOpacity, translucentSurfaceAlpha) {
                     android.util.Log.d(
                         "TranslucentSurfaceOpacity",
@@ -2551,6 +2559,8 @@ onOpenAccessibility = { navRoute = "accessibility" },
                 DynamicBackdropHost {
                     CompositionLocalProvider(
                         LocalTranslucentSurfaceAlpha provides translucentSurfaceAlpha,
+                        LocalSettingsCardBlurEnabled provides settingsCardBlurEnabled,
+                        LocalSettingsCardAlpha provides settingsCardAlpha,
                         LocalContentColor provides MaterialTheme.colorScheme.onBackground
                     ) {
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {

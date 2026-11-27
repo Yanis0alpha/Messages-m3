@@ -71,6 +71,9 @@
     <string name="settings_theme_title">اختيار المظهر</string>
     <string name="settings_translucent_surface_opacity_title">عتامة الأسطح الشفافة</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">تمويه بطاقات الإعدادات</string>
+    <string name="settings_card_blur_subtitle">تمويه الخلفية التعبيرية خلف بطاقات الإعدادات الملونة</string>
+    <string name="settings_card_opacity_title">عتامة بطاقات الإعدادات</string>
     <string name="settings_archiving_title">الأرشفة</string>
     <string name="settings_archiving_subtitle">السماح بأرشفة المحادثات</string>
     <string name="settings_pinned_title">المحادثات المثبّتة</string>

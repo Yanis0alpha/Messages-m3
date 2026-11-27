@@ -20,6 +20,8 @@ class TranslucentBackdropSurfaceTest {
         assertTrue(surface.contains(".clip(shape)"))
         assertFalse(surface.contains(".dynamicBackdropSource(backdropLayer)"))
         assertTrue(surface.contains(".dynamicBackdropEffect(blurRadius, backdropLayer, followMotion)"))
+        assertTrue(surface.contains("if (blurEnabled)"))
+        assertTrue(surface.contains("val surfaceAlpha = tintAlpha ?:"))
         assertTrue(surface.contains("tint.copy(alpha = surfaceAlpha)"))
     }
 
@@ -46,12 +48,20 @@ class TranslucentBackdropSurfaceTest {
         val settingsRow = settings.substringAfter("fun SettingsRow(")
             .substringBefore("fun SettingsFooter(")
         assertTrue(settingsRow.contains("TranslucentBackdropSurface("))
-        assertTrue(settingsRow.contains("val cardTint = settingsCardTint(title)"))
+        assertTrue(settingsRow.contains("val cardTint = settingsCardTint()"))
         assertTrue(settingsRow.contains("tint = cardTint"))
-        assertTrue(settings.contains("colors.primaryContainer"))
-        assertTrue(settings.contains("colors.secondaryContainer"))
-        assertTrue(settings.contains("colors.tertiaryContainer"))
-        assertTrue(settings.contains("lerp(expressive, colors.surfaceContainerLow, 0.18f)"))
+        assertTrue(settingsRow.contains("blurEnabled = cardBlurEnabled"))
+        assertTrue(settingsRow.contains("tintAlpha = cardAlpha"))
+        val tintHelper = settings.substringAfter("internal fun settingsCardTint()")
+            .substringBefore("/** \"#RRGGBB\"")
+        assertTrue(tintHelper.contains("colors.primaryContainer"))
+        assertFalse(tintHelper.contains("colors.secondaryContainer"))
+        assertFalse(tintHelper.contains("colors.tertiaryContainer"))
+        assertTrue(
+            tintHelper.contains(
+                "lerp(colors.primaryContainer, colors.surfaceContainerLow, 0.18f)"
+            )
+        )
         assertTrue(settings.contains("internal fun SettingsExpressiveBackdrop("))
         assertTrue(settings.contains("SettingsExpressiveBackdrop()"))
         assertTrue(settings.contains("SettingsBlurredBackdropSource()"))

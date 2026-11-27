@@ -71,6 +71,9 @@
     <string name="settings_theme_title">Design wählen</string>
     <string name="settings_translucent_surface_opacity_title">Deckkraft transparenter Flächen</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">Unschärfe der Einstellungskarten</string>
+    <string name="settings_card_blur_subtitle">Expressiven Hintergrund hinter farbigen Einstellungskarten weichzeichnen</string>
+    <string name="settings_card_opacity_title">Deckkraft der Einstellungskarten</string>
     <string name="settings_archiving_title">Archivierung</string>
     <string name="settings_archiving_subtitle">Archivieren von Unterhaltungen ermöglichen</string>
     <string name="settings_pinned_title">Angeheftete Unterhaltungen</string>

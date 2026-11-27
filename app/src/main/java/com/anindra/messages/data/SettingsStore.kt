@@ -47,6 +47,8 @@ class SettingsStore(context: Context) {
 
         const val KEY_THEME = "theme_mode"
         const val KEY_TRANSLUCENT_SURFACE_OPACITY = "translucent_surface_opacity_percent"
+        const val KEY_SETTINGS_CARD_BLUR = "settings_card_blur_enabled"
+        const val KEY_SETTINGS_CARD_OPACITY = "settings_card_opacity_percent"
         const val KEY_CALENDAR = "calendar_system"
         const val KEY_NOTIFICATIONS = "notifications_enabled"
         const val KEY_SOUNDS = "message_sounds_enabled"
@@ -175,6 +177,27 @@ class SettingsStore(context: Context) {
         set(v) {
             prefs.edit()
                 .putInt(KEY_TRANSLUCENT_SURFACE_OPACITY, TranslucentSurfaceOpacity.normalize(v))
+                .apply()
+            _revision.value++
+        }
+
+    var settingsCardBlurEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SETTINGS_CARD_BLUR, true)
+        set(v) {
+            prefs.edit().putBoolean(KEY_SETTINGS_CARD_BLUR, v).apply()
+            _revision.value++
+        }
+
+    var settingsCardOpacityPercent: Int
+        get() = TranslucentSurfaceOpacity.normalize(
+            prefs.getInt(
+                KEY_SETTINGS_CARD_OPACITY,
+                TranslucentSurfaceOpacity.DEFAULT_PERCENT
+            )
+        )
+        set(v) {
+            prefs.edit()
+                .putInt(KEY_SETTINGS_CARD_OPACITY, TranslucentSurfaceOpacity.normalize(v))
                 .apply()
             _revision.value++
         }

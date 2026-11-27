@@ -42,6 +42,29 @@ class TranslucentSurfaceOpacityTest {
     }
 
     @Test
+    fun settingsCardsHaveIndependentBlurAndOpacityControls() {
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val settings = source("java/com/anindra/messages/ui/SettingsScreen.kt")
+        val store = source("java/com/anindra/messages/data/SettingsStore.kt")
+        val style = source("java/com/anindra/messages/ui/TranslucentSurfaceStyle.kt")
+
+        assertTrue(store.contains("var settingsCardBlurEnabled: Boolean"))
+        assertTrue(store.contains("var settingsCardOpacityPercent: Int"))
+        assertTrue(settings.contains("settings_card_blur_title"))
+        assertTrue(settings.contains("settings_card_opacity_title"))
+        assertTrue(settings.contains("vm.settings.settingsCardBlurEnabled = enabled"))
+        assertTrue(settings.contains("vm.settings.settingsCardOpacityPercent = percent"))
+        assertTrue(style.contains("LocalSettingsCardBlurEnabled"))
+        assertTrue(style.contains("LocalSettingsCardAlpha"))
+        assertTrue(
+            activity.contains(
+                "LocalSettingsCardBlurEnabled provides settingsCardBlurEnabled"
+            )
+        )
+        assertTrue(activity.contains("LocalSettingsCardAlpha provides settingsCardAlpha"))
+    }
+
+    @Test
     fun oneCompositionValueFeedsEveryBlurredSurface() {
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val navigation = source("java/com/anindra/messages/ui/MessagesNavigationBar.kt")

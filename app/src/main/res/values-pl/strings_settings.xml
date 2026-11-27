@@ -71,6 +71,9 @@
     <string name="settings_theme_title">Wybierz motyw</string>
     <string name="settings_translucent_surface_opacity_title">Krycie półprzezroczystych powierzchni</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">Rozmycie kart Ustawień</string>
+    <string name="settings_card_blur_subtitle">Rozmywa ekspresyjne tło za kolorowymi kartami Ustawień</string>
+    <string name="settings_card_opacity_title">Krycie kart Ustawień</string>
     <string name="settings_archiving_title">Archiwizacja</string>
     <string name="settings_archiving_subtitle">Zezwól na archiwizowanie rozmów</string>
     <string name="settings_pinned_title">Przypięte rozmowy</string>

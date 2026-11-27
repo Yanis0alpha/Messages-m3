@@ -71,6 +71,9 @@
     <string name="settings_theme_title">थीम चुनें</string>
     <string name="settings_translucent_surface_opacity_title">पारभासी सतहों की अपारदर्शिता</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">सेटिंग कार्ड धुंधलापन</string>
+    <string name="settings_card_blur_subtitle">रंगीन सेटिंग कार्ड के पीछे की अभिव्यंजक पृष्ठभूमि धुंधली करें</string>
+    <string name="settings_card_opacity_title">सेटिंग कार्ड अपारदर्शिता</string>
     <string name="settings_archiving_title">आर्काइव</string>
     <string name="settings_archiving_subtitle">संवाद संग्रहीत करने की अनुमति दें</string>
     <string name="settings_pinned_title">पिन किए गए संवाद</string>

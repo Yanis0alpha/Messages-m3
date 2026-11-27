@@ -71,6 +71,9 @@
     <string name="settings_theme_title">Thème</string>
     <string name="settings_translucent_surface_opacity_title">Opacité des surfaces translucides</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">Flou des cartes Paramètres</string>
+    <string name="settings_card_blur_subtitle">Flouter l’arrière-plan expressif derrière les cartes colorées des Paramètres</string>
+    <string name="settings_card_opacity_title">Opacité des cartes Paramètres</string>
     <string name="settings_archiving_title">Archivage</string>
     <string name="settings_archiving_subtitle">Autoriser l\'archivage des conversations</string>
     <string name="settings_pinned_title">Conversations épinglées</string>

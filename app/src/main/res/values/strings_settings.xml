@@ -71,6 +71,9 @@
     <string name="settings_theme_title">Choose theme</string>
     <string name="settings_translucent_surface_opacity_title">Opacity of translucent surfaces</string>
     <string name="settings_translucent_surface_opacity_value">%1$d%%</string>
+    <string name="settings_card_blur_title">Settings card blur</string>
+    <string name="settings_card_blur_subtitle">Blur the expressive background behind colored Settings cards</string>
+    <string name="settings_card_opacity_title">Settings card opacity</string>
     <string name="settings_archiving_title">Archiving</string>
     <string name="settings_archiving_subtitle">Allow archiving conversations</string>
     <string name="settings_pinned_title">Pinned conversations</string>
