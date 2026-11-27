@@ -178,7 +178,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -188,6 +188,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -2983,10 +2984,10 @@ private fun ChatFabMenuItem(
         visible = true
     }
 
-    val widthProgress by animateFloatAsState(
+    val revealProgress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = motionSpring(reduceMotion),
-        label = "chatFabMenuItemWidth$order"
+        label = "chatFabMenuItemReveal$order"
     )
     val alphaProgress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
@@ -2994,69 +2995,73 @@ private fun ChatFabMenuItem(
         label = "chatFabMenuItemAlpha$order"
     )
 
-    if (visible || widthProgress > 0f || alphaProgress > 0f) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier
-                .clipToBounds()
-                .layout { measurable, constraints ->
-                    val placeable = measurable.measure(constraints)
-                    val width = (
-                        placeable.width * maxOf(widthProgress, 0f)
-                    ).roundToInt().coerceIn(
-                        constraints.minWidth,
-                        constraints.maxWidth
-                    )
-                    layout(width, placeable.height) {
-                        // Keep the trailing edge fixed while the start edge
-                        // reveals from right to left, like an M3 FAB menu item.
-                        placeable.place(width - placeable.width, 0)
-                    }
+    // Keep every item's final bounds reserved from the first popup frame. The
+    // old width-changing Layout made the DropdownMenu recompute its own width
+    // for every staggered item, so the complete menu wandered left then right.
+    Surface(
+        onClick = onClick,
+        enabled = visible,
+        modifier = Modifier
+            .drawWithContent {
+                val revealLeft = size.width * (
+                    1f - revealProgress.coerceIn(0f, 1f)
+                )
+                clipRect(
+                    left = revealLeft,
+                    top = 0f,
+                    right = size.width,
+                    bottom = size.height
+                ) {
+                    this@drawWithContent.drawContent()
                 }
-                .graphicsLayer { alpha = alphaProgress },
-            shape = CircleShape,
-            color = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            }
+            .graphicsLayer { alpha = alphaProgress },
+        shape = CircleShape,
+        color = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .onGloballyPositioned { coordinates ->
+                    val current = coordinates.positionInWindow()
+                    if (pillPosition != current) pillPosition = current
+                }
         ) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .onGloballyPositioned { coordinates ->
-                        val current = coordinates.positionInWindow()
-                        if (pillPosition != current) pillPosition = current
-                    }
-            ) {
+            // Attach each backdrop sampler only when its stagger begins. This
+            // avoids launching every pill's root capture on the opening frame.
+            if (visible) {
                 DynamicBackdropBlur(
                     backgroundRoot = backgroundRoot,
                     samplePosition = pillPosition,
                     blurRadius = 32.dp,
                     modifier = Modifier.matchParentSize()
                 )
-                Box(
-                    Modifier
-                        .matchParentSize()
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer.copy(
-                                alpha = surfaceAlpha
-                            )
+            }
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer.copy(
+                            alpha = surfaceAlpha
                         )
-                )
-                Row(
-                    modifier = Modifier
-                        .height(56.dp)
-                        .padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    icon()
-                    Text(
-                        text,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
                     )
-                    trailing?.invoke()
-                }
+            )
+            Row(
+                modifier = Modifier
+                    .height(56.dp)
+                    .padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                icon()
+                Text(
+                    text,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                trailing?.invoke()
             }
         }
     }
