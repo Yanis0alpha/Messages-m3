@@ -12,6 +12,15 @@ import org.junit.Test
 class VoiceBarTest {
 
     @Test
+    fun voiceAndDiscardArchesStartConnectedThenSeparateWhenArmed() {
+        assertEquals(72, VoiceArchGroup.IDLE_PILL_WIDTH_DP)
+        assertEquals(56, VoiceArchGroup.BUTTON_HEIGHT_DP)
+        assertEquals(2, VoiceArchGroup.gapFor(VoiceArm.NONE))
+        assertEquals(10, VoiceArchGroup.gapFor(VoiceArm.CANCEL))
+        assertTrue(VoiceArchGroup.INNER_CORNER_DP < VoiceArchGroup.OUTER_CORNER_DP)
+    }
+
+    @Test
     fun aHeldNoteOffersTheSlide() {
         val mode = VoiceBar.modeFor(VoiceArm.NONE)
         assertEquals(VoiceBarMode.HOLD, mode)

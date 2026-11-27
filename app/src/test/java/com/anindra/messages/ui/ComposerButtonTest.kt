@@ -1,14 +1,12 @@
 package com.anindra.messages.ui
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The composer's one circle keeps the accent fill whether it records or sends,
- * and only a running note leaves it. The glyph follows the mode, so the drawing
- * code never has to decide any of this twice.
+ * The composer's voice pill, recording arch and send control keep the accent.
+ * Cancellation owns the red state on its separate discard arch.
  */
 class ComposerButtonTest {
 
@@ -40,8 +38,8 @@ class ComposerButtonTest {
     }
 
     @Test
-    fun onlyARunningNoteLeavesTheAccent() {
-        assertFalse(ComposerButton.usesAccentFill(ComposerCircle.Record, recording = true))
+    fun aRunningNoteKeepsTheVoiceArchOnTheAccent() {
+        assertTrue(ComposerButton.usesAccentFill(ComposerCircle.Record, recording = true))
     }
 
     @Test

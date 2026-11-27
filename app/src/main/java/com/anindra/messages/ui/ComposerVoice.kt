@@ -11,6 +11,18 @@ import com.anindra.messages.R
  */
 internal enum class VoiceArm { NONE, CANCEL }
 
+internal object VoiceArchGroup {
+    const val IDLE_PILL_WIDTH_DP = 72
+    const val BUTTON_HEIGHT_DP = 56
+    const val CONNECTED_GAP_DP = 2
+    const val ARMED_GAP_DP = 10
+    const val INNER_CORNER_DP = 10
+    const val OUTER_CORNER_DP = 28
+
+    fun gapFor(arm: VoiceArm): Int =
+        if (arm == VoiceArm.CANCEL) ARMED_GAP_DP else CONNECTED_GAP_DP
+}
+
 internal object VoiceGesture {
 
     /** How far a finger travels before the cancel arms. */

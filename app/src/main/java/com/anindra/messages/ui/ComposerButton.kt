@@ -9,10 +9,9 @@ internal enum class ComposerGlyph { Wave, Send }
 /**
  * The composer button's state, decided once.
  *
- * WhatsApp keeps one accent-filled circle whether it records or sends, and only
- * the glyph changes; the disc turns red for the length of a note. Deciding the
- * mode, glyph and fill here keeps the drawing code from re-deriving them
- * separately and disagreeing with itself.
+ * The idle voice pill and its recording arch keep the Material You accent;
+ * cancellation owns the red state on the separate discard arch. Deciding the
+ * mode, glyph and fill here keeps drawing and gesture state in agreement.
  */
 internal object ComposerButton {
 
@@ -22,9 +21,9 @@ internal object ComposerButton {
     fun glyphFor(mode: ComposerCircle): ComposerGlyph =
         if (mode == ComposerCircle.Record) ComposerGlyph.Wave else ComposerGlyph.Send
 
-    /** True everywhere except a running note, which is red. */
-    fun usesAccentFill(mode: ComposerCircle, recording: Boolean): Boolean =
-        !(mode == ComposerCircle.Record && recording)
+    /** The voice/send control stays accented; only the discard target turns red. */
+    @Suppress("UNUSED_PARAMETER")
+    fun usesAccentFill(mode: ComposerCircle, recording: Boolean): Boolean = true
 }
 
 /** How the glyph swaps: a quarter turn with a small pinch, then a spring back. */

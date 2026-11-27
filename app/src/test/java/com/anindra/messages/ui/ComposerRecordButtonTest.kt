@@ -5,10 +5,8 @@ import org.junit.Test
 import java.io.File
 
 /**
- * WhatsApp's composer: one accent-filled circle for Record, Send and the locked
- * send, with only the glyph changing. The accent fills the circle in both idle
- * states, so the swap recolours nothing, and the disc turns red for the length
- * of a note. The input pill's fill is no longer involved.
+ * The voice control starts as an accent pill and becomes the right arch of a
+ * connected recording group. The discard arch owns the red cancellation state.
  */
 class ComposerRecordButtonTest {
 
@@ -44,29 +42,39 @@ class ComposerRecordButtonTest {
     }
 
     @Test
-    fun recordingRepaintsTheRecordButtonRed() {
+    fun voicePillMorphsIntoTwoOpposingArches() {
+        assertTrue(chat.contains("VoiceArchGroup.IDLE_PILL_WIDTH_DP.dp"))
+        assertTrue(chat.contains("topStart = voiceInnerCorner"))
+        assertTrue(chat.contains("val discardShape = RoundedCornerShape("))
+        assertTrue(chat.contains("visible = recording"))
+        assertTrue(chat.contains("horizontalArrangement = Arrangement.spacedBy(deleteGap)"))
+    }
+
+    @Test
+    fun swipingToDiscardTurnsOnlyTheDiscardArchRed() {
         assertTrue(
-            "recording must turn the record circle red",
-            chat.contains("else MaterialTheme.colorScheme.recordActive")
+            "the voice control must keep its accent while recording",
+            chat.contains("val usesAccent = ComposerButton.usesAccentFill(circleMode, recording)")
         )
         assertTrue(
-            "the glyph must switch to the ink that reads on that red",
-            chat.contains("else MaterialTheme.colorScheme.onRecordActive")
+            "the discard arch must own the error fill",
+            chat.contains("if (discardArmed) MaterialTheme.colorScheme.error")
+        )
+        assertTrue(
+            "the discard icon needs the matching readable ink",
+            chat.contains("if (discardArmed) MaterialTheme.colorScheme.onError")
         )
     }
 
     @Test
-    fun theDiscBreathesWithTheVoice() {
-        // Silent recording looked frozen; the disc carries a live meter behind
-        // it, driven by the recorder's own amplitude.
+    fun theInputPillShowsTheLiveVoiceWaveform() {
         assertTrue(
             "the composer must take the microphone level",
             chat.contains("voiceLevel: Float = 0f")
         )
-        assertTrue(
-            "the meter must be drawn behind the disc while recording",
-            chat.contains("HALO_GROWTH * voiceLevel")
-        )
+        assertTrue(chat.contains("internal fun ComposerVoiceWaveform("))
+        assertTrue(chat.contains("level = voiceLevel"))
+        assertTrue(chat.contains("label = \"composerVoiceWaveformPulse\""))
     }
 
     @Test

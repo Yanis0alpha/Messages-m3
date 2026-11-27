@@ -4357,6 +4357,44 @@ internal fun AlphanumericNotice(address: String) {
     }
 }
 
+@Composable
+internal fun ComposerVoiceWaveform(
+    level: Float,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    val reduceMotion = LocalReduceMotion.current
+    val idlePulse = if (reduceMotion) 0.25f else {
+        val pulse = rememberInfiniteTransition(label = "composerVoiceWaveform")
+        pulse.animateFloat(
+            initialValue = 0.15f,
+            targetValue = 0.55f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(520, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "composerVoiceWaveformPulse"
+        ).value
+    }
+    val energy = maxOf(level.coerceIn(0f, 1f), idlePulse)
+    val bars = remember { floatArrayOf(0.42f, 0.72f, 1f, 0.62f, 0.88f, 0.54f, 0.76f) }
+    Row(
+        modifier = modifier.height(30.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        bars.forEach { factor ->
+            val height = (5f + 23f * energy * factor).dp
+            Box(
+                Modifier
+                    .width(3.dp)
+                    .height(height)
+                    .background(tint, CircleShape)
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun InputBar(
@@ -4398,10 +4436,7 @@ internal fun InputBar(
     val reduceMotion = LocalReduceMotion.current
     var recording by remember { mutableStateOf(false) }
     var arm by remember { mutableStateOf(VoiceArm.NONE) }
-    // How far the slide has carried the bar's contents, in pixels; read only by
-    // the offset lambda so a drag costs a layout pass, not a recomposition.
-    var slideDx by remember { mutableFloatStateOf(0f) }
-    // The finger is down on the circle. The microphone only opens once that
+    // The finger is down on the voice pill. The microphone only opens once that
     // press has become a hold, so tapping the button records nothing. Named
     // apart from the send circle's own schedule-hold, which shadows a plain
     // `holding` further down this composable.
@@ -4415,7 +4450,6 @@ internal fun InputBar(
         if (!recording) return
         recording = false
         arm = VoiceArm.NONE
-        slideDx = 0f
         if (send) onVoiceFinish() else onVoiceCancel()
     }
 
@@ -4433,7 +4467,6 @@ internal fun InputBar(
         }
         recording = true
         arm = VoiceArm.NONE
-        slideDx = 0f
     }
 
     LaunchedEffect(recording) {
@@ -4658,49 +4691,27 @@ internal fun InputBar(
                         Spacer(Modifier.width(8.dp))
                     }
                 if (recording) {
-                        // Drawn over the field rather than in place of it: taking
-                        // the text field out of the composition drops its focus,
-                        // and the IME closes under a finger that is still
-                        // recording. The overlay swallows taps so the field
-                        // underneath cannot be edited mid-recording.
-                        val barMode = VoiceBar.modeFor(arm)
-                        val slideCap = with(LocalDensity.current) { 40.dp.toPx() }
-                        val thresholdPx = with(LocalDensity.current) {
-                            VoiceGesture.THRESHOLD_DP.dp.toPx()
-                        }
-                        val armedBubble = barMode == VoiceBarMode.CANCEL
-                        // The hint is a chat bubble of its own: it pops in with
-                        // the recording, stretches while it is pulled, and turns
-                        // into the error container once the release would drop
-                        // the note. Only the arm changes the colour, so the two
-                        // animations never run at frame rate.
-                        val bubbleFill by animateColorAsState(
-                            targetValue = if (armedBubble) MaterialTheme.colorScheme.errorContainer
-                            else MaterialTheme.colorScheme.surfaceContainerLowest,
-                            animationSpec = motionTween<Color>(reduceMotion, Motion.DURATION_SHORT4),
-                            label = "voiceBubbleFill"
-                        )
-                        val bubbleInk by animateColorAsState(
-                            targetValue = if (armedBubble) MaterialTheme.colorScheme.onErrorContainer
-                            else MaterialTheme.colorScheme.onSurface,
-                            animationSpec = motionTween<Color>(reduceMotion, Motion.DURATION_SHORT4),
-                            label = "voiceBubbleInk"
-                        )
-                        val bubblePop = remember {
-                            Animatable(if (reduceMotion) 1f else VoiceBar.BUBBLE_POP_FROM)
-                        }
-                        LaunchedEffect(Unit) {
-                            bubblePop.animateTo(
-                                1f,
-                                motionSpring(
-                                    reduceMotion,
-                                    ComposerSwap.DAMPING,
-                                    ComposerSwap.STIFFNESS
-                                )
-                            )
-                        }
+                    // Keep the text field composed so its IME/focus survives,
+                    // but replace its visible contents with the live voice meter.
+                    val barMode = VoiceBar.modeFor(arm)
+                    val cancelArmed = barMode == VoiceBarMode.CANCEL
+                    val meterInk by animateColorAsState(
+                        targetValue = if (cancelArmed) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        animationSpec = motionTween<Color>(
+                            reduceMotion,
+                            Motion.DURATION_SHORT4
+                        ),
+                        label = "voiceWaveformInk"
+                    )
+                    CompositionLocalProvider(
+                        LocalLayoutDirection provides LayoutDirection.Ltr
+                    ) {
                         Row(
-                            Modifier
+                            modifier = Modifier
                                 .matchParentSize()
                                 .background(MaterialTheme.colorScheme.inputPill)
                                 .pointerInput(Unit) {
@@ -4710,98 +4721,43 @@ internal fun InputBar(
                                         }
                                     }
                                 }
-                                .padding(horizontal = 12.dp),
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Google Messages' bar, measured off its own composer:
-                            // a steady white dot, the counter, the discard bin, a
-                            // left chevron and "Slide to cancel", then the red
-                            // disc. The row stays at full contrast; only an armed
-                            // cancel changes its colour.
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    // Follows the finger with a layout-only read,
-                                    // so a drag does not recompose the bar.
-                                    .offset {
-                                        IntOffset(
-                                            VoiceBar.slideOffset(slideDx, slideCap).roundToInt(),
-                                            0
-                                        )
-                                    },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                            Box(
-                                Modifier
-                                    .size(12.dp)
-                                    .background(MaterialTheme.colorScheme.onSurface, CircleShape)
-                            )
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                VoiceNotePolicy.elapsedLabel(elapsedMs),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            val cancelLabel = stringResource(R.string.chat_voice_cancel_recording)
-                            // The bin, the arrow and the hint sit in one bubble.
-                            // While the finger holds, the bin is the target the
-                            // slide is aimed at, not a button: it is drawn but
-                            // not clickable, which is exactly how Google Messages
-                            // renders it mid-hold.
-                            Row(
-                                Modifier
-                                    .weight(1f)
-                                    // Read in the layer pass, so following the
-                                    // finger costs no recomposition.
-                                    .graphicsLayer {
-                                        val pull = VoiceBar.bubbleProgress(slideDx, thresholdPx)
-                                        scaleX = bubblePop.value * VoiceBar.bubbleScaleX(pull)
-                                        scaleY = bubblePop.value * VoiceBar.bubbleScaleY(pull)
-                                    }
-                                    .background(bubbleFill, RoundedCornerShape(14.dp))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    Modifier
-                                        .size(24.dp)
-                                        .semantics { contentDescription = cancelLabel },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.DeleteOutline, null,
-                                        tint = bubbleInk,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                Icon(
-                                    Icons.Rounded.ChevronLeft, null,
-                                    tint = bubbleInk,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    stringResource(VoiceBar.hintRes(barMode)),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = bubbleInk,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    // The hint shares the row with the counter,
-                                    // so it gives way first when space runs out.
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            Spacer(Modifier.width(4.dp))
-                            }
+                        ComposerVoiceWaveform(
+                            level = voiceLevel,
+                            tint = meterInk,
+                            modifier = Modifier.width(40.dp)
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            VoiceNotePolicy.elapsedLabel(elapsedMs),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Icon(
+                            Icons.Rounded.ChevronLeft,
+                            contentDescription = null,
+                            tint = meterInk,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            stringResource(VoiceBar.hintRes(barMode)),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = meterInk,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
                         }
+                    }
                 }
             }
         }
-        // The send circle is always there, dimmed while there is nothing to
-        // send, and inert until then — combinedClickable is gated on [ready], so
-        // an empty tap cannot fire and holding it schedules nothing. Round 2 of
-        // #347 hid it instead; the row then looked unfinished on an empty chat.
+        // This trailing control is always present: Send stays compact, while an
+        // empty composer exposes the wider voice pill.
         val ready = canSend(draft, hasAttachments)
         // An empty composer has nothing to send, so the circle is the way into a
         // voice note instead — the same swap Google Messages makes, and the only
@@ -4834,10 +4790,8 @@ internal fun InputBar(
             holding = false
         }
         Spacer(Modifier.width(8.dp))
-        // One slot, three meanings: record, send, and send-for-a-locked-note.
-        // WhatsApp's composer keeps one accent-filled circle through all three
-        // and swaps only the glyph, so the button never blinks out of the row.
-        // The disc turns red for the length of a note and for nothing else.
+        // One slot, two resting meanings: the wide voice pill or compact Send.
+        // Holding voice morphs it into the right arch and reveals discard on its left.
         val circleMode = ComposerButton.modeFor(micMode)
         val glyph = ComposerButton.glyphFor(circleMode)
         val voiceLabel = stringResource(R.string.icon_voice)
@@ -4858,8 +4812,56 @@ internal fun InputBar(
             animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4),
             label = "composerDiscInk"
         )
-        // The disc's resolved colour and glyph have no text equivalent, so they
-        // name themselves; scripts assert the WhatsApp-parity palette here.
+        val voiceWidth by animateDpAsState(
+            targetValue = if (circleMode == ComposerCircle.Record && !recording) {
+                VoiceArchGroup.IDLE_PILL_WIDTH_DP.dp
+            } else {
+                VoiceArchGroup.BUTTON_HEIGHT_DP.dp
+            },
+            animationSpec = motionSpring(reduceMotion),
+            label = "voicePillWidth"
+        )
+        val voiceInnerCorner by animateDpAsState(
+            targetValue = if (recording) {
+                VoiceArchGroup.INNER_CORNER_DP.dp
+            } else {
+                VoiceArchGroup.OUTER_CORNER_DP.dp
+            },
+            animationSpec = motionSpring(reduceMotion),
+            label = "voiceArchInnerCorner"
+        )
+        val voiceShape = RoundedCornerShape(
+            topStart = voiceInnerCorner,
+            topEnd = VoiceArchGroup.OUTER_CORNER_DP.dp,
+            bottomEnd = VoiceArchGroup.OUTER_CORNER_DP.dp,
+            bottomStart = voiceInnerCorner
+        )
+        val discardShape = RoundedCornerShape(
+            topStart = VoiceArchGroup.OUTER_CORNER_DP.dp,
+            topEnd = VoiceArchGroup.INNER_CORNER_DP.dp,
+            bottomEnd = VoiceArchGroup.INNER_CORNER_DP.dp,
+            bottomStart = VoiceArchGroup.OUTER_CORNER_DP.dp
+        )
+        val deleteGap by animateDpAsState(
+            targetValue = if (recording) VoiceArchGroup.gapFor(arm).dp else 0.dp,
+            animationSpec = motionSpring(reduceMotion),
+            label = "voiceArchGap"
+        )
+        val discardArmed = arm == VoiceArm.CANCEL
+        val discardFill by animateColorAsState(
+            targetValue = if (discardArmed) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.secondaryContainer,
+            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4),
+            label = "voiceDiscardFill"
+        )
+        val discardInk by animateColorAsState(
+            targetValue = if (discardArmed) MaterialTheme.colorScheme.onError
+            else MaterialTheme.colorScheme.onSecondaryContainer,
+            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4),
+            label = "voiceDiscardInk"
+        )
+        // The control's resolved colour and glyph have no text equivalent, so
+        // they name themselves for visual regression scripts.
         LaunchedEffect(circleMode, glyph, recording, fillTarget, inkTarget) {
             android.util.Log.d(
                 "VoiceButton",
@@ -4873,168 +4875,176 @@ internal fun InputBar(
                     )
             )
         }
-        Box(
-            Modifier
-                .size(56.dp)
-                .graphicsLayer {
-                    alpha = present
-                    // Only Send shrinks under a long press; the hold-to-record
-                    // disc has its own halo and must stay put under the finger.
-                    scaleX = if (circleMode == ComposerCircle.Send) holdScale else 1f
-                    scaleY = scaleX
-                }
-                .background(discColor, CircleShape)
-                // Record keeps the press-and-hold gesture; an empty composer's
-                // send circle is inert until there is something to send or a
-                // long press to schedule.
-                .then(
-                    when (circleMode) {
-                        ComposerCircle.Record -> Modifier.pointerInput(voiceMaxSeconds) {
-                            awaitEachGesture {
-                                val down = awaitFirstDown(requireUnconsumed = false)
-                                down.consume()
-                                micHeld = true
-                                var dragX = 0f
-                                var peakPull = 0f
-                                val threshold = VoiceGesture.THRESHOLD_DP.dp.toPx()
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    // Follow the finger that started the note; a
-                                    // second pointer (a palm, or a tap on the
-                                    // overlay) must not stall the drag.
-                                    val change = event.changes.firstOrNull { it.id == down.id }
-                                        ?: event.changes.first()
-                                    if (!change.pressed) {
-                                        change.consume()
-                                        break
-                                    }
-                                    dragX += change.positionChange().x
-                                    // Nothing is armed until the microphone is
-                                    // actually open; before that this is a tap.
-                                    if (recording) {
-                                        slideDx = dragX
-                                        peakPull = maxOf(
-                                            peakPull,
-                                            VoiceBar.bubbleProgress(dragX, threshold)
-                                        )
-                                        arm = VoiceGesture.armFor(dragX, threshold)
-                                    }
-                                    change.consume()
-                                }
-                                micHeld = false
-                                // A press shorter than the hold delay never
-                                // opened the microphone, so there is no note to
-                                // send and nothing to clean up.
-                                if (!recording) return@awaitEachGesture
-                                // The bubble's stretch is pixels, which a UI
-                                // dump cannot see; the pull that reached it is
-                                // what the regression script asserts instead.
-                                android.util.Log.d(
-                                    "VoiceBubble",
-                                    String.format(
-                                        java.util.Locale.ROOT,
-                                        "peak=%.2f armed=%b",
-                                        peakPull,
-                                        arm == VoiceArm.CANCEL
-                                    )
-                                )
-                                stopRecording(send = arm != VoiceArm.CANCEL)
-                            }
-                        }
-                        ComposerCircle.Send -> Modifier.combinedClickable(
-                            enabled = ready,
-                            onClick = onSend,
-                            onLongClick = if (schedulingEnabled) ({ holding = true }) else null
-                        )
-                    }
-                )
-                .semantics {
-                    contentDescription =
-                        if (circleMode == ComposerCircle.Record) voiceLabel else sendLabel
-                },
-            contentAlignment = Alignment.Center
+        CompositionLocalProvider(
+            LocalLayoutDirection provides LayoutDirection.Ltr
         ) {
-                // The live meter: a translucent ring that grows with the voice,
-                // so a recording has motion while the finger is down.
-                if (recording) {
-                    // A quiet microphone would otherwise leave the meter frozen,
-                    // so the ring also breathes on its own; the voice rides on top
-                    // of that. Reduce motion keeps it at a still, faint ring.
-                    val breathe = if (reduceMotion) 0f else {
-                        val pulse = rememberInfiniteTransition(label = "recordHalo")
-                        pulse.animateFloat(
-                            initialValue = 0f,
-                            targetValue = 1f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(900, easing = LinearEasing),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "recordHaloPulse"
-                        ).value
-                    }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(deleteGap),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AnimatedVisibility(
+                    visible = recording,
+                    enter = fadeIn(motionTween(reduceMotion, Motion.DURATION_SHORT4)) +
+                        scaleIn(
+                            initialScale = 0.6f,
+                            transformOrigin = TransformOrigin(1f, 0.5f),
+                            animationSpec = motionSpring(reduceMotion)
+                        ),
+                    exit = fadeOut(motionTween(reduceMotion, Motion.DURATION_SHORT4)) +
+                        scaleOut(
+                            targetScale = 0.6f,
+                            transformOrigin = TransformOrigin(1f, 0.5f),
+                            animationSpec = motionTween(reduceMotion, Motion.DURATION_SHORT4)
+                        )
+                ) {
+                    val cancelLabel = stringResource(R.string.chat_voice_cancel_recording)
                     Box(
-                        Modifier
-                            .matchParentSize()
-                            .graphicsLayer {
-                                val grow = 1f + HALO_GROWTH * voiceLevel + HALO_BREATHE_GROWTH * breathe
-                                scaleX = grow
-                                scaleY = grow
-                            }
-                            .background(
-                                MaterialTheme.colorScheme.recordActive.copy(
-                                    alpha = HALO_MIN_ALPHA + HALO_ALPHA * voiceLevel +
-                                        HALO_BREATHE_ALPHA * breathe
-                                ),
-                                CircleShape
-                            )
-                    )
-                }
-            AnimatedContent(
-                targetState = glyph,
-                transitionSpec = {
-                    val spec = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
-                    val settle = motionSpring<Float>(
-                        reduceMotion, ComposerSwap.DAMPING, ComposerSwap.STIFFNESS
-                    )
-                    // WhatsApp pinches the old glyph out and springs the new one
-                    // in; the settle overshoots a little so the swap has weight.
-                    (fadeIn(settle) +
-                        scaleIn(initialScale = ComposerSwap.SCALE, animationSpec = settle))
-                        .togetherWith(
-                            fadeOut(spec) +
-                                scaleOut(targetScale = ComposerSwap.SCALE, animationSpec = spec)
-                        )
-                },
-                label = "composerGlyph"
-            ) { shown ->
-                // This Compose version has no rotateIn/rotateOut, so the turn
-                // comes from the content scope's own transition: the outgoing
-                // glyph spins away to one side and the incoming one unwinds from
-                // the other, reading as one circle turning over.
-                val turn by transition.animateFloat(
-                    transitionSpec = { motionTween(reduceMotion, Motion.DURATION_SHORT4) },
-                    label = "composerGlyphTurn"
-                ) { state ->
-                    if (reduceMotion) 0f else when (state) {
-                        EnterExitState.PreEnter -> -ComposerSwap.TURN_DEGREES
-                        EnterExitState.PostExit -> ComposerSwap.TURN_DEGREES
-                        else -> 0f
-                    }
-                }
-                Box(Modifier.graphicsLayer { rotationZ = turn }) {
-                    when (shown) {
-                        ComposerGlyph.Wave -> Icon(
-                            painterResource(R.drawable.ic_voice_wave), null,
-                            tint = discInk,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        ComposerGlyph.Send -> Icon(
-                            Icons.AutoMirrored.Rounded.Send, null,
-                            tint = discInk,
+                        modifier = Modifier
+                            .size(VoiceArchGroup.BUTTON_HEIGHT_DP.dp)
+                            .background(discardFill, discardShape)
+                            .semantics { contentDescription = cancelLabel },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Rounded.DeleteOutline,
+                            contentDescription = null,
+                            tint = discardInk,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
+                Box(
+                    modifier = Modifier
+                        .width(voiceWidth)
+                        .height(VoiceArchGroup.BUTTON_HEIGHT_DP.dp)
+                        .graphicsLayer {
+                            alpha = present
+                            // Only Send shrinks for scheduling; voice stays under the
+                            // finger while its pill morphs into the right recording arch.
+                            scaleX = if (circleMode == ComposerCircle.Send) holdScale else 1f
+                            scaleY = scaleX
+                        }
+                        .background(discColor, voiceShape)
+                        // Record keeps the press-and-hold gesture; an empty composer's
+                        // send control is inert until there is something to send or a
+                        // long press to schedule.
+                        .then(
+                            when (circleMode) {
+                                ComposerCircle.Record -> Modifier.pointerInput(voiceMaxSeconds) {
+                                    awaitEachGesture {
+                                        val down = awaitFirstDown(requireUnconsumed = false)
+                                        down.consume()
+                                        micHeld = true
+                                        var dragX = 0f
+                                        var peakPull = 0f
+                                        val threshold = VoiceGesture.THRESHOLD_DP.dp.toPx()
+                                        while (true) {
+                                            val event = awaitPointerEvent()
+                                            // Follow the finger that started the note; a
+                                            // second pointer must not stall the drag.
+                                            val change = event.changes.firstOrNull { it.id == down.id }
+                                                ?: event.changes.first()
+                                            if (!change.pressed) {
+                                                change.consume()
+                                                break
+                                            }
+                                            dragX += change.positionChange().x
+                                            // Before the microphone opens this is only a tap.
+                                            if (recording) {
+                                                peakPull = maxOf(
+                                                    peakPull,
+                                                    VoiceBar.bubbleProgress(dragX, threshold)
+                                                )
+                                                arm = VoiceGesture.armFor(dragX, threshold)
+                                            }
+                                            change.consume()
+                                        }
+                                        micHeld = false
+                                        // A short press opened no recording to finish.
+                                        if (!recording) return@awaitEachGesture
+                                        android.util.Log.d(
+                                            "VoiceBubble",
+                                            String.format(
+                                                java.util.Locale.ROOT,
+                                                "peak=%.2f armed=%b",
+                                                peakPull,
+                                                arm == VoiceArm.CANCEL
+                                            )
+                                        )
+                                        stopRecording(send = arm != VoiceArm.CANCEL)
+                                    }
+                                }
+                                ComposerCircle.Send -> Modifier.combinedClickable(
+                                    enabled = ready,
+                                    onClick = onSend,
+                                    onLongClick = if (schedulingEnabled) ({ holding = true }) else null
+                                )
+                            }
+                        )
+                        .semantics {
+                            contentDescription = if (circleMode == ComposerCircle.Record) {
+                                voiceLabel
+                            } else {
+                                sendLabel
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    // The live waveform is inside the input pill; this arch stays
+                    // still under the finger so the recording target remains clear.
+                    AnimatedContent(
+                        targetState = glyph,
+                        transitionSpec = {
+                            val spec = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
+                            val settle = motionSpring<Float>(
+                                reduceMotion,
+                                ComposerSwap.DAMPING,
+                                ComposerSwap.STIFFNESS
+                            )
+                            (fadeIn(settle) +
+                                scaleIn(
+                                    initialScale = ComposerSwap.SCALE,
+                                    animationSpec = settle
+                                )).togetherWith(
+                                fadeOut(spec) + scaleOut(
+                                    targetScale = ComposerSwap.SCALE,
+                                    animationSpec = spec
+                                )
+                            )
+                        },
+                        label = "composerGlyph"
+                    ) { shown ->
+                        val turn by transition.animateFloat(
+                            transitionSpec = {
+                                motionTween(reduceMotion, Motion.DURATION_SHORT4)
+                            },
+                            label = "composerGlyphTurn"
+                        ) { state ->
+                            if (reduceMotion) 0f else when (state) {
+                                EnterExitState.PreEnter -> -ComposerSwap.TURN_DEGREES
+                                EnterExitState.PostExit -> ComposerSwap.TURN_DEGREES
+                                else -> 0f
+                            }
+                        }
+                        Box(Modifier.graphicsLayer { rotationZ = turn }) {
+                            when (shown) {
+                                ComposerGlyph.Wave -> Icon(
+                                    painterResource(R.drawable.ic_voice_wave),
+                                    contentDescription = null,
+                                    tint = discInk,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                ComposerGlyph.Send -> Icon(
+                                    Icons.AutoMirrored.Rounded.Send,
+                                    contentDescription = null,
+                                    tint = discInk,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
             }
         }
             }
@@ -5078,16 +5088,6 @@ internal fun SuggestionChips(
         }
     }
 }
-
-/** How far a finger has to travel before releasing a recording cancels it. */
-private const val SLIDE_CANCEL_DP = 72
-
-/** The live meter behind the record disc: growth and opacity against the voice. */
-private const val HALO_GROWTH = 0.45f
-private const val HALO_MIN_ALPHA = 0.22f
-private const val HALO_ALPHA = 0.35f
-private const val HALO_BREATHE_GROWTH = 0.22f
-private const val HALO_BREATHE_ALPHA = 0.20f
 
 @Composable
 internal fun SimPickerDialog(

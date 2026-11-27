@@ -8,9 +8,8 @@ import java.io.File
 
 /**
  * The composer is a pill: its corner radius is half its height, and its height
- * matches the 56dp send/record circle beside it. Google Messages' own composer
- * row measures 56dp tall in a uiautomator dump (field `[..,2032][..,2186]` on a
- * 440dpi screen), circle included.
+ * matches the 56dp send/voice control beside it. During recording that control
+ * becomes two opposing arches without changing the row height.
  *
  * The rule is asserted rather than the numbers, so restyling the bar only has to
  * keep the corner and the height in proportion.
@@ -52,17 +51,16 @@ class ComposerShapeTest {
     }
 
     @Test
-    fun thePillMatchesTheSendCircle() {
+    fun thePillMatchesTheSendAndVoiceControl() {
         assertTrue(
-            "the composer pill must be as tall as the circle beside it",
+            "the composer pill must remain 56dp tall",
             chat.contains("Modifier.fillMaxWidth().heightIn(min = 56.dp)")
         )
-        // Record, Send and the locked send share one circle now, so there is a
-        // single 56dp box behind every state rather than one per branch.
+        assertEquals(56, VoiceArchGroup.BUTTON_HEIGHT_DP)
         assertTrue(
-            "the one composer circle must be that same height",
-            Regex("""\.size\(56\.dp\)[\s\S]{0,900}?\.background\(discColor, CircleShape\)""")
-                .containsMatchIn(chat)
+            "the trailing control must use that same height through its morph",
+            chat.contains(".height(VoiceArchGroup.BUTTON_HEIGHT_DP.dp)") &&
+                chat.contains(".background(discColor, voiceShape)")
         )
     }
 }
