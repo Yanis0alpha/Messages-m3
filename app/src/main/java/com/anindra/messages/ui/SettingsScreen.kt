@@ -79,6 +79,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalFocusManager
@@ -1242,9 +1243,21 @@ fun GroupedRowCard(
     }
 }
 
-/* Keep the darker Google Messages row role as the tint of each glass card.
- * The shared opacity and backdrop blur now let expressive shapes remain visible
- * without changing the semantic Material color used by text and controls. */
+/**
+ * A stable, light Material You tint for Settings cards. Dynamic colour supplies the three
+ * expressive containers; nudging each toward the neutral surface keeps text readable and the
+ * configured translucency subtle in both light and dark themes.
+ */
+@Composable
+internal fun settingsCardTint(seed: String): Color {
+    val colors = MaterialTheme.colorScheme
+    val expressive = when (seed.hashCode().ushr(1) % 3) {
+        0 -> colors.primaryContainer
+        1 -> colors.secondaryContainer
+        else -> colors.tertiaryContainer
+    }
+    return lerp(expressive, colors.surfaceContainerLow, 0.18f)
+}
 
 /** "#RRGGBB" for the SettingsColors log line; Compose channels are 0..1 floats. */
 internal fun hexColor(c: androidx.compose.ui.graphics.Color): String = "#%02X%02X%02X".format(
@@ -1371,6 +1384,7 @@ fun SettingsRow(
     if (!SettingsSearch.matches(rowSearchQuery, title)) return
     val effectivePosition = if (rowSearchQuery.isBlank()) position else RowPosition.SINGLE
     val contentAlpha = if (enabled) 1f else 0.38f
+    val cardTint = settingsCardTint(title)
     val corners = rowCorners(effectivePosition)
     // Corner radii are pixels with no text equivalent, so publish them the way
     // the chat bubbles do (BubbleShape): a regression script can then assert a
@@ -1390,7 +1404,7 @@ fun SettingsRow(
             bottomEnd = corners.bottomEnd,
             bottomStart = corners.bottomStart
         ),
-        tint = MaterialTheme.colorScheme.background,
+        tint = cardTint,
         modifier = Modifier.fillMaxWidth(),
         blurRadius = 0.dp,
         backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
