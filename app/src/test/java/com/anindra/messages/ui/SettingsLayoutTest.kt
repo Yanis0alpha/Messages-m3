@@ -106,6 +106,9 @@ class SettingsLayoutTest {
         assertEquals(56.dp, SettingsLayout.ROW_HEIGHT_TITLE_ONLY)
         assertEquals(76.dp, SettingsLayout.ROW_HEIGHT_WITH_SUBTITLE)
         assertEquals(12.dp, SettingsLayout.LARGE_TARGET_GROWTH)
+        assertEquals(48.dp, SettingsLayout.SWIPE_ACTION_SHAPE_SIZE)
+        assertEquals(36.dp, SettingsLayout.SWIPE_ACTION_SHAPE_TRAVEL)
+        assertEquals(220f, SettingsLayout.SWIPE_ACTION_SHAPE_TURN_DEGREES, 0f)
         assertEquals(6.dp, SettingsLayout.FOOTER_TOP_GAP)
         assertEquals(20.dp, SettingsLayout.FOOTER_BOTTOM_GAP)
     }

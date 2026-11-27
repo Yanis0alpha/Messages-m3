@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,12 +41,12 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -54,6 +56,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
@@ -74,6 +77,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalFocusManager
@@ -354,6 +358,8 @@ fun SettingsScreen(
         }
 
         Box(Modifier.padding(padding).fillMaxSize()) {
+            SettingsExpressiveBackdrop()
+
             Column(
                 Modifier
                     .fillMaxSize()
@@ -1070,6 +1076,70 @@ fun SettingsScreen(
     }
 }
 
+/** Expressive silhouettes scattered behind the fixed glass settings surfaces. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun SettingsExpressiveBackdrop() {
+    val colors = MaterialTheme.colorScheme
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .align(Alignment.TopStart)
+                .offset(x = (-54).dp, y = 92.dp)
+                .size(176.dp)
+                .rotate(-16f)
+                .background(
+                    colors.primaryContainer.copy(alpha = 0.34f),
+                    MaterialShapes.Cookie12Sided.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 42.dp, y = 258.dp)
+                .size(138.dp)
+                .rotate(21f)
+                .background(
+                    colors.tertiaryContainer.copy(alpha = 0.30f),
+                    MaterialShapes.Clover8Leaf.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = (-46).dp, y = 34.dp)
+                .size(126.dp)
+                .rotate(11f)
+                .background(
+                    colors.secondaryContainer.copy(alpha = 0.28f),
+                    MaterialShapes.Sunny.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = 62.dp, y = (-38).dp)
+                .size(184.dp)
+                .rotate(-24f)
+                .background(
+                    colors.primaryContainer.copy(alpha = 0.30f),
+                    MaterialShapes.Gem.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .offset(x = (-82).dp, y = 70.dp)
+                .size(154.dp)
+                .rotate(17f)
+                .background(
+                    colors.tertiaryContainer.copy(alpha = 0.28f),
+                    MaterialShapes.Cookie9Sided.toShape()
+                )
+        )
+    }
+}
+
 /**
  * A run of settings rows separated by a small gap. Each row draws its own card;
  * the group itself is only the vertical rhythm, so a group's outer rows are
@@ -1087,26 +1157,23 @@ fun GroupedRowCard(
     content: @Composable () -> Unit
 ) {
     val corners = rowCorners(position)
-    Card(
+    TranslucentBackdropSurface(
         shape = RoundedCornerShape(
             topStart = corners.topStart,
             topEnd = corners.topEnd,
             bottomEnd = corners.bottomEnd,
             bottomStart = corners.bottomStart
         ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        tint = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxWidth()
     ) {
         content()
     }
 }
 
-/* Google Messages puts its settings rows *darker* than the sheet they sit on —
- * page #1E1F20, row #131314 — so every settings screen paints the sheet in
- * surfaceContainer and every SettingsRow paints the page background. One rule,
- * in SettingsRow, so no screen can drift from another. */
+/* Keep the darker Google Messages row role as the tint of each glass card.
+ * The shared opacity and backdrop blur now let expressive shapes remain visible
+ * without changing the semantic Material color used by text and controls. */
 
 /** "#RRGGBB" for the SettingsColors log line; Compose channels are 0..1 floats. */
 internal fun hexColor(c: androidx.compose.ui.graphics.Color): String = "#%02X%02X%02X".format(
@@ -1132,11 +1199,9 @@ fun GroupedRowList(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Card(
+    TranslucentBackdropSurface(
         shape = RoundedCornerShape(SettingsLayout.OUTER_RADIUS),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        tint = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxWidth()
     ) {
         Column { content() }
@@ -1244,16 +1309,14 @@ fun SettingsRow(
                 "bottomStart=${corners.bottomStart.value} bottomEnd=${corners.bottomEnd.value}"
         )
     }
-    Card(
+    TranslucentBackdropSurface(
         shape = RoundedCornerShape(
             topStart = corners.topStart,
             topEnd = corners.topEnd,
             bottomEnd = corners.bottomEnd,
             bottomStart = corners.bottomStart
         ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ),
+        tint = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(

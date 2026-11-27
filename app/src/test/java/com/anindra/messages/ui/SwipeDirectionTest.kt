@@ -84,14 +84,16 @@ class SwipeDirectionTest {
     }
 
     @Test
-    fun iconFitsInsideThePreviewBlock() {
-        // The block hugs the row edge, so the inset plus the icon on both sides
-        // has to fit inside it or the glyph is clipped.
-        val needed = SettingsLayout.SWIPE_ICON_INSET * 2 + SettingsLayout.SWIPE_ICON_SIZE
+    fun expressiveShapeFitsInsideThePreviewBlock() {
+        // The block hugs the row edge, so the inset and the expressive action
+        // container must fit without clipping its selected action glyph.
+        val needed = SettingsLayout.SWIPE_ICON_INSET * 2 +
+            SettingsLayout.SWIPE_ACTION_SHAPE_SIZE
         assertTrue(
-            "icon needs $needed but the block is only ${SettingsLayout.PREVIEW_BLOCK_WIDTH}",
+            "action shape needs $needed but the block is only ${SettingsLayout.PREVIEW_BLOCK_WIDTH}",
             needed <= SettingsLayout.PREVIEW_BLOCK_WIDTH
         )
+        assertTrue(SettingsLayout.SWIPE_ICON_SIZE < SettingsLayout.SWIPE_ACTION_SHAPE_SIZE)
     }
 
     @Test

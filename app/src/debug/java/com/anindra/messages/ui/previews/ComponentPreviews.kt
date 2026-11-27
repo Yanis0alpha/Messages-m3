@@ -63,6 +63,7 @@ import com.anindra.messages.ui.PersistentConversationEmptyState
 import com.anindra.messages.ui.PersistentConversationSheet
 import com.anindra.messages.ui.ProvideShimmer
 import com.anindra.messages.ui.RowPosition
+import com.anindra.messages.ui.SettingsExpressiveBackdrop
 import com.anindra.messages.ui.SettingsRow
 import com.anindra.messages.ui.SkeletonConversationRow
 import com.anindra.messages.ui.SwipeActionPreview
@@ -254,6 +255,47 @@ private fun ConversationChatSheetPreview() {
                         "The blurred inbox and its navigation remain visible through the sheet."
                     )
                 }
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Expressive glass settings", showBackground = true, widthDp = 380, heightDp = 520)
+@Composable
+private fun SettingsExpressiveBackdropPreview() {
+    MessagesTheme(mode = "system") {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            SettingsExpressiveBackdrop()
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                SettingsRow(
+                    title = "Notifications",
+                    subtitle = "Sound and alerts",
+                    checked = true,
+                    onChecked = {},
+                    position = RowPosition.FIRST
+                )
+                SettingsRow(
+                    title = "Choose theme",
+                    subtitle = "System default",
+                    onClick = {},
+                    position = RowPosition.MIDDLE
+                )
+                SettingsRow(
+                    title = "About",
+                    subtitle = "Messages",
+                    onClick = {},
+                    position = RowPosition.LAST
+                )
             }
         }
     }

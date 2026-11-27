@@ -133,4 +133,33 @@ class RtlSwipeMappingTest {
         // from; a leftward swipe must show it on the right in RTL as well as LTR.
         assertEquals(RevealSide.RIGHT, SwipeDirection.LEFT.revealedSide())
     }
+
+    @Test
+    fun aLeftSwipeRollsTheExpressiveShapeTowardThePhysicalRight() {
+        assertEquals(-1f, rollingSwipeShapeTranslation(0f, RevealSide.RIGHT), 0f)
+        assertEquals(-0.5f, rollingSwipeShapeTranslation(0.5f, RevealSide.RIGHT), 0f)
+        assertEquals(0f, rollingSwipeShapeTranslation(1f, RevealSide.RIGHT), 0f)
+        assertEquals(
+            -SettingsLayout.SWIPE_ACTION_SHAPE_TURN_DEGREES,
+            rollingSwipeShapeRotation(0f, RevealSide.RIGHT),
+            0f
+        )
+        assertEquals(0f, rollingSwipeShapeRotation(1f, RevealSide.RIGHT), 0f)
+    }
+
+    @Test
+    fun aRightSwipeUsesTheExactInverseRoll() {
+        listOf(0f, 0.25f, 0.5f, 1f).forEach { progress ->
+            assertEquals(
+                -rollingSwipeShapeTranslation(progress, RevealSide.RIGHT),
+                rollingSwipeShapeTranslation(progress, RevealSide.LEFT),
+                0f
+            )
+            assertEquals(
+                -rollingSwipeShapeRotation(progress, RevealSide.RIGHT),
+                rollingSwipeShapeRotation(progress, RevealSide.LEFT),
+                0f
+            )
+        }
+    }
 }

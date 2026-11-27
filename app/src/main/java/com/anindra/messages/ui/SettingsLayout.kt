@@ -109,6 +109,15 @@ object SettingsLayout {
     /** Side of the swipe action's icon. */
     val SWIPE_ICON_SIZE: Dp = 24.dp
 
+    /** Expressive container that rolls behind a swiped conversation. */
+    val SWIPE_ACTION_SHAPE_SIZE: Dp = 48.dp
+
+    /** Distance the shape travels towards the edge uncovered by the swipe. */
+    val SWIPE_ACTION_SHAPE_TRAVEL: Dp = 36.dp
+
+    /** Rotation used to make the expressive container visibly roll. */
+    const val SWIPE_ACTION_SHAPE_TURN_DEGREES = 220f
+
     /**
      * Inset of the action icon from the row's leading edge. Shared by the real
      * gesture and its preview so the preview cannot advertise a different
@@ -195,6 +204,23 @@ fun dragRevealedSide(direction: SwipeToDismissBoxValue): RevealSide? = when (dir
     SwipeToDismissBoxValue.StartToEnd -> RevealSide.LEFT
     SwipeToDismissBoxValue.EndToStart -> RevealSide.RIGHT
     SwipeToDismissBoxValue.Settled -> null
+}
+
+/**
+ * Gesture-linked travel for the expressive action shape. A leftward swipe
+ * reveals [RevealSide.RIGHT], so the value grows from -1 to 0 and the shape
+ * rolls physically right; the other direction is its exact inverse.
+ */
+fun rollingSwipeShapeTranslation(progress: Float, revealedSide: RevealSide): Float {
+    val remaining = 1f - progress.coerceIn(0f, 1f)
+    return if (revealedSide == RevealSide.RIGHT) -remaining else remaining
+}
+
+/** Rotation matching [rollingSwipeShapeTranslation]'s physical direction. */
+fun rollingSwipeShapeRotation(progress: Float, revealedSide: RevealSide): Float {
+    val direction = if (revealedSide == RevealSide.RIGHT) -1f else 1f
+    return direction * (1f - progress.coerceIn(0f, 1f)) *
+        SettingsLayout.SWIPE_ACTION_SHAPE_TURN_DEGREES
 }
 
 /** The action a settled row performs, translated from its layout-relative value. */

@@ -94,6 +94,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -163,6 +164,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -1165,6 +1167,7 @@ internal fun SwipeConversationItem(
     position: RowPosition = RowPosition.SINGLE
 ) {
     var dismissStateRef: SwipeToDismissBoxState? = null
+    var swipeWidthPx by remember { mutableFloatStateOf(1f) }
     val dismissState = rememberSwipeToDismissBoxState(
         positionalThreshold = { total -> total * SettingsLayout.SWIPE_COMMIT_FRACTION },
         confirmValueChange = { value ->
@@ -1179,7 +1182,9 @@ internal fun SwipeConversationItem(
 
     SwipeToDismissBox(
         state = dismissState,
-        modifier = modifier,
+        modifier = modifier.onSizeChanged { size ->
+            swipeWidthPx = size.width.coerceAtLeast(1).toFloat()
+        },
         backgroundContent = {
             val direction = dismissState.dismissDirection
             val action = dragSwipeAction(
@@ -1187,11 +1192,21 @@ internal fun SwipeConversationItem(
             )
             val revealed = dragRevealedSide(direction)
             val iconAtPhysicalLeft = revealed == RevealSide.LEFT
+            val reduceMotion = LocalReduceMotion.current
+            val actionColor = action.background()
+            val gestureProgress = (
+                abs(runCatching { dismissState.requireOffset() }.getOrDefault(0f)) /
+                    swipeWidthPx
+            ).coerceIn(0f, 1f)
+            val shapeProgress = if (reduceMotion) 1f else gestureProgress
+            val shapeTravelPx = with(LocalDensity.current) {
+                SettingsLayout.SWIPE_ACTION_SHAPE_TRAVEL.toPx()
+            }
 
             val bgColor by animateColorAsState(
-                targetValue = action.background(),
+                targetValue = actionColor.copy(alpha = 0.28f),
                 animationSpec = motionTween(
-                    reduceMotion = LocalReduceMotion.current,
+                    reduceMotion = reduceMotion,
                     durationMs = Motion.DURATION_SHORT4
                 ),
                 label = stringResource(R.string.access_swipe_background)
@@ -1211,12 +1226,32 @@ internal fun SwipeConversationItem(
                     else -> Alignment.CenterEnd
                 }
             ) {
-                if (action != SwipeAction.OFF) {
-                    Icon(
-                        imageVector = action.icon(unread = convo.unreadCount > 0),
-                        contentDescription = stringResource(action.a11yLabelRes(convo.unreadCount > 0)),
-                        tint = action.iconTint()
-                    )
+                if (action != SwipeAction.OFF && revealed != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(SettingsLayout.SWIPE_ACTION_SHAPE_SIZE)
+                            .graphicsLayer {
+                                translationX = rollingSwipeShapeTranslation(
+                                    shapeProgress,
+                                    revealed
+                                ) * shapeTravelPx
+                                rotationZ = rollingSwipeShapeRotation(
+                                    shapeProgress,
+                                    revealed
+                                )
+                            }
+                            .background(actionColor, action.expressiveShape()),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = action.icon(unread = convo.unreadCount > 0),
+                            contentDescription = stringResource(
+                                action.a11yLabelRes(convo.unreadCount > 0)
+                            ),
+                            tint = action.iconTint(),
+                            modifier = Modifier.size(SettingsLayout.SWIPE_ICON_SIZE)
+                        )
+                    }
                 }
             }
         },
@@ -1293,6 +1328,16 @@ private fun SwipeAction.icon(unread: Boolean): ImageVector = when (this) {
     SwipeAction.PIN -> Icons.Rounded.PushPin
     SwipeAction.BLOCK -> Icons.Rounded.Block
     SwipeAction.OFF -> Icons.Rounded.Archive
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun SwipeAction.expressiveShape(): Shape = when (this) {
+    SwipeAction.ARCHIVE -> MaterialShapes.Cookie7Sided.toShape()
+    SwipeAction.DELETE -> MaterialShapes.Gem.toShape()
+    SwipeAction.MARK_READ_UNREAD -> MaterialShapes.Cookie9Sided.toShape()
+    SwipeAction.PIN -> MaterialShapes.Clover8Leaf.toShape()
+    SwipeAction.BLOCK -> MaterialShapes.Sunny.toShape()
+    SwipeAction.OFF -> MaterialShapes.Cookie6Sided.toShape()
 }
 
 /**
@@ -1388,22 +1433,29 @@ private fun RowScope.IconBlock(
         return
     }
     val hugStart = onPhysicalRight == isRtl
+    val actionColor = action.background()
     Box(
         modifier = Modifier
             .width(SettingsLayout.PREVIEW_BLOCK_WIDTH)
             .fillMaxHeight()
             .clip(shape)
-            .background(action.background()),
+            .background(actionColor.copy(alpha = 0.28f)),
         contentAlignment = if (hugStart) Alignment.CenterStart else Alignment.CenterEnd
     ) {
-        Icon(
-            imageVector = action.icon(unread = false),
-            contentDescription = null,
-            tint = action.iconTint(),
+        Box(
             modifier = Modifier
                 .padding(horizontal = SettingsLayout.SWIPE_ICON_INSET)
-                .size(SettingsLayout.SWIPE_ICON_SIZE)
-        )
+                .size(SettingsLayout.SWIPE_ACTION_SHAPE_SIZE)
+                .background(actionColor, action.expressiveShape()),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = action.icon(unread = false),
+                contentDescription = null,
+                tint = action.iconTint(),
+                modifier = Modifier.size(SettingsLayout.SWIPE_ICON_SIZE)
+            )
+        }
     }
 }
 
