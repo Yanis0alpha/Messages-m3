@@ -1111,7 +1111,7 @@ class Repository(private val context: Context) {
             if (convoId > 0) {
                 db.writableDatabase.execSQL(
                     "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-                    arrayOf(convoId, target)
+                    arrayOf<Any?>(convoId, target)
                 )
             }
             notifyChanged()
@@ -1174,14 +1174,14 @@ class Repository(private val context: Context) {
         upsertParticipant(db.writableDatabase, target)
         db.writableDatabase.execSQL(
             "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-            arrayOf(newId, target)
+            arrayOf<Any?>(newId, target)
         )
         for (a in wanted) {
             val t = canonical(a).ifEmpty { a }
             upsertParticipant(db.writableDatabase, t)
             db.writableDatabase.execSQL(
                 "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-                arrayOf(newId, t)
+                arrayOf<Any?>(newId, t)
             )
         }
         ensureGroupTitle(newId)
@@ -1264,7 +1264,7 @@ class Repository(private val context: Context) {
                 added += address
                 db.writableDatabase.execSQL(
                     "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-                    arrayOf(conversationId, address)
+                    arrayOf<Any?>(conversationId, address)
                 )
             }
             // A conversation that somehow lost its own recipient row would
@@ -1276,7 +1276,7 @@ class Repository(private val context: Context) {
             if (primary != null && primary !in existing && added.isNotEmpty()) {
                 db.writableDatabase.execSQL(
                     "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-                    arrayOf(conversationId, primary)
+                    arrayOf<Any?>(conversationId, primary)
                 )
             }
             if (added.isNotEmpty()) {
@@ -1455,7 +1455,7 @@ class Repository(private val context: Context) {
             upsertParticipant(db.writableDatabase, clean)
             db.writableDatabase.execSQL(
                 "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-                arrayOf(conversationId, clean)
+                arrayOf<Any?>(conversationId, clean)
             )
             added += clean
         }
@@ -1493,7 +1493,7 @@ class Repository(private val context: Context) {
             upsertParticipant(db.writableDatabase, address, subId)
             db.writableDatabase.execSQL(
                 "INSERT OR IGNORE INTO conversation_recipients(conversation_id, address) VALUES(?,?)",
-                arrayOf(id, address)
+                arrayOf<Any?>(id, address)
             )
         }
         ensureGroupTitle(id)
@@ -1928,7 +1928,7 @@ class Repository(private val context: Context) {
         val next = InboxCategoryRules.afterOtp(current, ruleMatched) ?: return
         db.writableDatabase.execSQL(
             "UPDATE conversations SET category=? WHERE id=?",
-            arrayOf(next, conversationId)
+            arrayOf<Any?>(next, conversationId)
         )
         notifyChanged()
     }
@@ -2002,7 +2002,7 @@ class Repository(private val context: Context) {
         db.writableDatabase.execSQL(
             """INSERT INTO messages(conversation_id,body,timestamp,is_me,status,deleted_at,blocked_reason)
                VALUES(?,?,?,0,'received',?,?)""",
-            arrayOf(conversationId, body, timestamp, System.currentTimeMillis(), blockedReason)
+            arrayOf<Any?>(conversationId, body, timestamp, System.currentTimeMillis(), blockedReason)
         )
         notifyChanged()
     }
@@ -2632,7 +2632,7 @@ class Repository(private val context: Context) {
             assignments.forEach { (id, category) ->
                 dbw.execSQL(
                     "UPDATE conversations SET category=? WHERE id=? AND category=''",
-                    arrayOf(category, id)
+                    arrayOf<Any?>(category, id)
                 )
             }
             dbw.setTransactionSuccessful()
@@ -5174,7 +5174,7 @@ class Repository(private val context: Context) {
                                 """INSERT OR IGNORE INTO message_provider_ids(message_id, transport, sys_id)
                                    SELECT id, transport, sys_id FROM messages
                                    WHERE transport=? AND sys_id=?""",
-                                arrayOf(MmsSupport.TRANSPORT_MMS, message.id)
+                                arrayOf<Any?>(MmsSupport.TRANSPORT_MMS, message.id)
                             )
                             refreshed.add(cid)
                             upsertParticipant(database, address, message.subId)
@@ -5224,7 +5224,7 @@ class Repository(private val context: Context) {
                                 if (refreshedBody != stored) {
                                     database.execSQL(
                                         "UPDATE messages SET body=? WHERE id=?",
-                                        arrayOf(refreshedBody, rowId)
+                                        arrayOf<Any?>(refreshedBody, rowId)
                                     )
                                     refreshed.add(
                                         database.rawQuery(
