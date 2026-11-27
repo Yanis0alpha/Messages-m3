@@ -10,6 +10,7 @@
     <string name="new_chat_title">New conversation</string>
     <string name="conversation_sheet_nothing_open">Nothing has been opened</string>
     <string name="conversation_sheet_actions">Conversation actions</string>
+    <string name="conversation_sheet_actions_timeout">Actions close in %1$d seconds</string>
     <string name="conversation_sheet_minimize">Minimize</string>
     <string name="new_chat_hint">Enter name or phone number</string>
     <string name="new_chat_only_phone">Only phone numbers can be messaged</string>

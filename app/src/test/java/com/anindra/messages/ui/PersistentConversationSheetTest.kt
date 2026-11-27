@@ -21,6 +21,8 @@ class PersistentConversationSheetTest {
     fun sheetKeepsATenPercentPeekAndExpandsToNinetyPercent() {
         assertEquals(0.1f, PersistentConversationSheetLayout.PEEK_FRACTION, 0f)
         assertEquals(0.9f, PersistentConversationSheetLayout.EXPANDED_FRACTION, 0f)
+        assertEquals(3, PersistentConversationSheetLayout.ACTION_TIMEOUT_SECONDS)
+        assertEquals(1_000L, PersistentConversationSheetLayout.ACTION_TICK_MS)
         assertEquals(80.dp, PersistentConversationSheetLayout.peekHeight(800.dp))
 
         val sheet = source("java/com/anindra/messages/ui/PersistentConversationSheet.kt")
@@ -99,16 +101,26 @@ class PersistentConversationSheetTest {
         assertTrue(sheet.contains("PersistentConversationSheetHandle("))
         assertTrue(sheet.contains("AnimatedContent("))
         assertTrue(sheet.contains("ConnectedButtonGroupLayout.GAP"))
+        assertTrue(sheet.contains("LaunchedEffect(handleActionsVisible, conversationOpen)"))
+        assertTrue(sheet.contains("delay(PersistentConversationSheetLayout.ACTION_TICK_MS)"))
+        assertTrue(sheet.contains("actionCountdownSeconds = remaining"))
+        assertTrue(sheet.contains("R.string.conversation_sheet_actions_timeout"))
         assertTrue(sheet.contains("R.string.common_close"))
         assertTrue(sheet.contains("R.string.conversation_sheet_minimize"))
         assertTrue(sheet.contains("PersistentConversationSheetMode.MINIMIZE_REQUESTED"))
         assertTrue(sheet.contains("PersistentConversationSheetMode.MINIMIZED"))
         assertTrue(sheet.contains("scope.launch { sheetState.partialExpand() }"))
+        assertTrue(sheet.contains("sheetMode != PersistentConversationSheetMode.ACTIVE"))
+        assertTrue(sheet.contains("restoreMinimizedConversation()"))
+        assertTrue(sheet.contains("sheetMode == PersistentConversationSheetMode.MINIMIZED"))
+        assertTrue(sheet.contains(".clickable(onClick = restoreMinimizedConversation)"))
         assertTrue(close.contains("expandedConversation = false"))
         assertTrue(close.contains("latestOnCollapsed()"))
         assertFalse(minimize.contains("latestOnCollapsed()"))
         assertTrue(strings.contains("name=\"conversation_sheet_minimize\">Minimize"))
+        assertTrue(strings.contains("name=\"conversation_sheet_actions_timeout\""))
         assertTrue(french.contains("name=\"conversation_sheet_minimize\">Minimiser"))
+        assertTrue(french.contains("name=\"conversation_sheet_actions_timeout\""))
     }
 
     @Test
