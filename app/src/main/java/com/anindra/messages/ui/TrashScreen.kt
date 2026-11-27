@@ -21,8 +21,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Undo
@@ -31,11 +31,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -108,44 +106,53 @@ fun TrashScreen(
     ClampToItemCount(conversationListState, tab == 0, conversations.size)
     ClampToItemCount(messageListState, tab == 1, messages.size)
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.trash_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
-                    }
-                },
-                actions = {
-                    AutoDeleteDurationAction(
-                        days = trashDays,
-                        active = vm.settings.retentionEnabled && vm.settings.retentionTrash,
-                        onPick = { vm.settings.retentionTrashDays = it; trashDays = it }
-                    )
-                    if (conversations.isNotEmpty() || messages.isNotEmpty()) {
-                        // Icon only, matching the Empty action in Spam & Blocked. The
-                        // label has to live on the icon or TalkBack has nothing to
-                        // announce; left at its natural size to match the auto-delete
-                        // clock beside it.
-                        IconButton(onClick = { showEmptyTrashDialog = true }) {
-                            Icon(
-                                Icons.Rounded.Delete,
-                                contentDescription = stringResource(R.string.trash_empty),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
+    DynamicBackdropMotionTracker {
+        if (tab == 0) {
+            conversationListState.firstVisibleItemIndex to conversationListState.firstVisibleItemScrollOffset
+        } else {
+            messageListState.firstVisibleItemIndex to messageListState.firstVisibleItemScrollOffset
+        }
+    }
+
+    ExpressiveSettingsScaffold(
+        title = stringResource(R.string.trash_title),
+        onBack = onBack,
+        actions = {
+            AutoDeleteDurationAction(
+                days = trashDays,
+                active = vm.settings.retentionEnabled && vm.settings.retentionTrash,
+                onPick = { vm.settings.retentionTrashDays = it; trashDays = it }
             )
+            if (conversations.isNotEmpty() || messages.isNotEmpty()) {
+                // Icon only, matching the Empty action in Spam & Blocked. The
+                // label has to live on the icon or TalkBack has nothing to
+                // announce; left at its natural size to match the auto-delete
+                // clock beside it.
+                IconButton(onClick = { showEmptyTrashDialog = true }) {
+                    Icon(
+                        Icons.Rounded.Delete,
+                        contentDescription = stringResource(R.string.trash_empty),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+        Column(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
             ExpressiveTabs(
                 tabs = listOf(
-                    ExpressiveTab(R.string.trash_tab_conversations),
-                    ExpressiveTab(R.string.trash_tab_messages)
+                    ExpressiveTab(
+                        R.string.trash_tab_conversations,
+                        Icons.Rounded.Delete
+                    ),
+                    ExpressiveTab(
+                        R.string.trash_tab_messages,
+                        Icons.Rounded.ChatBubble
+                    )
                 ),
                 selected = tab,
                 onSelect = { tab = it }
@@ -320,6 +327,9 @@ internal fun TrashRow(
     onRestore: () -> Unit,
     onDeleteForever: () -> Unit
 ) {
+    ExpressiveSettingsCard(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -370,6 +380,7 @@ internal fun TrashRow(
             )
         }
     }
+    }
 }
 
 @Composable
@@ -379,6 +390,9 @@ internal fun TrashMessageRow(
     onDeleteForever: () -> Unit
 ) {
     val sender = if (msg.name == msg.address) BidiText.ltr(formatPhoneNumber(msg.address)) else msg.name
+    ExpressiveSettingsCard(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -429,6 +443,7 @@ internal fun TrashMessageRow(
                 tint = MaterialTheme.colorScheme.error
             )
         }
+    }
     }
 }
 

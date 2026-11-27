@@ -17,20 +17,15 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,7 +42,6 @@ import com.anindra.messages.R
 import com.anindra.messages.data.RetentionPolicy
 import com.anindra.messages.data.SettingsStore
 import com.anindra.messages.diagnostics.DiagnosticsDialog
-import com.anindra.messages.sms.NotificationHelper
 import com.anindra.messages.ui.theme.AppFonts
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,23 +80,10 @@ onOpenAccessibility: () -> Unit = {},
     var keywordsDialog by remember { mutableStateOf(false) }
     var diagReport by remember { mutableStateOf<String?>(null) }
 
-    Scaffold(
-        // Same sheet as General settings: page and app bar are surfaceContainer,
-        // rows are inset at the page background.
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                title = { Text(stringResource(R.string.settings_advanced_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
-                    }
-                }
-            )
-        }
+    DynamicBackdropMotionTracker { scrollState.value }
+    ExpressiveSettingsScaffold(
+        title = stringResource(R.string.settings_advanced_title),
+        onBack = onBack
     ) { padding ->
         Column(
             Modifier

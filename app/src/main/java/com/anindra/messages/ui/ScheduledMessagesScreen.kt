@@ -9,16 +9,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Schedule
@@ -29,14 +26,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -95,28 +89,22 @@ fun ScheduledMessagesScreen(
     BackHandler(enabled = searching) { searching = false; query = "" }
     BackHandler(enabled = !searching, onBack = onBack)
 
-    // This screen builds its header by hand and so has no Surface to derive a
-    // content colour from. Left unset, LocalContentColor is Color.Black, which
-    // renders the title, back arrow and search icon invisible in dark mode.
-    CompositionLocalProvider(
-        LocalContentColor provides MaterialTheme.colorScheme.onSurface
-    ) {
-    Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        // same header shape as the conversation list: the title is replaced in
-        // place by the field, so the screen never grows a second row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    val listState = rememberLazyListState()
+    DynamicBackdropMotionTracker {
+        listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+    }
+    val closeSearch = {
+        searching = false
+        query = ""
+    }
+    ExpressiveSettingsScaffold(
+        title = stringResource(R.string.settings_scheduled_title),
+        onBack = if (searching) closeSearch else onBack,
+        navigationContentDescription = stringResource(
+            if (searching) R.string.icon_close_search else R.string.icon_back
+        ),
+        titleContent = {
             if (searching) {
-                IconButton(onClick = { searching = false; query = "" }) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.ArrowBack,
-                        stringResource(R.string.icon_close_search)
-                    )
-                }
                 val focusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) { focusRequester.requestFocus() }
                 TextField(
@@ -130,27 +118,25 @@ fun ScheduledMessagesScreen(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
                     ),
-                    modifier = Modifier.weight(1f).focusRequester(focusRequester)
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
                 )
             } else {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.ArrowBack,
-                        stringResource(R.string.icon_back)
-                    )
-                }
-                Text(
-                    stringResource(R.string.settings_scheduled_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.weight(1f)
-                )
+                Text(stringResource(R.string.settings_scheduled_title))
+            }
+        },
+        actions = {
+            if (!searching) {
                 IconButton(onClick = { searching = true }) {
                     Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
                 }
             }
         }
-
-        Column(Modifier.weight(1f)) {
+    ) { padding ->
+        Column(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
             if (visible.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -165,6 +151,7 @@ fun ScheduledMessagesScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
                         horizontal = SettingsLayout.ROW_CONTENT_PADDING,
@@ -188,7 +175,6 @@ fun ScheduledMessagesScreen(
                 }
             }
         }
-    }
     }
 
     editing?.let { sm ->
@@ -216,11 +202,7 @@ internal fun ScheduledRow(
     val context = LocalContext.current
     val is24Hour = is24HourFormat(context)
 
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(SettingsLayout.OUTER_RADIUS),
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    ExpressiveSettingsCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier

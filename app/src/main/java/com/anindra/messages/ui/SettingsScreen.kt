@@ -1344,11 +1344,13 @@ fun GroupedRowCard(
             bottomEnd = corners.bottomEnd,
             bottomStart = corners.bottomStart
         ),
-        tint = MaterialTheme.colorScheme.surfaceContainerLow,
+        tint = settingsCardTint(),
         modifier = modifier.fillMaxWidth(),
         blurRadius = 0.dp,
         backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
-        followMotion = true
+        followMotion = true,
+        blurEnabled = LocalSettingsCardBlurEnabled.current,
+        tintAlpha = LocalSettingsCardAlpha.current
     ) {
         content()
     }
@@ -1402,11 +1404,13 @@ fun GroupedRowList(
 ) {
     TranslucentBackdropSurface(
         shape = RoundedCornerShape(SettingsLayout.OUTER_RADIUS),
-        tint = MaterialTheme.colorScheme.surfaceContainerLow,
+        tint = settingsCardTint(),
         modifier = modifier.fillMaxWidth(),
         blurRadius = 0.dp,
         backdropLayer = DynamicBackdropLayer.SETTINGS_CARD,
-        followMotion = true
+        followMotion = true,
+        blurEnabled = LocalSettingsCardBlurEnabled.current,
+        tintAlpha = LocalSettingsCardAlpha.current
     ) {
         Column { content() }
     }

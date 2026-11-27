@@ -4,7 +4,6 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,21 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,11 +39,8 @@ import com.anindra.messages.R
 import com.anindra.messages.data.MmsVerdict
 import com.anindra.messages.data.ReplyNudgePolicy
 import com.anindra.messages.data.ReplyNudgeScheduler
-import com.anindra.messages.data.SettingsStore
 import com.anindra.messages.data.SimMmsCheck
 import com.anindra.messages.sms.NotificationHelper
-import com.anindra.messages.sms.NotificationCategory
-import com.anindra.messages.sms.NotificationChannels
 import com.anindra.messages.sms.SimMmsProbe
 
 private const val DAYS_TRASH = "trash"
@@ -540,32 +529,17 @@ internal fun SettingsScaffold(
     onBack: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    Scaffold(
-        // Same sheet as General settings: page and app bar are surfaceContainer,
-        // rows are inset at the page background.
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            stringResource(R.string.icon_back)
-                        )
-                    }
-                }
-            )
-        }
+    val scrollState = rememberScrollState()
+    DynamicBackdropMotionTracker { scrollState.value }
+    ExpressiveSettingsScaffold(
+        title = title,
+        onBack = onBack
     ) { padding ->
         Column(
             Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = SettingsLayout.SCREEN_PADDING)
         ) {
             Spacer(Modifier.height(SettingsLayout.TOP_GAP))

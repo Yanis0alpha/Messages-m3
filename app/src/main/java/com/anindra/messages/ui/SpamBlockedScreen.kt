@@ -19,11 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Undo
@@ -31,22 +30,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -99,50 +94,59 @@ fun SpamBlockedScreen(
     ClampToItemCount(conversationListState, tab == 0, blockedConversations.size)
     ClampToItemCount(messageListState, tab == 1, blockedMessages.size)
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+    DynamicBackdropMotionTracker {
+        if (tab == 0) {
+            conversationListState.firstVisibleItemIndex to conversationListState.firstVisibleItemScrollOffset
+        } else {
+            messageListState.firstVisibleItemIndex to messageListState.firstVisibleItemScrollOffset
+        }
+    }
+
+    ExpressiveSettingsScaffold(
+        title = stringResource(R.string.conversations_spam_blocked),
+        onBack = onBack,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.conversations_spam_blocked)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
-                    }
-                },
-                actions = {
-                    AutoDeleteDurationAction(
-                        days = spamDays,
-                        active = vm.settings.retentionEnabled &&
-                            (vm.settings.retentionKeywordMessages || vm.settings.retentionBlockedSenders),
-                        onPick = { vm.settings.retentionSpamDays = it; spamDays = it }
-                    )
-                    val canEmpty = if (tab == 0) {
-                        blockedConversations.isNotEmpty()
-                    } else {
-                        blockedMessages.isNotEmpty()
-                    }
-                    if (canEmpty) {
-                        // Icon only, so the label has to live on the icon itself or
-                        // TalkBack has nothing to announce. Left at its natural size to
-                        // match the auto-delete clock beside it.
-                        IconButton(onClick = { showEmptyDialog = true }) {
-                            Icon(
-                                Icons.Rounded.Delete,
-                                contentDescription = stringResource(R.string.spam_empty),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
+        actions = {
+            AutoDeleteDurationAction(
+                days = spamDays,
+                active = vm.settings.retentionEnabled &&
+                    (vm.settings.retentionKeywordMessages || vm.settings.retentionBlockedSenders),
+                onPick = { vm.settings.retentionSpamDays = it; spamDays = it }
             )
+            val canEmpty = if (tab == 0) {
+                blockedConversations.isNotEmpty()
+            } else {
+                blockedMessages.isNotEmpty()
+            }
+            if (canEmpty) {
+                // Icon only, so the label has to live on the icon itself or
+                // TalkBack has nothing to announce. Left at its natural size to
+                // match the auto-delete clock beside it.
+                IconButton(onClick = { showEmptyDialog = true }) {
+                    Icon(
+                        Icons.Rounded.Delete,
+                        contentDescription = stringResource(R.string.spam_empty),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+        Column(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
             ExpressiveTabs(
                 tabs = listOf(
-                    ExpressiveTab(R.string.spam_tab_conversations),
-                    ExpressiveTab(R.string.spam_tab_messages)
+                    ExpressiveTab(
+                        R.string.spam_tab_conversations,
+                        Icons.Rounded.Block
+                    ),
+                    ExpressiveTab(
+                        R.string.spam_tab_messages,
+                        Icons.Rounded.ChatBubble
+                    )
                 ),
                 selected = tab,
                 onSelect = { tab = it }
@@ -238,10 +242,15 @@ internal fun ConversationsTab(
         items(blocked, key = { it.id }) { convo ->
             val sender = if (convo.name == convo.address) BidiText.ltr(convo.display) else convo.name
             val blockedLabel = stringResource(R.string.access_blocked)
+            ExpressiveSettingsCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .animateItem()
                     .semantics(mergeDescendants = true) {
                         contentDescription = A11y.describe(
                             sender, blockedLabel, formatListTime(convo.timestamp, now, context)
@@ -292,6 +301,7 @@ internal fun ConversationsTab(
                     )
                 }
             }
+            }
         }
     }
 }
@@ -313,10 +323,15 @@ internal fun MessagesTab(
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         items(messages, key = { it.id }) { msg ->
             val sender = if (msg.name == msg.address) BidiText.ltr(formatPhoneNumber(msg.address)) else msg.name
+            ExpressiveSettingsCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .animateItem()
                     .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -376,6 +391,7 @@ internal fun MessagesTab(
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
+            }
             }
         }
     }
