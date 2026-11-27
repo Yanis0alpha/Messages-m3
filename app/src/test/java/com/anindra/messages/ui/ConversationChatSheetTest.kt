@@ -46,6 +46,7 @@ class ConversationChatSheetTest {
         val chat = source("java/com/anindra/messages/ui/ChatScreen.kt")
         val activity = source("java/com/anindra/messages/MainActivity.kt")
         val blur = source("java/com/anindra/messages/ui/DynamicBackdropBlur.kt")
+        val manifest = source("AndroidManifest.xml")
         assertTrue(sheet.contains("LocalTranslucentSurfaceAlpha.current"))
         assertTrue(sheet.contains("SCRIM_ALPHA = 0.18f"))
         assertTrue(sheet.contains(".dynamicBackdropEffect("))
@@ -56,6 +57,12 @@ class ConversationChatSheetTest {
         assertTrue(blur.contains("drawBackdrop("))
         assertTrue(blur.contains("textureBlurEffect("))
         assertTrue(blur.contains("Build.VERSION_CODES.TIRAMISU"))
+        assertTrue(blur.contains("if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {\n        content()"))
+        assertTrue(
+            manifest.contains(
+                "tools:overrideLibrary=\"top.yukonga.miuix.kmp.blur\""
+            )
+        )
         assertTrue(blur.contains("internal fun DynamicBackdropMotionTracker("))
         assertTrue(blur.contains("graph.motionFrame"))
         assertTrue(blur.contains("withFrameNanos { }"))

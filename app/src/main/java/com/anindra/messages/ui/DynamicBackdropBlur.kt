@@ -129,6 +129,13 @@ private val LocalDynamicBackdropGraph = staticCompositionLocalOf<DynamicBackdrop
 /** One shared, hardware-accelerated LayerBackdrop graph for all glass surfaces. */
 @Composable
 internal fun DynamicBackdropHost(content: @Composable () -> Unit) {
+    // The dependency's manifest starts at API 33. On Android 10-12, do not initialise any miuix
+    // class: translucent surfaces keep their Material tint and the rest of the UI remains intact.
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        content()
+        return
+    }
+
     val background = rememberLayerBackdrop()
     val settingsBlurredBackground = rememberLayerBackdrop()
     val pageContent = rememberLayerBackdrop()
