@@ -205,6 +205,8 @@ private fun PersistentConversationSheetPreview() {
             )
             PersistentConversationSheet(
                 conversationOpen = false,
+                conversationTitle = "",
+                conversationAddress = "",
                 onCollapsed = {},
                 captureGuard = sheetCaptureGuard,
                 peekHeight = 80.dp
