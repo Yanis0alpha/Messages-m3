@@ -105,7 +105,9 @@ import com.anindra.messages.ui.SettingsScreen
 import com.anindra.messages.ui.MessagesNavigationBar
 import com.anindra.messages.ui.LocalTranslucentSurfaceAlpha
 import com.anindra.messages.ui.TopLevelDestination
+import com.anindra.messages.ui.TopLevelDestinationTransition
 import com.anindra.messages.ui.TopLevelNavigationBarClearance
+import com.anindra.messages.ui.isTopLevelRouteTransition
 import com.anindra.messages.ui.AdvancedSettingsScreen
 import com.anindra.messages.ui.AccessibilityScreen
 import com.anindra.messages.ui.MmsSupportScreen
@@ -2257,6 +2259,20 @@ open class MainActivity : FragmentActivity() {
                                 val from = routeDepth[initialState] ?: 0
                                 val to = routeDepth[targetState] ?: 0
                                 when {
+                                    isTopLevelRouteTransition(initialState, targetState) ->
+                                        fadeIn(
+                                            tween(
+                                                durationMillis =
+                                                    TopLevelDestinationTransition.INCOMING_DURATION_MS,
+                                                delayMillis =
+                                                    TopLevelDestinationTransition.OUTGOING_DURATION_MS
+                                            )
+                                        ) togetherWith fadeOut(
+                                            tween(
+                                                durationMillis =
+                                                    TopLevelDestinationTransition.OUTGOING_DURATION_MS
+                                            )
+                                        )
                                     chatUsesSheet &&
                                         (initialState == "chat" || targetState == "chat") ->
                                         androidx.compose.animation.EnterTransition.None togetherWith

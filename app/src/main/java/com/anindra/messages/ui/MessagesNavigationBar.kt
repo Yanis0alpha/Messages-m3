@@ -48,6 +48,19 @@ enum class TopLevelDestination {
     SETTINGS
 }
 
+internal object TopLevelDestinationTransition {
+    // Material fade-through: the old destination leaves first, then the new
+    // destination appears. Keeping the phases separate avoids a muddy overlap.
+    const val OUTGOING_DURATION_MS = 90
+    const val INCOMING_DURATION_MS = 180
+}
+
+internal fun isTopLevelRouteTransition(from: String, to: String): Boolean {
+    val contentRoutes = setOf("list", "chat")
+    return (from == "settings" && to in contentRoutes) ||
+        (to == "settings" && from in contentRoutes)
+}
+
 internal val TopLevelNavigationBarClearance = 104.dp
 
 private data class TopLevelNavigationItem(

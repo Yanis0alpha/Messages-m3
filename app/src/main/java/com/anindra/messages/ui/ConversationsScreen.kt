@@ -16,6 +16,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -108,6 +109,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -181,6 +183,33 @@ fun ConversationsScreen(
     backHandled: Boolean = true
 ) {
     val reduceMotion = LocalReduceMotion.current
+    var displayedDestination by remember { mutableStateOf(selectedDestination) }
+    val topLevelContentAlpha = remember { Animatable(1f) }
+    LaunchedEffect(selectedDestination, reduceMotion) {
+        if (selectedDestination == displayedDestination) {
+            topLevelContentAlpha.snapTo(1f)
+        } else if (reduceMotion) {
+            displayedDestination = selectedDestination
+            topLevelContentAlpha.snapTo(1f)
+        } else {
+            // Use the same two-phase fade-through as the Settings destination:
+            // remove the current page, swap it, then reveal the new page.
+            topLevelContentAlpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = TopLevelDestinationTransition.OUTGOING_DURATION_MS
+                )
+            )
+            displayedDestination = selectedDestination
+            topLevelContentAlpha.snapTo(0f)
+            topLevelContentAlpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = TopLevelDestinationTransition.INCOMING_DURATION_MS
+                )
+            )
+        }
+    }
     val conversations by remember(vm) { vm.conversations }.collectAsState(initial = emptyList())
     val scheduledAll by vm.scheduledMessages().collectAsState(initial = emptyList())
     val scheduledPreview = remember(scheduledAll) {
@@ -212,7 +241,7 @@ fun ConversationsScreen(
     var searching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var searchScope by remember { mutableStateOf(SearchScope.All) }
-    val showArchived = selectedDestination == TopLevelDestination.ARCHIVED
+    val showArchived = displayedDestination == TopLevelDestination.ARCHIVED
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -526,7 +555,11 @@ fun ConversationsScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .graphicsLayer { alpha = topLevelContentAlpha.value }
+    ) {
         HomeShapeBackdrop()
         Scaffold(
             containerColor = Color.Transparent,

@@ -59,12 +59,53 @@ class MessagesNavigationBarTest {
         assertTrue(activity.contains("selectedDestination = if (navRoute == \"settings\")"))
         assertTrue(activity.contains("TopLevelDestination.SETTINGS"))
         assertTrue(activity.contains("onDestinationSelected = navigateTopLevel"))
-        assertTrue(conversations.contains("val showArchived = selectedDestination == TopLevelDestination.ARCHIVED"))
+        assertTrue(
+            conversations.contains(
+                "val showArchived = displayedDestination == TopLevelDestination.ARCHIVED"
+            )
+        )
         assertTrue(conversations.contains(".height(bottomControlsClearance)"))
         assertTrue(activity.contains(".padding(bottom = topLevelNavigationBottomOffset)"))
         assertFalse(settings.contains("bottomBar = {"))
         assertFalse(settings.contains(".navigationBarsPadding()"))
         assertTrue(settings.contains("SettingsLayout.BOTTOM_GAP + bottomOverlayClearance"))
+    }
+
+    @Test
+    fun allTopLevelDestinationsUseTheSameFadeThroughTransition() {
+        assertEquals(90, TopLevelDestinationTransition.OUTGOING_DURATION_MS)
+        assertEquals(180, TopLevelDestinationTransition.INCOMING_DURATION_MS)
+        assertTrue(isTopLevelRouteTransition("list", "settings"))
+        assertTrue(isTopLevelRouteTransition("chat", "settings"))
+        assertTrue(isTopLevelRouteTransition("settings", "list"))
+        assertTrue(isTopLevelRouteTransition("settings", "chat"))
+        assertFalse(isTopLevelRouteTransition("list", "chat"))
+        assertFalse(isTopLevelRouteTransition("settings", "advanced"))
+
+        val activity = source("java/com/anindra/messages/MainActivity.kt")
+        val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
+        val transition = activity.substringAfter("transitionSpec = {")
+            .substringBefore("modifier = paneModifier")
+        assertTrue(conversations.contains("var displayedDestination by remember"))
+        assertTrue(conversations.contains("val topLevelContentAlpha = remember { Animatable(1f) }"))
+        assertTrue(conversations.contains("displayedDestination = selectedDestination"))
+        assertTrue(conversations.contains(".graphicsLayer { alpha = topLevelContentAlpha.value }"))
+        assertTrue(
+            conversations.contains(
+                "TopLevelDestinationTransition.OUTGOING_DURATION_MS"
+            )
+        )
+        assertTrue(
+            conversations.contains(
+                "TopLevelDestinationTransition.INCOMING_DURATION_MS"
+            )
+        )
+        assertTrue(transition.contains("isTopLevelRouteTransition(initialState, targetState)"))
+        assertTrue(transition.contains("delayMillis ="))
+        assertTrue(
+            transition.indexOf("isTopLevelRouteTransition(initialState, targetState)") <
+                transition.indexOf("slideInHorizontally(navSlide)")
+        )
     }
 
     @Test
