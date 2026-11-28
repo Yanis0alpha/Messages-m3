@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">欢迎使用 M3 Expressive</string>
+    <string name="onboarding_subtitle">只需几个快速步骤，即可在此手机上准备好私密短信功能。</string>
+    <string name="onboarding_default_title">将 M3 Expressive 设为默认应用</string>
+    <string name="onboarding_default_subtitle">接收、发送和整理对话所必需。</string>
+    <string name="onboarding_permissions_title">必要权限</string>
+    <string name="onboarding_permissions_subtitle">短信和通知权限。仅在需要时请求联系人权限。</string>
+    <string name="onboarding_privacy">短信和设置数据仅保留在此设备上。</string>
+    <string name="onboarding_action_default">设为默认应用</string>
+    <string name="onboarding_action_permissions">授予权限</string>
+    <string name="onboarding_action_finish">开始发短信</string>
+    <string name="onboarding_not_now">暂不</string>
+    <string name="onboarding_ready">已就绪</string>
+    <string name="onboarding_pending">需要操作</string>
+</resources>

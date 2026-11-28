@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">به M3 Expressive خوش آمدید</string>
+    <string name="onboarding_subtitle">چند مرحلهٔ سریع، پیام‌رسانی خصوصی را در این تلفن آماده می‌کند.</string>
+    <string name="onboarding_default_title">M3 Expressive به‌عنوان برنامهٔ پیش‌فرض</string>
+    <string name="onboarding_default_subtitle">برای دریافت، ارسال و سازمان‌دهی گفتگوها لازم است.</string>
+    <string name="onboarding_permissions_title">مجوزهای ضروری</string>
+    <string name="onboarding_permissions_subtitle">دسترسی به پیامک و اعلان‌ها. مخاطبان فقط هنگام نیاز درخواست می‌شوند.</string>
+    <string name="onboarding_privacy">پیام‌ها و داده‌های راه‌اندازی روی این دستگاه می‌مانند.</string>
+    <string name="onboarding_action_default">تنظیم به‌عنوان پیش‌فرض</string>
+    <string name="onboarding_action_permissions">دادن مجوزها</string>
+    <string name="onboarding_action_finish">شروع پیام‌رسانی</string>
+    <string name="onboarding_not_now">فعلاً نه</string>
+    <string name="onboarding_ready">آماده</string>
+    <string name="onboarding_pending">اقدام لازم است</string>
+</resources>

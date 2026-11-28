@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">Добро пожаловать в M3 Expressive</string>
+    <string name="onboarding_subtitle">Несколько быстрых шагов настроят приватные сообщения на этом телефоне.</string>
+    <string name="onboarding_default_title">M3 Expressive по умолчанию</string>
+    <string name="onboarding_default_subtitle">Необходимо для получения, отправки и организации переписок.</string>
+    <string name="onboarding_permissions_title">Необходимые разрешения</string>
+    <string name="onboarding_permissions_subtitle">Доступ к SMS и уведомлениям. Контакты запрашиваются только при необходимости.</string>
+    <string name="onboarding_privacy">Сообщения и данные настройки остаются на этом устройстве.</string>
+    <string name="onboarding_action_default">Использовать по умолчанию</string>
+    <string name="onboarding_action_permissions">Предоставить разрешения</string>
+    <string name="onboarding_action_finish">Начать общение</string>
+    <string name="onboarding_not_now">Не сейчас</string>
+    <string name="onboarding_ready">Готово</string>
+    <string name="onboarding_pending">Требуется действие</string>
+</resources>

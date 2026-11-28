@@ -62,6 +62,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -89,6 +90,7 @@ import com.anindra.messages.sms.SmsSender
 import com.anindra.messages.share.ShareText
 import com.anindra.messages.ui.DynamicBackdropHost
 import com.anindra.messages.ui.DynamicBackdropMotionTracker
+import com.anindra.messages.ui.FirstLaunchSetupScreen
 import com.anindra.messages.ui.ChatScreen
 import com.anindra.messages.ui.ConversationChatSheet
 import com.anindra.messages.ui.ConversationsScreen
@@ -1533,6 +1535,9 @@ internal fun bubbleBackHandled(bubbleMode: Boolean, backClosesBubble: Boolean, s
 
 open class MainActivity : FragmentActivity() {
 
+    /** Recompose first-run status after a role or permission dialog returns. */
+    private var setupRefreshVersion by mutableIntStateOf(0)
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
             if (grants[Manifest.permission.READ_SMS] == true) {
@@ -1548,10 +1553,12 @@ open class MainActivity : FragmentActivity() {
                     android.widget.Toast.LENGTH_LONG
                 ).show()
             }
+            setupRefreshVersion++
         }
 
     private val defaultSmsLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            setupRefreshVersion++
             // The role dialog has just resolved, either way: whatever it did
             // not hand over silently is asked for now, and only that.
             requestMissingSmsPermissions()
@@ -1610,12 +1617,6 @@ open class MainActivity : FragmentActivity() {
         applyTransferLogProbe(intent)
         applyImeProbe(intent)
         enableEdgeToEdge()
-        // The role is asked for first; it hands over the whole SMS set on its
-        // own, so anything still missing is only asked for once it has had
-        // its say. An install that already holds the role has no dialog
-        // coming, so its one-time ask (notifications) happens here.
-        if (smsRoleHeld()) requestMissingSmsPermissions()
-
         // The application parks a database written by a newer build (see
         // DatabaseCompatibility.setAside) and starts this one on a fresh file;
         // the notice about what happened is shown over the first screen.
@@ -1639,6 +1640,11 @@ open class MainActivity : FragmentActivity() {
         }
 
         val bootVm = androidx.lifecycle.ViewModelProvider(this)[AppViewModel::class.java]
+        // Existing installations keep the old launch behavior. A fresh install
+        // asks from the dedicated setup screen so no system dialog covers its welcome animation.
+        if (smsRoleHeld() && bootVm.settings.onboardingCompleted) {
+            requestMissingSmsPermissions()
+        }
         if (bootVm.settings.privacyModeEnabled) {
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         }
@@ -1820,6 +1826,30 @@ open class MainActivity : FragmentActivity() {
             font = vm.fontFamily,
             a11y = vm.a11y,
         ) {
+                var onboardingCompleted by remember {
+                    mutableStateOf(vm.settings.onboardingCompleted)
+                }
+                var onboardingJustFinished by remember { mutableStateOf(false) }
+                val setupRevision = setupRefreshVersion
+                if (!onboardingCompleted) {
+                    val defaultSmsReady = remember(setupRevision) { smsRoleHeld() }
+                    val permissionsReady = remember(setupRevision) { setupPermissionsReady() }
+                    val finishOnboarding = {
+                        vm.settings.onboardingCompleted = true
+                        onboardingJustFinished = true
+                        onboardingCompleted = true
+                    }
+                    FirstLaunchSetupScreen(
+                        defaultSmsReady = defaultSmsReady,
+                        permissionsReady = permissionsReady,
+                        onRequestDefaultSms = { requestDefaultSmsRole() },
+                        onRequestPermissions = { requestMissingSmsPermissions() },
+                        onComplete = finishOnboarding,
+                        onNotNow = finishOnboarding
+                    )
+                    return@MessagesTheme
+                }
+
                 // The home-list query that opened the chat, so the chat can
                 // highlight and scroll to the matching message. Null for every
                 // other way into a chat (new, scheduled, spam, intent).
@@ -1892,12 +1922,9 @@ open class MainActivity : FragmentActivity() {
                 }
 
                 androidx.compose.runtime.LaunchedEffect(Unit) {
-                    if (navRoute != "settings") {
+                    if (navRoute != "settings" && !onboardingJustFinished) {
                         kotlinx.coroutines.delay(1500)
-                        val roleManager = getSystemService(RoleManager::class.java)
-                        val isDefaultSms = roleManager.isRoleHeld(RoleManager.ROLE_SMS) ||
-                            Telephony.Sms.getDefaultSmsPackage(this@MainActivity) == packageName
-                        if (!isDefaultSms) {
+                        if (!smsRoleHeld()) {
                             showDefaultSmsDialog = true
                         }
                     }
@@ -1963,22 +1990,7 @@ open class MainActivity : FragmentActivity() {
                         confirmButton = {
                             androidx.compose.material3.TextButton(onClick = {
                                 showDefaultSmsDialog = false
-                                val roleManager = getSystemService(RoleManager::class.java)
-                                if (roleManager.isRoleAvailable(RoleManager.ROLE_SMS)) {
-                                    defaultSmsLauncher.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS))
-                                } else {
-                                    // Roles are absent on some OEM builds. The legacy
-                                    // picker still works there; without this the
-                                    // button did nothing at all.
-                                    defaultSmsLauncher.launch(
-                                        android.content.Intent(
-                                            android.provider.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT
-                                        ).putExtra(
-                                            android.provider.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME,
-                                            packageName
-                                        )
-                                    )
-                                }
+                                requestDefaultSmsRole()
                             }) { androidx.compose.material3.Text(stringResource(R.string.default_sms_set)) }
                         },
                         dismissButton = {
@@ -2656,6 +2668,32 @@ onOpenAccessibility = { navRoute = "accessibility" },
         getSystemService(RoleManager::class.java)?.isRoleHeld(RoleManager.ROLE_SMS) == true ||
             Telephony.Sms.getDefaultSmsPackage(this) == packageName
 
+    /** Opens the modern role picker, with the legacy OEM fallback kept intact. */
+    private fun requestDefaultSmsRole() {
+        val roleManager = getSystemService(RoleManager::class.java)
+        if (roleManager?.isRoleAvailable(RoleManager.ROLE_SMS) == true) {
+            defaultSmsLauncher.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS))
+        } else {
+            defaultSmsLauncher.launch(
+                Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).putExtra(
+                    Telephony.Sms.Intents.EXTRA_PACKAGE_NAME,
+                    packageName
+                )
+            )
+        }
+    }
+
+    /** Every permission represented by the first-run checklist is currently granted. */
+    private fun setupPermissionsReady(): Boolean {
+        val smsReady = com.anindra.messages.data.LaunchPermissions.SMS_SET.all {
+            checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
+        }
+        val notificationsReady = Build.VERSION.SDK_INT < 33 ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        return smsReady && notificationsReady
+    }
+
     /** Routes that cannot do their job without the address book. */
     private val CONTACTS_ROUTES = setOf("new", "details", "add-people")
 
@@ -2672,6 +2710,7 @@ onOpenAccessibility = { navRoute = "accessibility" },
 
     override fun onResume() {
         super.onResume()
+        setupRefreshVersion++
         com.anindra.messages.sms.ForegroundTracker.setAppForeground(true)
         val repo = (application as MessagesApplication).repository
         // import right away once SMS access appears (default-app role, dialog)

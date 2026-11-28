@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">M3 Expressive へようこそ</string>
+    <string name="onboarding_subtitle">いくつかの簡単な手順で、この端末のプライベートメッセージを準備します。</string>
+    <string name="onboarding_default_title">M3 Expressive をデフォルトに設定</string>
+    <string name="onboarding_default_subtitle">会話の受信、送信、整理に必要です。</string>
+    <string name="onboarding_permissions_title">必要な権限</string>
+    <string name="onboarding_permissions_subtitle">SMS と通知へのアクセスです。連絡先は必要なときだけ求めます。</string>
+    <string name="onboarding_privacy">メッセージと設定データはこの端末内に保存されます。</string>
+    <string name="onboarding_action_default">デフォルトに設定</string>
+    <string name="onboarding_action_permissions">権限を許可</string>
+    <string name="onboarding_action_finish">メッセージを始める</string>
+    <string name="onboarding_not_now">後で</string>
+    <string name="onboarding_ready">準備完了</string>
+    <string name="onboarding_pending">操作が必要</string>
+</resources>

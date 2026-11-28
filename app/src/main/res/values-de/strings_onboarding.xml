@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">Willkommen bei M3 Expressive</string>
+    <string name="onboarding_subtitle">Ein paar kurze Schritte richten private Nachrichten auf diesem Gerät ein.</string>
+    <string name="onboarding_default_title">M3 Expressive als Standard</string>
+    <string name="onboarding_default_subtitle">Erforderlich, um Unterhaltungen zu empfangen, zu senden und zu verwalten.</string>
+    <string name="onboarding_permissions_title">Erforderliche Berechtigungen</string>
+    <string name="onboarding_permissions_subtitle">SMS-Zugriff und Benachrichtigungen. Kontakte werden erst bei Bedarf angefordert.</string>
+    <string name="onboarding_privacy">Nachrichten und Einrichtungsdaten bleiben auf diesem Gerät.</string>
+    <string name="onboarding_action_default">Als Standard festlegen</string>
+    <string name="onboarding_action_permissions">Berechtigungen erteilen</string>
+    <string name="onboarding_action_finish">Nachrichten starten</string>
+    <string name="onboarding_not_now">Später</string>
+    <string name="onboarding_ready">Bereit</string>
+    <string name="onboarding_pending">Aktion erforderlich</string>
+</resources>

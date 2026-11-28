@@ -68,6 +68,27 @@ class FreshInstallDefaultsTest {
     }
 
     @Test
+    fun onboardingOnlyInterruptsAFreshInstall() {
+        assertEquals(
+            false,
+            SettingsStore.initialOnboardingCompleted(freshInstall = true, stored = null)
+        )
+        assertEquals(
+            true,
+            SettingsStore.initialOnboardingCompleted(freshInstall = false, stored = null)
+        )
+        assertEquals(
+            false,
+            SettingsStore.initialOnboardingCompleted(freshInstall = false, stored = false)
+        )
+        assertEquals(
+            true,
+            SettingsStore.initialOnboardingCompleted(freshInstall = true, stored = true)
+        )
+        assertTrue(store.contains("KEY_ONBOARDING_COMPLETED"))
+    }
+
+    @Test
     fun theDesignedUiIsTheDefault() {
         assertTrue(
             "a user who never touched the switch must land on the redesigned screens",

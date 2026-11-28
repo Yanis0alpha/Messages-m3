@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">مرحبًا بك في M3 Expressive</string>
+    <string name="onboarding_subtitle">بضع خطوات سريعة لإعداد المراسلة الخاصة على هذا الهاتف.</string>
+    <string name="onboarding_default_title">M3 Expressive كتطبيق افتراضي</string>
+    <string name="onboarding_default_subtitle">مطلوب لاستلام محادثاتك وإرسالها وتنظيمها.</string>
+    <string name="onboarding_permissions_title">الأذونات الأساسية</string>
+    <string name="onboarding_permissions_subtitle">الوصول إلى SMS والإشعارات. تُطلب جهات الاتصال عند الحاجة فقط.</string>
+    <string name="onboarding_privacy">تبقى الرسائل وبيانات الإعداد على هذا الجهاز.</string>
+    <string name="onboarding_action_default">تعيين كتطبيق افتراضي</string>
+    <string name="onboarding_action_permissions">منح الأذونات</string>
+    <string name="onboarding_action_finish">بدء المراسلة</string>
+    <string name="onboarding_not_now">ليس الآن</string>
+    <string name="onboarding_ready">جاهز</string>
+    <string name="onboarding_pending">يلزم إجراء</string>
+</resources>

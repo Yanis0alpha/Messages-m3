@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">Te damos la bienvenida a M3 Expressive</string>
+    <string name="onboarding_subtitle">Unos pasos rápidos preparan la mensajería privada en este teléfono.</string>
+    <string name="onboarding_default_title">M3 Expressive como predeterminada</string>
+    <string name="onboarding_default_subtitle">Necesaria para recibir, enviar y organizar tus conversaciones.</string>
+    <string name="onboarding_permissions_title">Permisos esenciales</string>
+    <string name="onboarding_permissions_subtitle">Acceso a SMS y notificaciones. Los contactos se solicitan solo cuando son necesarios.</string>
+    <string name="onboarding_privacy">Los mensajes y los datos de configuración permanecen en este dispositivo.</string>
+    <string name="onboarding_action_default">Establecer como predeterminada</string>
+    <string name="onboarding_action_permissions">Conceder permisos</string>
+    <string name="onboarding_action_finish">Empezar a enviar mensajes</string>
+    <string name="onboarding_not_now">Ahora no</string>
+    <string name="onboarding_ready">Listo</string>
+    <string name="onboarding_pending">Acción necesaria</string>
+</resources>

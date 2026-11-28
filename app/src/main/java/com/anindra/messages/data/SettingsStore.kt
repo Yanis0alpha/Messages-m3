@@ -31,6 +31,14 @@ class SettingsStore(context: Context) {
         seedFontFor(firstInstall, prefs.getString(KEY_FONT_FAMILY, null))?.let {
             prefs.edit().putString(KEY_FONT_FAMILY, it).apply()
         }
+        if (!prefs.contains(KEY_ONBOARDING_COMPLETED)) {
+            prefs.edit()
+                .putBoolean(
+                    KEY_ONBOARDING_COMPLETED,
+                    initialOnboardingCompleted(firstInstall, stored = null)
+                )
+                .apply()
+        }
     }
 
     private val _revision = MutableStateFlow(0)
@@ -46,6 +54,7 @@ class SettingsStore(context: Context) {
         const val THEME_DYNAMIC = "dynamic"
 
         const val KEY_THEME = "theme_mode"
+        const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
         const val KEY_TRANSLUCENT_SURFACE_OPACITY = "translucent_surface_opacity_percent"
         const val KEY_SETTINGS_CARD_BLUR = "settings_card_blur_enabled"
         const val KEY_SETTINGS_CARD_OPACITY = "settings_card_opacity_percent"
@@ -115,6 +124,12 @@ class SettingsStore(context: Context) {
         internal fun seedFontFor(freshInstall: Boolean, storedFont: String?): String? =
             if (freshInstall && storedFont == null) FONT_DM_SANS else null
 
+        /** Existing installations must not be interrupted by onboarding after an update. */
+        internal fun initialOnboardingCompleted(
+            freshInstall: Boolean,
+            stored: Boolean?
+        ): Boolean = stored ?: !freshInstall
+
         const val FONT_DM_SANS = "dm_sans"
         const val FONT_INTER = "inter"
         const val FONT_FIGTREE = "figtree"
@@ -162,6 +177,13 @@ class SettingsStore(context: Context) {
         private fun storedCalendarOf(prefs: SharedPreferences): String? =
             prefs.getString(KEY_CALENDAR, CalendarSystem.AUTO.storageValue)
     }
+
+    var onboardingCompleted: Boolean
+        get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, !firstInstall)
+        set(v) {
+            prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, v).apply()
+            _revision.value++
+        }
 
     var themeMode: String
         get() = prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM

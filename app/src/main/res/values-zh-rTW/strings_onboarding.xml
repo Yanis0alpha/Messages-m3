@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">歡迎使用 M3 Expressive</string>
+    <string name="onboarding_subtitle">只需幾個快速步驟，即可在此手機上準備好私人簡訊功能。</string>
+    <string name="onboarding_default_title">將 M3 Expressive 設為預設應用程式</string>
+    <string name="onboarding_default_subtitle">接收、傳送和整理對話所必需。</string>
+    <string name="onboarding_permissions_title">必要權限</string>
+    <string name="onboarding_permissions_subtitle">簡訊和通知權限。只在需要時要求聯絡人權限。</string>
+    <string name="onboarding_privacy">簡訊和設定資料只會保留在此裝置上。</string>
+    <string name="onboarding_action_default">設為預設應用程式</string>
+    <string name="onboarding_action_permissions">授予權限</string>
+    <string name="onboarding_action_finish">開始傳送簡訊</string>
+    <string name="onboarding_not_now">稍後</string>
+    <string name="onboarding_ready">已就緒</string>
+    <string name="onboarding_pending">需要操作</string>
+</resources>
