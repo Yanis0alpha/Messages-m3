@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="onboarding_brand" translatable="false">M3 Expressive</string>
+    <string name="onboarding_hero_title">Messagerie M3 Expressive</string>
     <string name="onboarding_title">Welcome to M3 Expressive</string>
     <string name="onboarding_subtitle">A few quick steps prepare private messaging on this phone.</string>
     <string name="onboarding_default_title">M3 Expressive as default</string>

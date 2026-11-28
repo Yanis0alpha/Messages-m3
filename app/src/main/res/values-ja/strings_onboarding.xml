@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="onboarding_hero_title">Messagerie M3 Expressive</string>
     <string name="onboarding_title">M3 Expressive へようこそ</string>
     <string name="onboarding_subtitle">いくつかの簡単な手順で、この端末のプライベートメッセージを準備します。</string>
     <string name="onboarding_default_title">M3 Expressive をデフォルトに設定</string>

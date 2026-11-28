@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="onboarding_hero_title">Messagerie M3 Expressive</string>
     <string name="onboarding_title">مرحبًا بك في M3 Expressive</string>
     <string name="onboarding_subtitle">بضع خطوات سريعة لإعداد المراسلة الخاصة على هذا الهاتف.</string>
     <string name="onboarding_default_title">M3 Expressive كتطبيق افتراضي</string>

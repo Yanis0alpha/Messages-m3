@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="onboarding_hero_title">Messagerie M3 Expressive</string>
     <string name="onboarding_title">歡迎使用 M3 Expressive</string>
     <string name="onboarding_subtitle">只需幾個快速步驟，即可在此手機上準備好私人簡訊功能。</string>
     <string name="onboarding_default_title">將 M3 Expressive 設為預設應用程式</string>

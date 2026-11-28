@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="onboarding_hero_title">Messagerie M3 Expressive</string>
     <string name="onboarding_title">M3 Expressive में आपका स्वागत है</string>
     <string name="onboarding_subtitle">कुछ त्वरित चरण इस फ़ोन पर निजी मैसेजिंग तैयार करते हैं।</string>
     <string name="onboarding_default_title">M3 Expressive को डिफ़ॉल्ट बनाएँ</string>

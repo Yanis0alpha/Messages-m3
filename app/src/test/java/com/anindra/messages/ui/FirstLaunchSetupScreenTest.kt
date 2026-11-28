@@ -35,64 +35,41 @@ class FirstLaunchSetupScreenTest {
     }
 
     @Test
-    fun pixelInspiredArtworkUsesTheRequestedExpressiveMotion() {
+    fun backgroundUsesFourEqualRotatingExpressiveShapesAndNoMovingGem() {
         assertTrue(source.contains("MaterialShapes.Cookie12Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Clover8Leaf.toShape()"))
         assertTrue(source.contains("MaterialShapes.Cookie6Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Cookie9Sided.toShape()"))
-        assertTrue(source.contains("MaterialShapes.Gem.toShape()"))
-        assertTrue(source.contains("SetupShapeMotion.frame(motionProgress.value)"))
-        assertTrue(source.contains("durationMillis = 4_200"))
+        assertTrue(!source.contains("MaterialShapes.Gem.toShape()"))
+        assertEquals(4, Regex("\\.size\\(shapeSize\\)").findAll(source).count())
+        assertTrue(source.contains("durationMillis = 14_000"))
+        assertTrue(source.contains("rotationProgress.value * 360f"))
+        assertTrue(source.contains("rotationProgress.value * 300f"))
+        assertTrue(source.contains("rotationProgress.value * 420f"))
+        assertTrue(source.contains("R.string.onboarding_hero_title"))
+    }
+
+    @Test
+    fun reducedMotionStopsAllFourShapeRotations() {
+        assertTrue(source.contains("if (reduceMotion)"))
+        assertTrue(source.contains("rotationProgress.snapTo(0f)"))
         assertTrue(source.contains("val reduceMotion = LocalReduceMotion.current"))
-        assertTrue(source.contains("SetupShapeMotion.resting"))
     }
 
     @Test
-    fun fourImpactsSendTheMovingShapeUpInAZigzag() {
-        val start = SetupShapeMotion.frame(0f)
-        val lower = SetupShapeMotion.frame(0.18f)
-        val middle = SetupShapeMotion.frame(0.40f)
-        val upperLeft = SetupShapeMotion.frame(0.62f)
-        val upperRight = SetupShapeMotion.frame(0.82f)
-        val end = SetupShapeMotion.frame(1f)
-
-        assertTrue("moving shape must enter from below", start.movingYFraction > 1f)
-        assertTrue("first collision must travel left", lower.movingXFraction < start.movingXFraction)
-        assertTrue("second collision must rebound right", middle.movingXFraction > lower.movingXFraction)
-        assertTrue("third collision must rebound left", upperLeft.movingXFraction < middle.movingXFraction)
-        assertTrue("fourth collision must rebound right", upperRight.movingXFraction > upperLeft.movingXFraction)
-        assertTrue("final rebound must leave to the left", end.movingXFraction < upperRight.movingXFraction)
-        assertTrue("moving shape must leave above the screen", end.movingYFraction < 0f)
-        assertTrue("lower obstacle must receive the first impact", lower.lowerImpact > 0.99f)
-        assertTrue("middle obstacle must receive the second impact", middle.middleImpact > 0.99f)
-        assertTrue("upper-left obstacle must receive the third impact", upperLeft.upperLeftImpact > 0.99f)
-        assertTrue("upper-right obstacle must receive the fourth impact", upperRight.upperRightImpact > 0.99f)
-        assertTrue("moving shape must squash on impact", middle.movingScaleY < 1f)
-    }
-
-    @Test
-    fun reducedMotionKeepsAReadableCollisionFreeComposition() {
-        val frame = SetupShapeMotion.resting
-        assertEquals(1f, frame.movingScaleX, 0f)
-        assertEquals(1f, frame.movingScaleY, 0f)
-        assertEquals(0f, frame.lowerImpact, 0f)
-        assertEquals(0f, frame.middleImpact, 0f)
-        assertEquals(0f, frame.upperLeftImpact, 0f)
-        assertEquals(0f, frame.upperRightImpact, 0f)
-        assertTrue(frame.movingYFraction in 0f..0.5f)
-    }
-
-    @Test
-    fun collapsedActionsExpandARealNinetyPercentSetupSheet() {
+    fun collapsedActionsExpandIntoADraggableNinetyPercentGlassSheet() {
         assertTrue(source.contains("screenHeight * 0.10f"))
-        assertTrue(source.contains("screenHeight * 0.90f"))
-        assertTrue(source.contains("setupExpanded = true"))
+        assertTrue(source.contains("ChatSheetLayout.HEIGHT_FRACTION"))
+        assertTrue(source.contains("BottomSheetScaffold("))
+        assertTrue(source.contains("setupStarted = true"))
+        assertTrue(source.contains("bottomSheetState.expand()"))
+        assertTrue(source.contains("sheetSwipeEnabled = setupStarted"))
+        assertTrue(source.contains("BottomSheetDefaults.DragHandle()"))
         assertTrue(source.contains("R.string.onboarding_start_setup"))
         assertTrue(source.contains("R.string.onboarding_skip_setup"))
         assertTrue(source.contains("OutlinedButton("))
-        assertTrue(source.contains("TranslucentBackdropSurface("))
-        assertTrue(source.contains("blurRadius = 32.dp"))
-        assertTrue(source.contains("tintAlpha = 0.72f"))
+        assertTrue(source.contains("ChatSheetLayout.BACKGROUND_BLUR_RADIUS"))
+        assertTrue(source.contains("alpha = surfaceAlpha"))
     }
 
     @Test
@@ -124,6 +101,7 @@ class FirstLaunchSetupScreenTest {
             .filter { it.isFile }
         assertEquals(14, files.size)
         val required = listOf(
+            "onboarding_hero_title",
             "onboarding_title",
             "onboarding_default_title",
             "onboarding_permissions_title",
@@ -133,9 +111,14 @@ class FirstLaunchSetupScreenTest {
             "onboarding_not_now"
         )
         files.forEach { file ->
+            val copy = file.readText()
             required.forEach { key ->
-                assertTrue("$key missing from $file", file.readText().contains("name=\"$key\""))
+                assertTrue("$key missing from $file", copy.contains("name=\"$key\""))
             }
+            assertTrue(
+                "hero title changed in $file",
+                copy.contains(">Messagerie M3 Expressive</string>")
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="onboarding_hero_title">Messagerie M3 Expressive</string>
     <string name="onboarding_title">Bienvenue dans M3 Expressive</string>
     <string name="onboarding_subtitle">Quelques étapes rapides préparent la messagerie privée sur ce téléphone.</string>
     <string name="onboarding_default_title">M3 Expressive par défaut</string>
