@@ -50,6 +50,7 @@ import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.MarkEmailRead
@@ -849,6 +850,12 @@ fun ConversationsScreen(
                                 .weight(1f)
                                 .fillMaxWidth()
                         )
+                    } else if (!showArchived && !searching && scoped.isEmpty()) {
+                        MessagesEmptyState(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        )
                     } else {
                         LazyColumn(
                             state = listState,
@@ -1619,7 +1626,46 @@ internal fun HomeShapeBackdrop(registerAsSource: Boolean = true) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
+internal fun MessagesEmptyState(modifier: Modifier = Modifier) {
+    ExpressiveConversationEmptyState(
+        icon = Icons.Rounded.ChatBubble,
+        text = stringResource(R.string.conversations_messages_empty),
+        shape = MaterialShapes.Cookie9Sided.toShape(),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        textColor = MaterialTheme.colorScheme.primary,
+        rotationPeak = -8f,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
 internal fun ArchivedEmptyState(modifier: Modifier = Modifier) {
+    ExpressiveConversationEmptyState(
+        icon = Icons.Rounded.Archive,
+        text = stringResource(R.string.conversations_archived_empty),
+        shape = MaterialShapes.Cookie7Sided.toShape(),
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        rotationPeak = 8f,
+        modifier = modifier
+    )
+}
+
+/** Shared M3 Expressive entrance for the Messages and Archives empty states. */
+@Composable
+private fun ExpressiveConversationEmptyState(
+    icon: ImageVector,
+    text: String,
+    shape: Shape,
+    containerColor: Color,
+    contentColor: Color,
+    textColor: Color,
+    rotationPeak: Float,
+    modifier: Modifier = Modifier
+) {
     val reduceMotion = LocalReduceMotion.current
     val shapeEntrance = remember { Animatable(if (reduceMotion) 1f else 0f) }
     val shapeRotation = remember { Animatable(0f) }
@@ -1641,7 +1687,7 @@ internal fun ArchivedEmptyState(modifier: Modifier = Modifier) {
             }
             launch {
                 shapeRotation.animateTo(
-                    targetValue = 8f,
+                    targetValue = rotationPeak,
                     animationSpec = tween(durationMillis = 180)
                 )
                 shapeRotation.animateTo(
@@ -1668,22 +1714,22 @@ internal fun ArchivedEmptyState(modifier: Modifier = Modifier) {
                     scaleY = 0.72f + (0.28f * shapeEntrance.value)
                     rotationZ = shapeRotation.value
                 }
-                .clip(MaterialShapes.Cookie7Sided.toShape())
-                .background(MaterialTheme.colorScheme.tertiaryContainer),
+                .clip(shape)
+                .background(containerColor),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Rounded.Archive,
+                imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                tint = contentColor,
                 modifier = Modifier.size(52.dp)
             )
         }
         Spacer(Modifier.height(20.dp))
         Text(
-            text = stringResource(R.string.conversations_archived_empty),
+            text = text,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = textColor,
             textAlign = TextAlign.Center
         )
     }

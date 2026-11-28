@@ -59,6 +59,18 @@ class InboxCategoryButtonGroupTest {
     }
 
     @Test
+    fun emptyMessagesUsesAnAnimatedExpressiveMaterialState() {
+        val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
+        assertTrue(conversations.contains("!showArchived && !searching && scoped.isEmpty()"))
+        assertTrue(conversations.contains("MessagesEmptyState("))
+        assertTrue(conversations.contains("MaterialShapes.Cookie9Sided.toShape()"))
+        assertTrue(conversations.contains("Icons.Rounded.ChatBubble"))
+        assertTrue(conversations.contains("R.string.conversations_messages_empty"))
+        assertTrue(conversations.contains("val reduceMotion = LocalReduceMotion.current"))
+        assertTrue(conversations.contains("if (reduceMotion)"))
+    }
+
+    @Test
     fun emptyArchiveUsesAnExpressiveMaterialState() {
         val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
         assertTrue(conversations.contains("showArchived && !searching && scoped.isEmpty()"))

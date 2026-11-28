@@ -15,6 +15,7 @@
     <string name="new_chat_send_to">ارسال به «%s»</string>
     <string name="text_placeholder">پیام</string>
     <string name="conversations_archived">بایگانی‌شده</string>
+    <string name="conversations_messages_empty">هنوز پیامی دریافت نشده است</string>
     <string name="conversations_archived_empty">فعلاً هیچ گفت‌وگویی بایگانی نشده است</string>
     <string name="conversations_spam_blocked">هرزنامه و مسدود</string>
     <string name="conversations_back_to_top">بازگشت به بالا</string>

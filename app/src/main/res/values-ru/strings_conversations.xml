@@ -15,6 +15,7 @@
     <string name="new_chat_send_to">Отправить «%s»</string>
     <string name="text_placeholder">Текстовое сообщение</string>
     <string name="conversations_archived">Архив</string>
+    <string name="conversations_messages_empty">Полученных сообщений пока нет</string>
     <string name="conversations_archived_empty">Пока нет архивных чатов</string>
     <string name="conversations_spam_blocked">Спам и блокировка</string>
     <string name="conversations_back_to_top">Наверх</string>
