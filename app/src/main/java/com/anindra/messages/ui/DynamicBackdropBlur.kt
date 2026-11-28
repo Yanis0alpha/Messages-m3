@@ -148,12 +148,14 @@ private class RegisteredBackdrop(
         get() = graph.sourcesBelow(consumerLayer).firstOrNull()?.offsetResidualX ?: 0f
     override val offsetResidualY: Float
         get() = graph.sourcesBelow(consumerLayer).firstOrNull()?.offsetResidualY ?: 0f
+    override val backdropCoordinates: LayoutCoordinates?
+        get() = graph.sourcesBelow(consumerLayer).firstOrNull()?.backdropCoordinates
 
     override fun DrawScope.drawBackdrop(
         density: Density,
         coordinates: LayoutCoordinates?,
         layerBlock: (GraphicsLayerScope.() -> Unit)?,
-        downscaleFactor: Int
+        downscaleFactor: Float
     ) {
         graph.sourcesBelow(consumerLayer).forEach { backdrop ->
             with(backdrop) {

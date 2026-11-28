@@ -162,12 +162,14 @@ class FloatingChatChromeTest {
             "app/src/main/java/com/anindra/messages/ui/DynamicBackdropBlur.kt"
         ).readText()
 
-        assertTrue(versions.contains("miuix = \"0.9.4\""))
+        assertTrue(versions.contains("miuix = \"0.9.5-rc02\""))
         assertTrue(versions.contains("name = \"miuix-blur-android\""))
         assertTrue(appBuild.contains("implementation(libs.miuix.blur)"))
         assertFalse(appBuild.contains("implementation(libs.haze)"))
         assertTrue(blur.contains("rememberLayerBackdrop("))
         assertTrue(blur.contains("graph.registerSource(owner, layer, backdrop)"))
+        assertTrue(blur.contains("downscaleFactor: Float"))
+        assertTrue(blur.contains("override val backdropCoordinates: LayoutCoordinates?"))
         assertTrue(blur.contains("textureBlurEffect("))
         assertTrue(blur.contains("noiseCoefficient = BlurDefaults.NoiseCoefficient"))
         assertFalse(blur.contains("noiseCoefficient = 0f"))
