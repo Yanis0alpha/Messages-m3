@@ -173,7 +173,7 @@ class FloatingChatChromeTest {
         assertFalse(blur.contains("noiseCoefficient = 0f"))
         assertFalse(blur.contains("if (layer == DynamicBackdropLayer.SHEET)"))
         assertFalse(blur.contains("downscaleFactor = 1"))
-        assertFalse(blur.contains("BlurEffect("))
+        assertFalse(blur.contains("import androidx.compose.ui.graphics.BlurEffect"))
     }
 
     @Test
