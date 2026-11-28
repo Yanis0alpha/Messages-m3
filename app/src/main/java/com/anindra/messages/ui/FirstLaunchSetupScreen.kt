@@ -218,17 +218,25 @@ internal fun FirstLaunchSetupScreen(
                                 }
                             }
                         } else {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
-                                    .navigationBarsPadding()
-                                    .padding(horizontal = 24.dp, vertical = 14.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                BottomSheetDefaults.DragHandle()
-                                Spacer(Modifier.height(14.dp))
-                                Text(
+                            Column(Modifier.fillMaxSize()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(ChatSheetLayout.DRAG_HANDLE_HEIGHT),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    BottomSheetDefaults.DragHandle()
+                                }
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                        .verticalScroll(rememberScrollState())
+                                        .navigationBarsPadding()
+                                        .padding(horizontal = 24.dp, vertical = 14.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
                                     text = stringResource(R.string.onboarding_title),
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.SemiBold,
@@ -314,6 +322,7 @@ internal fun FirstLaunchSetupScreen(
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp)
                                     )
+                                }
                                 }
                             }
                         }
