@@ -36,12 +36,45 @@ class FirstLaunchSetupScreenTest {
 
     @Test
     fun pixelInspiredArtworkUsesTheRequestedExpressiveMotion() {
-        assertTrue(source.contains("MaterialShapes.Cookie12Sided.toShape()"))
+        assertTrue(source.contains("MaterialShapes.Cookie9Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Gem.toShape()"))
-        assertTrue(source.contains("gemY.animateTo("))
-        assertTrue(source.contains("Spring.DampingRatioMediumBouncy"))
+        assertTrue(source.contains("SetupShapeMotion.frame(motionProgress.value)"))
+        assertTrue(source.contains("durationMillis = 3_000"))
         assertTrue(source.contains("val reduceMotion = LocalReduceMotion.current"))
-        assertTrue(source.contains("if (reduceMotion)"))
+        assertTrue(source.contains("SetupShapeMotion.resting"))
+    }
+
+    @Test
+    fun gravityImpactAndRestitutionAreOneCoordinatedMotion() {
+        val start = SetupShapeMotion.frame(0f)
+        val fallingEarly = SetupShapeMotion.frame(0.24f)
+        val fallingMiddle = SetupShapeMotion.frame(0.32f)
+        val fallingLate = SetupShapeMotion.frame(0.40f)
+        val impact = SetupShapeMotion.frame(0.53f)
+        val rebound = SetupShapeMotion.frame(0.68f)
+        val end = SetupShapeMotion.frame(1f)
+
+        assertTrue("cookie must enter from below-left", start.cookieYFraction > 0.4f)
+        assertTrue(
+            "falling distance must accelerate under gravity",
+            fallingLate.gemYFraction - fallingMiddle.gemYFraction >
+                fallingMiddle.gemYFraction - fallingEarly.gemYFraction
+        )
+        assertTrue("cookie must squash at impact", impact.cookieScaleY < 1f)
+        assertTrue("cookie must spread at impact", impact.cookieScaleX > 1f)
+        assertTrue("gem must squash at impact", impact.gemScaleY < 1f)
+        assertTrue("restitution must send the gem upward", rebound.gemYFraction < impact.gemYFraction)
+        assertTrue("cookie must leave below before the loop restarts", end.cookieYFraction > 0.4f)
+    }
+
+    @Test
+    fun reducedMotionKeepsAReadableCollisionFreeComposition() {
+        val frame = SetupShapeMotion.resting
+        assertEquals(1f, frame.cookieScaleX, 0f)
+        assertEquals(1f, frame.cookieScaleY, 0f)
+        assertEquals(1f, frame.gemScaleX, 0f)
+        assertEquals(1f, frame.gemScaleY, 0f)
+        assertTrue(frame.gemYFraction < 0.5f)
     }
 
     @Test

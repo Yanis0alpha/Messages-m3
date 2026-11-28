@@ -1,9 +1,7 @@
 package com.anindra.messages.ui
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,8 +44,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -56,7 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
 import com.anindra.messages.ui.theme.LocalReduceMotion
-import kotlinx.coroutines.delay
+import kotlin.math.PI
+import kotlin.math.sin
 
 internal enum class FirstLaunchAction {
     REQUEST_DEFAULT_SMS,
@@ -69,6 +68,143 @@ internal object FirstLaunchSetupFlow {
         !defaultSmsReady -> FirstLaunchAction.REQUEST_DEFAULT_SMS
         !permissionsReady -> FirstLaunchAction.REQUEST_PERMISSIONS
         else -> FirstLaunchAction.COMPLETE
+    }
+}
+
+internal data class SetupShapeMotionFrame(
+    val cookieXFraction: Float,
+    val cookieYFraction: Float,
+    val cookieRotation: Float,
+    val cookieScaleX: Float,
+    val cookieScaleY: Float,
+    val gemXFraction: Float,
+    val gemYFraction: Float,
+    val gemRotation: Float,
+    val gemScaleX: Float,
+    val gemScaleY: Float
+)
+
+/**
+ * One deterministic pass of the setup artwork. The timing follows the same model used by
+ * Feldman Clock's open-source Setup Wizard artwork (`feldmandev/feldman-clock`): gravity
+ * accelerates the falling body, restitution sends it back up, and the large cookie behaves as a
+ * springy trampoline at the collision. The equations here are a small local implementation, so
+ * this screen does not pull the reference app's much larger motion-and-font dependency.
+ */
+internal object SetupShapeMotion {
+    private const val IMPACT_START = 0.48f
+    private const val IMPACT_END = 0.58f
+
+    val resting = SetupShapeMotionFrame(
+        cookieXFraction = 0f,
+        cookieYFraction = 0f,
+        cookieRotation = -12f,
+        cookieScaleX = 1f,
+        cookieScaleY = 1f,
+        gemXFraction = 0.53f,
+        gemYFraction = 0.34f,
+        gemRotation = 58f,
+        gemScaleX = 1f,
+        gemScaleY = 1f
+    )
+
+    fun frame(rawProgress: Float): SetupShapeMotionFrame {
+        val progress = rawProgress.coerceIn(0f, 1f)
+        val entrance = phase(progress, 0f, 0.20f)
+        val entranceSpring = easeOutBack(entrance)
+        val exit = phase(progress, 0.84f, 1f)
+        val impact = phase(progress, IMPACT_START, IMPACT_END)
+        val compression = if (progress in IMPACT_START..IMPACT_END) {
+            sin(impact * PI.toFloat()).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+
+        val gemX: Float
+        val gemY: Float
+        val gemRotation: Float
+        val gemScaleX: Float
+        val gemScaleY: Float
+        when {
+            progress < 0.16f -> {
+                gemX = 0.70f
+                gemY = -0.34f
+                gemRotation = -28f
+                gemScaleX = 1f
+                gemScaleY = 1f
+            }
+            progress < IMPACT_START -> {
+                val fall = phase(progress, 0.16f, IMPACT_START)
+                // Constant gravity: travelled distance is proportional to time squared.
+                val gravity = fall * fall
+                gemX = lerp(0.70f, 0.52f, fall)
+                gemY = lerp(-0.34f, 0.50f, gravity)
+                gemRotation = lerp(-28f, 68f, fall)
+                gemScaleX = 1f
+                gemScaleY = 1f
+            }
+            progress <= IMPACT_END -> {
+                gemX = 0.52f
+                gemY = 0.50f + 0.026f * compression
+                gemRotation = lerp(68f, 94f, impact)
+                // Squash on contact, then stretch as restitution takes over.
+                val release = phase(impact, 0.5f, 1f)
+                if (impact < 0.5f) {
+                    val squash = sin(impact * PI.toFloat())
+                    gemScaleX = 1f + 0.13f * squash
+                    gemScaleY = 1f - 0.20f * squash
+                } else {
+                    gemScaleX = lerp(1.13f, 0.934f, release)
+                    gemScaleY = lerp(0.80f, 1.12f, release)
+                }
+            }
+            progress < 0.84f -> {
+                val rebound = phase(progress, IMPACT_END, 0.84f)
+                // Restitution gives a high initial velocity which eases as the gem reaches its apex.
+                val ballisticRise = 1f - (1f - rebound) * (1f - rebound)
+                gemX = lerp(0.52f, 0.61f, rebound)
+                gemY = lerp(0.50f, -0.34f, ballisticRise)
+                gemRotation = lerp(94f, 178f, rebound)
+                val stretch = (1f - rebound) * 0.12f
+                gemScaleX = 1f - stretch * 0.55f
+                gemScaleY = 1f + stretch
+            }
+            else -> {
+                gemX = 0.61f
+                gemY = -0.34f
+                gemRotation = 178f
+                gemScaleX = 1f
+                gemScaleY = 1f
+            }
+        }
+
+        return SetupShapeMotionFrame(
+            cookieXFraction = -0.10f * (1f - entrance.coerceIn(0f, 1f)) - 0.10f * exit,
+            cookieYFraction = 0.74f * (1f - entranceSpring) + 0.74f * exit,
+            cookieRotation = lerp(-24f, -12f, entrance.coerceIn(0f, 1f)) +
+                2.5f * compression,
+            cookieScaleX = 1f + 0.075f * compression,
+            cookieScaleY = 1f - 0.095f * compression,
+            gemXFraction = gemX,
+            gemYFraction = gemY,
+            gemRotation = gemRotation,
+            gemScaleX = gemScaleX,
+            gemScaleY = gemScaleY
+        )
+    }
+
+    private fun phase(value: Float, start: Float, end: Float): Float =
+        ((value - start) / (end - start)).coerceIn(0f, 1f)
+
+    private fun lerp(start: Float, end: Float, fraction: Float): Float =
+        start + (end - start) * fraction
+
+    /** Slight overshoot gives the heavy cookie a spring rather than a tweened slide. */
+    private fun easeOutBack(value: Float): Float {
+        val c1 = 1.70158f
+        val c3 = c1 + 1f
+        val shifted = value - 1f
+        return 1f + c3 * shifted * shifted * shifted + c1 * shifted * shifted
     }
 }
 
@@ -93,47 +229,28 @@ internal fun FirstLaunchSetupScreen(
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val visualHeight = maxHeight * 0.43f
             val cookieSize = if (maxWidth < 520.dp) maxWidth * 0.94f else 460.dp
-            val bounceY = visualHeight.value * 0.34f
-            val gemY = remember { Animatable(-112f) }
+            val motionProgress = remember { Animatable(0f) }
 
-            LaunchedEffect(reduceMotion, bounceY) {
+            LaunchedEffect(reduceMotion) {
                 if (reduceMotion) {
-                    gemY.snapTo(bounceY - 22f)
+                    motionProgress.snapTo(0f)
                 } else {
                     while (true) {
-                        gemY.snapTo(-112f)
-                        gemY.animateTo(
-                            targetValue = bounceY,
+                        motionProgress.snapTo(0f)
+                        motionProgress.animateTo(
+                            targetValue = 1f,
                             animationSpec = tween(
-                                durationMillis = 760,
-                                easing = FastOutSlowInEasing
+                                durationMillis = 3_000,
+                                easing = LinearEasing
                             )
                         )
-                        gemY.animateTo(
-                            targetValue = bounceY - 34f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                        gemY.animateTo(
-                            targetValue = bounceY,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            )
-                        )
-                        delay(220)
-                        gemY.animateTo(
-                            targetValue = -72f,
-                            animationSpec = tween(
-                                durationMillis = 780,
-                                easing = FastOutSlowInEasing
-                            )
-                        )
-                        delay(520)
                     }
                 }
+            }
+            val motionFrame = if (reduceMotion) {
+                SetupShapeMotion.resting
+            } else {
+                SetupShapeMotion.frame(motionProgress.value)
             }
 
             Column(Modifier.fillMaxSize()) {
@@ -153,31 +270,38 @@ internal fun FirstLaunchSetupScreen(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
-                            .offset(x = -(cookieSize * 0.28f), y = cookieSize * 0.30f)
+                            .offset(
+                                x = -(cookieSize * 0.28f) +
+                                    cookieSize * motionFrame.cookieXFraction,
+                                y = cookieSize * 0.30f +
+                                    cookieSize * motionFrame.cookieYFraction
+                            )
                             .size(cookieSize)
-                            .rotate(-12f)
-                            .clip(MaterialShapes.Cookie12Sided.toShape())
+                            .graphicsLayer {
+                                rotationZ = motionFrame.cookieRotation
+                                scaleX = motionFrame.cookieScaleX
+                                scaleY = motionFrame.cookieScaleY
+                                transformOrigin = TransformOrigin(0.5f, 0.82f)
+                            }
+                            .clip(MaterialShapes.Cookie9Sided.toShape())
                             .background(MaterialTheme.colorScheme.primaryContainer)
                     )
                     Box(
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .offset(x = (-48).dp, y = gemY.value.dp)
+                            .align(Alignment.TopStart)
+                            .offset(
+                                x = maxWidth * motionFrame.gemXFraction,
+                                y = visualHeight * motionFrame.gemYFraction
+                            )
                             .size(96.dp)
                             .graphicsLayer {
-                                rotationZ = (gemY.value + 112f) * 0.34f
+                                rotationZ = motionFrame.gemRotation
+                                scaleX = motionFrame.gemScaleX
+                                scaleY = motionFrame.gemScaleY
                             }
                             .clip(MaterialShapes.Gem.toShape())
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Sms,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(42.dp)
-                        )
-                    }
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
                 }
 
                 Column(
@@ -287,12 +411,13 @@ internal fun FirstLaunchSetupScreen(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SetupRequirementCard(
+internal fun SetupRequirementCard(
     icon: ImageVector,
     title: String,
     subtitle: String,
     complete: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val container = if (complete) {
         MaterialTheme.colorScheme.primaryContainer
@@ -300,7 +425,7 @@ private fun SetupRequirementCard(
         MaterialTheme.colorScheme.surfaceContainerHigh
     }
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(26.dp))
             .clickable(enabled = !complete, onClick = onClick),
