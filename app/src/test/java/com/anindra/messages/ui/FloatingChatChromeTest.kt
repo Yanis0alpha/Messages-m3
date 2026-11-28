@@ -2,7 +2,6 @@ package com.anindra.messages.ui
 
 import java.io.File
 import kotlin.math.abs
-import kotlin.math.sqrt
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -174,21 +173,20 @@ class FloatingChatChromeTest {
         assertTrue(blur.contains("noiseCoefficient = BlurDefaults.NoiseCoefficient"))
         assertFalse(blur.contains("noiseCoefficient = 0f"))
         assertTrue(blur.contains("layer == DynamicBackdropLayer.SHEET"))
-        assertTrue(blur.contains("repeat(passCount) { blur(passRadiusPx) }"))
+        assertTrue(blur.contains("downscaleFactor = 1"))
+        assertTrue(blur.contains("effect(\n                        BlurEffect("))
+        assertTrue(blur.contains("edgeTreatment = TileMode.Decal"))
     }
 
     @Test
-    fun smoothSheetBlurKeepsTheRequestedRadiusWithFinerPasses() {
+    fun nativeSheetBlurKeepsFullResolutionPaddingAroundEveryEdge() {
         listOf(25f, 50f, 75f, 100f).forEach { radiusPx ->
-            val passCount = DynamicBackdropBlurQuality.smoothPassCount(radiusPx)
-            val passRadius = DynamicBackdropBlurQuality.smoothPassRadius(radiusPx)
+            val padding = DynamicBackdropBlurQuality.nativeEdgePadding(radiusPx)
+            val expected = radiusPx *
+                DynamicBackdropBlurQuality.NATIVE_EDGE_PADDING_MULTIPLIER
 
-            assertTrue(passCount in 1..DynamicBackdropBlurQuality.MAX_SMOOTH_PASSES)
-            assertTrue(
-                passRadius <= DynamicBackdropBlurQuality.MAX_SMOOTH_PASS_RADIUS_PX ||
-                    passCount == DynamicBackdropBlurQuality.MAX_SMOOTH_PASSES
-            )
-            assertTrue(abs(passRadius * sqrt(passCount.toFloat()) - radiusPx) < 0.001f)
+            assertTrue(abs(padding - expected) < 0.001f)
+            assertTrue(padding >= radiusPx)
         }
     }
 

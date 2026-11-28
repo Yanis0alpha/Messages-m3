@@ -21,8 +21,10 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.unit.Density
@@ -35,12 +37,10 @@ import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.effect
 import top.yukonga.miuix.kmp.blur.noiseDither
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.blur.textureBlurEffect
-import kotlin.math.ceil
-import kotlin.math.sqrt
 
 /** Shared layer ordering for same-frame backdrop composition. */
 internal object DynamicBackdropLayer {
@@ -58,22 +58,12 @@ internal object DynamicBackdropLayer {
     const val SHEET_FLOATING_CONTENT = 7f
 }
 
-/**
- * Large sheets make the adaptive blur's coarse texture levels visible over saturated artwork.
- * Splitting one wide Gaussian into smaller passes preserves its variance while keeping every pass
- * on a finer sampling level. Nine passes is the upper performance bound for very dense displays.
- */
+/** Full-resolution sheet blur constants, kept separate from the adaptive miuix fallback. */
 internal object DynamicBackdropBlurQuality {
-    const val MAX_SMOOTH_PASS_RADIUS_PX = 34f
-    const val MAX_SMOOTH_PASSES = 9
+    const val NATIVE_EDGE_PADDING_MULTIPLIER = 1.5f
 
-    fun smoothPassCount(radiusPx: Float): Int {
-        val ratio = radiusPx.coerceAtLeast(0f) / MAX_SMOOTH_PASS_RADIUS_PX
-        return ceil(ratio * ratio).toInt().coerceIn(1, MAX_SMOOTH_PASSES)
-    }
-
-    fun smoothPassRadius(radiusPx: Float): Float =
-        radiusPx.coerceAtLeast(0f) / sqrt(smoothPassCount(radiusPx).toFloat())
+    fun nativeEdgePadding(radiusPx: Float): Float =
+        radiusPx.coerceAtLeast(0f) * NATIVE_EDGE_PADDING_MULTIPLIER
 }
 
 private data class DynamicBackdropSource(
@@ -300,15 +290,23 @@ internal fun Modifier.dynamicBackdropEffect(
             if (blurRadius.value > 0f) {
                 if (layer == DynamicBackdropLayer.SHEET) {
                     val radiusPx = blurRadius.value * density
-                    val passCount = DynamicBackdropBlurQuality.smoothPassCount(radiusPx)
-                    val passRadiusPx = DynamicBackdropBlurQuality.smoothPassRadius(radiusPx)
 
-                    // A 25 dp one-pass blur selects a coarse 8x texture on typical Pixel density.
-                    // Several smaller Gaussian passes keep sampling at 4x while preserving the
-                    // requested radius because independent Gaussian variances add together.
-                    padding = maxOf(padding, radiusPx * 1.5f)
+                    // Bypass miuix's adaptive low-resolution Gaussian for large sheets. The
+                    // backdrop graph still supplies the live pixels, but Android's hardware
+                    // RenderEffect now blurs a 1:1 texture instead of enlarging a coarse capture.
+                    downscaleFactor = 1
+                    padding = maxOf(
+                        padding,
+                        DynamicBackdropBlurQuality.nativeEdgePadding(radiusPx)
+                    )
                     noiseDither(BlurDefaults.NoiseCoefficient)
-                    repeat(passCount) { blur(passRadiusPx) }
+                    effect(
+                        BlurEffect(
+                            radiusX = radiusPx,
+                            radiusY = radiusPx,
+                            edgeTreatment = TileMode.Decal
+                        )
+                    )
                 } else {
                     textureBlurEffect(
                         blurRadiusX = blurRadius.value,
