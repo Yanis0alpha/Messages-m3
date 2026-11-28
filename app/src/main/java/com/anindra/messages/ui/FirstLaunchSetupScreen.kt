@@ -227,8 +227,9 @@ internal fun FirstLaunchSetupScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
+            val visualWidth = maxWidth
             val visualHeight = maxHeight * 0.43f
-            val cookieSize = if (maxWidth < 520.dp) maxWidth * 0.94f else 460.dp
+            val cookieSize = if (visualWidth < 520.dp) visualWidth * 0.94f else 460.dp
             val motionProgress = remember { Animatable(0f) }
 
             LaunchedEffect(reduceMotion) {
@@ -290,7 +291,7 @@ internal fun FirstLaunchSetupScreen(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .offset(
-                                x = maxWidth * motionFrame.gemXFraction,
+                                x = visualWidth * motionFrame.gemXFraction,
                                 y = visualHeight * motionFrame.gemYFraction
                             )
                             .size(96.dp)
