@@ -29,13 +29,18 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.BlurDefaults
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.noiseDither
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.blur.textureBlurEffect
+import kotlin.math.ceil
+import kotlin.math.sqrt
 
 /** Shared layer ordering for same-frame backdrop composition. */
 internal object DynamicBackdropLayer {
@@ -51,6 +56,24 @@ internal object DynamicBackdropLayer {
     // Sheet children are above the sheet backdrop and must never be fed back into it.
     const val SHEET_CONTENT = 6f
     const val SHEET_FLOATING_CONTENT = 7f
+}
+
+/**
+ * Large sheets make the adaptive blur's coarse texture levels visible over saturated artwork.
+ * Splitting one wide Gaussian into smaller passes preserves its variance while keeping every pass
+ * on a finer sampling level. Nine passes is the upper performance bound for very dense displays.
+ */
+internal object DynamicBackdropBlurQuality {
+    const val MAX_SMOOTH_PASS_RADIUS_PX = 34f
+    const val MAX_SMOOTH_PASSES = 9
+
+    fun smoothPassCount(radiusPx: Float): Int {
+        val ratio = radiusPx.coerceAtLeast(0f) / MAX_SMOOTH_PASS_RADIUS_PX
+        return ceil(ratio * ratio).toInt().coerceIn(1, MAX_SMOOTH_PASSES)
+    }
+
+    fun smoothPassRadius(radiusPx: Float): Float =
+        radiusPx.coerceAtLeast(0f) / sqrt(smoothPassCount(radiusPx).toFloat())
 }
 
 private data class DynamicBackdropSource(
@@ -275,10 +298,24 @@ internal fun Modifier.dynamicBackdropEffect(
             // coordinates on the current frame even when an ancestor only transforms the layer.
             if (followMotion) graph.motionFrame
             if (blurRadius.value > 0f) {
-                textureBlurEffect(
-                    blurRadiusX = blurRadius.value,
-                    noiseCoefficient = 0f
-                )
+                if (layer == DynamicBackdropLayer.SHEET) {
+                    val radiusPx = blurRadius.value * density
+                    val passCount = DynamicBackdropBlurQuality.smoothPassCount(radiusPx)
+                    val passRadiusPx = DynamicBackdropBlurQuality.smoothPassRadius(radiusPx)
+
+                    // A 25 dp one-pass blur selects a coarse 8x texture on typical Pixel density.
+                    // Several smaller Gaussian passes keep sampling at 4x while preserving the
+                    // requested radius because independent Gaussian variances add together.
+                    padding = maxOf(padding, radiusPx * 1.5f)
+                    noiseDither(BlurDefaults.NoiseCoefficient)
+                    repeat(passCount) { blur(passRadiusPx) }
+                } else {
+                    textureBlurEffect(
+                        blurRadiusX = blurRadius.value,
+                        // Full-resolution dither hides quantisation bands after texture upscaling.
+                        noiseCoefficient = BlurDefaults.NoiseCoefficient
+                    )
+                }
             }
         }
     )
