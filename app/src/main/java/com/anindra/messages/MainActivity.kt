@@ -1839,14 +1839,16 @@ open class MainActivity : FragmentActivity() {
                         onboardingJustFinished = true
                         onboardingCompleted = true
                     }
-                    FirstLaunchSetupScreen(
-                        defaultSmsReady = defaultSmsReady,
-                        permissionsReady = permissionsReady,
-                        onRequestDefaultSms = { requestDefaultSmsRole() },
-                        onRequestPermissions = { requestMissingSmsPermissions() },
-                        onComplete = finishOnboarding,
-                        onNotNow = finishOnboarding
-                    )
+                    DynamicBackdropHost {
+                        FirstLaunchSetupScreen(
+                            defaultSmsReady = defaultSmsReady,
+                            permissionsReady = permissionsReady,
+                            onRequestDefaultSms = { requestDefaultSmsRole() },
+                            onRequestPermissions = { requestMissingSmsPermissions() },
+                            onComplete = finishOnboarding,
+                            onNotNow = finishOnboarding
+                        )
+                    }
                     return@MessagesTheme
                 }
 

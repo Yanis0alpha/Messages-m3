@@ -84,19 +84,21 @@ internal data class SetupShapeMotionFrame(
     val movingScaleY: Float,
     val lowerImpact: Float,
     val middleImpact: Float,
-    val upperImpact: Float
+    val upperLeftImpact: Float,
+    val upperRightImpact: Float
 )
 
 /**
  * A lightweight multi-collision physics timeline inspired by the open-source Feldman Clock setup
- * artwork. The moving shape is launched upward, loses speed under gravity, collides with three
- * staggered Material shapes and leaves through the top in a natural zigzag. Each impact is shared
+ * artwork. The moving shape is launched upward, loses speed under gravity, collides with four
+ * staggered Material shapes and leaves through the upper-left in a natural zigzag. Each impact is shared
  * with the obstacle so the background visibly absorbs and returns the energy.
  */
 internal object SetupShapeMotion {
-    private const val LOWER_HIT = 0.22f
-    private const val MIDDLE_HIT = 0.48f
-    private const val UPPER_HIT = 0.72f
+    private const val LOWER_HIT = 0.18f
+    private const val MIDDLE_HIT = 0.40f
+    private const val UPPER_LEFT_HIT = 0.62f
+    private const val UPPER_RIGHT_HIT = 0.82f
 
     val resting = SetupShapeMotionFrame(
         movingXFraction = 0.52f,
@@ -106,15 +108,22 @@ internal object SetupShapeMotion {
         movingScaleY = 1f,
         lowerImpact = 0f,
         middleImpact = 0f,
-        upperImpact = 0f
+        upperLeftImpact = 0f,
+        upperRightImpact = 0f
     )
 
     fun frame(rawProgress: Float): SetupShapeMotionFrame {
         val progress = rawProgress.coerceIn(0f, 1f)
         val lowerImpact = impactPulse(progress, LOWER_HIT)
         val middleImpact = impactPulse(progress, MIDDLE_HIT)
-        val upperImpact = impactPulse(progress, UPPER_HIT)
-        val strongestImpact = maxOf(lowerImpact, middleImpact, upperImpact)
+        val upperLeftImpact = impactPulse(progress, UPPER_LEFT_HIT)
+        val upperRightImpact = impactPulse(progress, UPPER_RIGHT_HIT)
+        val strongestImpact = maxOf(
+            lowerImpact,
+            middleImpact,
+            upperLeftImpact,
+            upperRightImpact
+        )
 
         val point = when {
             progress <= LOWER_HIT -> arcPoint(
@@ -133,21 +142,29 @@ internal object SetupShapeMotion {
                 toY = 0.56f,
                 gravityArc = 0.055f
             )
-            progress <= UPPER_HIT -> arcPoint(
-                phase(progress, MIDDLE_HIT, UPPER_HIT),
+            progress <= UPPER_LEFT_HIT -> arcPoint(
+                phase(progress, MIDDLE_HIT, UPPER_LEFT_HIT),
                 fromX = 0.58f,
                 fromY = 0.56f,
                 toX = 0.20f,
                 toY = 0.36f,
                 gravityArc = 0.050f
             )
-            else -> arcPoint(
-                phase(progress, UPPER_HIT, 1f),
+            progress <= UPPER_RIGHT_HIT -> arcPoint(
+                phase(progress, UPPER_LEFT_HIT, UPPER_RIGHT_HIT),
                 fromX = 0.20f,
                 fromY = 0.36f,
-                toX = 0.64f,
-                toY = -0.18f,
-                gravityArc = 0.040f
+                toX = 0.66f,
+                toY = 0.17f,
+                gravityArc = 0.045f
+            )
+            else -> arcPoint(
+                phase(progress, UPPER_RIGHT_HIT, 1f),
+                fromX = 0.66f,
+                fromY = 0.17f,
+                toX = -0.20f,
+                toY = -0.14f,
+                gravityArc = 0.035f
             )
         }
 
@@ -159,7 +176,8 @@ internal object SetupShapeMotion {
             movingScaleY = 1f - strongestImpact * 0.20f,
             lowerImpact = lowerImpact,
             middleImpact = middleImpact,
-            upperImpact = upperImpact
+            upperLeftImpact = upperLeftImpact,
+            upperRightImpact = upperRightImpact
         )
     }
 
@@ -187,7 +205,7 @@ internal object SetupShapeMotion {
         start + (end - start) * fraction
 }
 
-/** Pixel-inspired first-run setup with a three-collision expressive shape path. */
+/** Pixel-inspired first-run setup with a four-collision expressive shape path. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FirstLaunchSetupScreen(
@@ -225,7 +243,8 @@ internal fun FirstLaunchSetupScreen(
             )
             val lowerSize = if (screenWidth < 520.dp) screenWidth * 0.76f else 420.dp
             val middleSize = if (screenWidth < 520.dp) screenWidth * 0.46f else 260.dp
-            val upperSize = if (screenWidth < 520.dp) screenWidth * 0.38f else 220.dp
+            val upperLeftSize = if (screenWidth < 520.dp) screenWidth * 0.38f else 220.dp
+            val upperRightSize = if (screenWidth < 520.dp) screenWidth * 0.52f else 300.dp
             val movingSize = if (screenWidth < 520.dp) 88.dp else 104.dp
             val motionProgress = remember { Animatable(0f) }
             val sheetReveal = remember { Animatable(if (reduceMotion) 1f else 0f) }
@@ -267,97 +286,133 @@ internal fun FirstLaunchSetupScreen(
                 SetupShapeMotion.frame(motionProgress.value)
             }
 
-            Text(
-                text = stringResource(R.string.onboarding_brand),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, top = 12.dp)
-            )
+            DynamicBackdropMotionTracker {
+                motionProgress.value to sheetHeight
+            }
 
-            // Lowest obstacle: a large cookie emerging from the bottom-left corner.
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(
-                        x = -(lowerSize * 0.22f),
-                        y = screenHeight - lowerSize * 0.56f
+                    .fillMaxSize()
+                    .dynamicBackdropSource(
+                        DynamicBackdropLayer.BACKGROUND,
+                        followMotion = true
                     )
-                    .size(lowerSize)
-                    .graphicsLayer {
-                        rotationZ = -14f + motionFrame.lowerImpact * 5f
-                        scaleX = 1f + motionFrame.lowerImpact * 0.08f
-                        scaleY = 1f - motionFrame.lowerImpact * 0.10f
-                        transformOrigin = TransformOrigin(0.45f, 0.80f)
-                    }
-                    .clip(MaterialShapes.Cookie12Sided.toShape())
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-            )
+            ) {
+                Text(
+                    text = stringResource(R.string.onboarding_brand),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(start = 24.dp, top = 12.dp)
+                )
 
-            // The right obstacle sits above the cookie and returns the shape towards the left.
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(
-                        x = screenWidth - middleSize * 0.72f,
-                        y = screenHeight * 0.58f
-                    )
-                    .size(middleSize)
-                    .graphicsLayer {
-                        rotationZ = 18f - motionFrame.middleImpact * 7f
-                        scaleX = 1f - motionFrame.middleImpact * 0.09f
-                        scaleY = 1f + motionFrame.middleImpact * 0.08f
-                    }
-                    .clip(MaterialShapes.Clover8Leaf.toShape())
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
-            )
+                // Lowest obstacle: a large cookie emerging from the bottom-left corner.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = -(lowerSize * 0.22f),
+                            y = screenHeight - lowerSize * 0.56f
+                        )
+                        .size(lowerSize)
+                        .graphicsLayer {
+                            rotationZ = -14f + motionFrame.lowerImpact * 5f
+                            scaleX = 1f + motionFrame.lowerImpact * 0.08f
+                            scaleY = 1f - motionFrame.lowerImpact * 0.10f
+                            transformOrigin = TransformOrigin(0.45f, 0.80f)
+                        }
+                        .clip(MaterialShapes.Cookie12Sided.toShape())
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                )
 
-            // The last obstacle is higher on the left and launches the moving shape off-screen.
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(
-                        x = -(upperSize * 0.10f),
-                        y = screenHeight * 0.34f
-                    )
-                    .size(upperSize)
-                    .graphicsLayer {
-                        rotationZ = -20f + motionFrame.upperImpact * 8f
-                        scaleX = 1f + motionFrame.upperImpact * 0.08f
-                        scaleY = 1f - motionFrame.upperImpact * 0.09f
-                    }
-                    .clip(MaterialShapes.Cookie6Sided.toShape())
-                    .background(MaterialTheme.colorScheme.tertiaryContainer)
-            )
+                // The right obstacle sits above the cookie and returns the shape towards the left.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = screenWidth - middleSize * 0.72f,
+                            y = screenHeight * 0.58f
+                        )
+                        .size(middleSize)
+                        .graphicsLayer {
+                            rotationZ = 18f - motionFrame.middleImpact * 7f
+                            scaleX = 1f - motionFrame.middleImpact * 0.09f
+                            scaleY = 1f + motionFrame.middleImpact * 0.08f
+                        }
+                        .clip(MaterialShapes.Clover8Leaf.toShape())
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                )
 
-            // One medium Gem climbs through all three collisions in a continuous zigzag.
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(
-                        x = screenWidth * motionFrame.movingXFraction,
-                        y = screenHeight * motionFrame.movingYFraction
-                    )
-                    .size(movingSize)
-                    .graphicsLayer {
-                        rotationZ = motionFrame.movingRotation
-                        scaleX = motionFrame.movingScaleX
-                        scaleY = motionFrame.movingScaleY
-                    }
-                    .clip(MaterialShapes.Gem.toShape())
-                    .background(MaterialTheme.colorScheme.primary)
-            )
+                // The third obstacle is higher on the left and redirects the Gem to the upper-right.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = -(upperLeftSize * 0.10f),
+                            y = screenHeight * 0.34f
+                        )
+                        .size(upperLeftSize)
+                        .graphicsLayer {
+                            rotationZ = -20f + motionFrame.upperLeftImpact * 8f
+                            scaleX = 1f + motionFrame.upperLeftImpact * 0.08f
+                            scaleY = 1f - motionFrame.upperLeftImpact * 0.09f
+                        }
+                        .clip(MaterialShapes.Cookie6Sided.toShape())
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                )
 
-            Surface(
+                // A large final obstacle in the upper-right sends the Gem out through the left edge.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = screenWidth - upperRightSize * 0.72f,
+                            y = screenHeight * 0.06f
+                        )
+                        .size(upperRightSize)
+                        .graphicsLayer {
+                            rotationZ = 14f - motionFrame.upperRightImpact * 7f
+                            scaleX = 1f - motionFrame.upperRightImpact * 0.08f
+                            scaleY = 1f + motionFrame.upperRightImpact * 0.09f
+                            transformOrigin = TransformOrigin(0.35f, 0.65f)
+                        }
+                        .clip(MaterialShapes.Cookie9Sided.toShape())
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                )
+
+                // One medium Gem climbs through all four collisions in a continuous zigzag.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = screenWidth * motionFrame.movingXFraction,
+                            y = screenHeight * motionFrame.movingYFraction
+                        )
+                        .size(movingSize)
+                        .graphicsLayer {
+                            rotationZ = motionFrame.movingRotation
+                            scaleX = motionFrame.movingScaleX
+                            scaleY = motionFrame.movingScaleY
+                        }
+                        .clip(MaterialShapes.Gem.toShape())
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
+
+            TranslucentBackdropSurface(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .height(sheetHeight)
                     .offset(y = sheetHeight * (1f - sheetReveal.value)),
                 shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                tonalElevation = 6.dp
+                tint = MaterialTheme.colorScheme.surfaceContainer,
+                blurRadius = 32.dp,
+                backdropLayer = DynamicBackdropLayer.SHEET,
+                followMotion = true,
+                blurEnabled = true,
+                tintAlpha = 0.72f
             ) {
                 if (!setupExpanded) {
                     Row(

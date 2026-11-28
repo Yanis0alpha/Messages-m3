@@ -39,6 +39,7 @@ class FirstLaunchSetupScreenTest {
         assertTrue(source.contains("MaterialShapes.Cookie12Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Clover8Leaf.toShape()"))
         assertTrue(source.contains("MaterialShapes.Cookie6Sided.toShape()"))
+        assertTrue(source.contains("MaterialShapes.Cookie9Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Gem.toShape()"))
         assertTrue(source.contains("SetupShapeMotion.frame(motionProgress.value)"))
         assertTrue(source.contains("durationMillis = 4_200"))
@@ -47,22 +48,25 @@ class FirstLaunchSetupScreenTest {
     }
 
     @Test
-    fun threeImpactsSendTheMovingShapeUpInAZigzag() {
+    fun fourImpactsSendTheMovingShapeUpInAZigzag() {
         val start = SetupShapeMotion.frame(0f)
-        val lower = SetupShapeMotion.frame(0.22f)
-        val middle = SetupShapeMotion.frame(0.48f)
-        val upper = SetupShapeMotion.frame(0.72f)
+        val lower = SetupShapeMotion.frame(0.18f)
+        val middle = SetupShapeMotion.frame(0.40f)
+        val upperLeft = SetupShapeMotion.frame(0.62f)
+        val upperRight = SetupShapeMotion.frame(0.82f)
         val end = SetupShapeMotion.frame(1f)
 
         assertTrue("moving shape must enter from below", start.movingYFraction > 1f)
         assertTrue("first collision must travel left", lower.movingXFraction < start.movingXFraction)
         assertTrue("second collision must rebound right", middle.movingXFraction > lower.movingXFraction)
-        assertTrue("third collision must rebound left", upper.movingXFraction < middle.movingXFraction)
-        assertTrue("final rebound must leave to the right", end.movingXFraction > upper.movingXFraction)
+        assertTrue("third collision must rebound left", upperLeft.movingXFraction < middle.movingXFraction)
+        assertTrue("fourth collision must rebound right", upperRight.movingXFraction > upperLeft.movingXFraction)
+        assertTrue("final rebound must leave to the left", end.movingXFraction < upperRight.movingXFraction)
         assertTrue("moving shape must leave above the screen", end.movingYFraction < 0f)
         assertTrue("lower obstacle must receive the first impact", lower.lowerImpact > 0.99f)
         assertTrue("middle obstacle must receive the second impact", middle.middleImpact > 0.99f)
-        assertTrue("upper obstacle must receive the third impact", upper.upperImpact > 0.99f)
+        assertTrue("upper-left obstacle must receive the third impact", upperLeft.upperLeftImpact > 0.99f)
+        assertTrue("upper-right obstacle must receive the fourth impact", upperRight.upperRightImpact > 0.99f)
         assertTrue("moving shape must squash on impact", middle.movingScaleY < 1f)
     }
 
@@ -73,7 +77,8 @@ class FirstLaunchSetupScreenTest {
         assertEquals(1f, frame.movingScaleY, 0f)
         assertEquals(0f, frame.lowerImpact, 0f)
         assertEquals(0f, frame.middleImpact, 0f)
-        assertEquals(0f, frame.upperImpact, 0f)
+        assertEquals(0f, frame.upperLeftImpact, 0f)
+        assertEquals(0f, frame.upperRightImpact, 0f)
         assertTrue(frame.movingYFraction in 0f..0.5f)
     }
 
@@ -85,6 +90,9 @@ class FirstLaunchSetupScreenTest {
         assertTrue(source.contains("R.string.onboarding_start_setup"))
         assertTrue(source.contains("R.string.onboarding_skip_setup"))
         assertTrue(source.contains("OutlinedButton("))
+        assertTrue(source.contains("TranslucentBackdropSurface("))
+        assertTrue(source.contains("blurRadius = 32.dp"))
+        assertTrue(source.contains("tintAlpha = 0.72f"))
     }
 
     @Test
