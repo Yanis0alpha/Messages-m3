@@ -230,8 +230,16 @@ class FloatingChatChromeTest {
         val bottomBar = screen.substringAfter("bottomBar = {")
             .substringBefore(") { padding ->")
 
-        assertTrue(screen.contains(") { padding ->\n        Box(Modifier.fillMaxSize())"))
-        assertFalse(screen.contains("Box(Modifier.fillMaxSize().padding(padding))"))
+        assertTrue(
+            screen.contains(
+                ") { padding ->\n" +
+                    "        Box(\n" +
+                    "            Modifier\n" +
+                    "                .fillMaxSize()\n" +
+                    "                .dynamicBackdropSource("
+            )
+        )
+        assertFalse(screen.contains(".fillMaxSize().padding(padding)"))
         assertTrue(screen.contains("top = padding.calculateTopPadding() + 12.dp"))
         assertTrue(screen.contains("bottom = padding.calculateBottomPadding() + 12.dp"))
         assertTrue(bottomBar.contains("Modifier.navigationBarsPadding()"))
