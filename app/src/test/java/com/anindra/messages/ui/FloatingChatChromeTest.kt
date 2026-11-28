@@ -179,9 +179,12 @@ class FloatingChatChromeTest {
     }
 
     @Test
-    fun material3SplitButtonCompilesAgainstItsRequiredAndroidApi() {
-        assertTrue(appBuild.contains("compileSdk = 37"))
-        assertTrue(mmsBuild.contains("compileSdk = 37"))
+    fun material3AndMiuixCompileAgainstTheirRequiredAndroidApi() {
+        listOf(appBuild, mmsBuild).forEach { build ->
+            assertTrue(build.contains("compileSdk {"))
+            assertTrue(build.contains("version = release(37)"))
+            assertTrue(build.contains("minorApiLevel = 2"))
+        }
         assertTrue(appBuild.contains("targetSdk = 36"))
     }
 
