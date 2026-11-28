@@ -35,25 +35,24 @@ class FirstLaunchSetupScreenTest {
     }
 
     @Test
-    fun backgroundUsesFourEqualRotatingExpressiveShapesAndNoMovingGem() {
+    fun backgroundUsesFourVariedStaticExpressiveShapesAndNoGem() {
         assertTrue(source.contains("MaterialShapes.Cookie12Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Clover8Leaf.toShape()"))
-        assertTrue(source.contains("MaterialShapes.Cookie6Sided.toShape()"))
+        assertTrue(source.contains("MaterialShapes.Sunny.toShape()"))
         assertTrue(source.contains("MaterialShapes.Cookie9Sided.toShape()"))
         assertTrue(!source.contains("MaterialShapes.Gem.toShape()"))
-        assertEquals(4, Regex("\\.size\\(shapeSize\\)").findAll(source).count())
-        assertTrue(source.contains("durationMillis = 14_000"))
-        assertTrue(source.contains("rotationProgress.value * 360f"))
-        assertTrue(source.contains("rotationProgress.value * 300f"))
-        assertTrue(source.contains("rotationProgress.value * 420f"))
+        assertTrue(source.contains("FirstLaunchStaticBackdrop()"))
+        assertEquals(4, Regex("\\.rotate\\(").findAll(source).count())
+        assertTrue(!source.contains("rotationProgress"))
+        assertTrue(!source.contains("Animatable("))
         assertTrue(source.contains("R.string.onboarding_hero_title"))
     }
 
     @Test
-    fun reducedMotionStopsAllFourShapeRotations() {
-        assertTrue(source.contains("if (reduceMotion)"))
-        assertTrue(source.contains("rotationProgress.snapTo(0f)"))
-        assertTrue(source.contains("val reduceMotion = LocalReduceMotion.current"))
+    fun setupReusesTheMainPagesStaticPreblurPipeline() {
+        assertTrue(source.contains("SettingsBlurredBackdropSource()"))
+        assertTrue(source.contains("FirstLaunchStaticBackdrop(registerAsSource = false)"))
+        assertTrue(source.contains("Modifier.dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)"))
     }
 
     @Test
@@ -69,8 +68,8 @@ class FirstLaunchSetupScreenTest {
         assertTrue(source.contains("R.string.onboarding_skip_setup"))
         assertTrue(source.contains("OutlinedButton("))
         assertTrue(source.contains("TranslucentBackdropSurface("))
-        assertTrue(source.contains("ChatSheetLayout.BACKGROUND_BLUR_RADIUS"))
-        assertTrue(source.contains("backdropLayer = DynamicBackdropLayer.SHEET"))
+        assertTrue(source.contains("blurRadius = ChatSheetLayout.BACKGROUND_BLUR_RADIUS"))
+        assertTrue(source.contains("backdropLayer = DynamicBackdropLayer.CONTENT"))
         assertTrue(source.contains("tintAlpha = surfaceAlpha"))
     }
 

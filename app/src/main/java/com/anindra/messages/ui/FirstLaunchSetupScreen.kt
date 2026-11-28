@@ -1,8 +1,5 @@
 package com.anindra.messages.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,25 +40,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
-import com.anindra.messages.ui.theme.LocalReduceMotion
 import kotlinx.coroutines.launch
 
 internal enum class FirstLaunchAction {
@@ -78,7 +72,7 @@ internal object FirstLaunchSetupFlow {
     }
 }
 
-/** Pixel-inspired first-run setup with four equally sized rotating Material shapes. */
+/** Pixel-inspired first-run setup with four static Material shapes and shared app glass. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FirstLaunchSetupScreen(
@@ -89,7 +83,6 @@ internal fun FirstLaunchSetupScreen(
     onComplete: () -> Unit,
     onNotNow: () -> Unit
 ) {
-    val reduceMotion = LocalReduceMotion.current
     val action = FirstLaunchSetupFlow.nextAction(defaultSmsReady, permissionsReady)
     val scaffoldState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
@@ -101,7 +94,6 @@ internal fun FirstLaunchSetupScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val screenWidth = maxWidth
             val screenHeight = maxHeight
             val proposedCollapsedHeight = screenHeight * 0.10f
             val collapsedHeight = if (proposedCollapsedHeight < 80.dp) {
@@ -111,30 +103,9 @@ internal fun FirstLaunchSetupScreen(
             }
             val sheetHeight = screenHeight * ChatSheetLayout.HEIGHT_FRACTION
             val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-            val shapeSize = if (screenWidth < 520.dp) screenWidth * 0.56f else 320.dp
-            val rotationProgress = remember { Animatable(0f) }
-
-            LaunchedEffect(reduceMotion) {
-                if (reduceMotion) {
-                    rotationProgress.snapTo(0f)
-                } else {
-                    while (true) {
-                        rotationProgress.snapTo(0f)
-                        rotationProgress.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(
-                                durationMillis = 14_000,
-                                easing = LinearEasing
-                            )
-                        )
-                    }
-                }
-            }
 
             DynamicBackdropMotionTracker {
-                rotationProgress.value to runCatching {
-                    scaffoldState.bottomSheetState.requireOffset()
-                }.getOrNull()
+                runCatching { scaffoldState.bottomSheetState.requireOffset() }.getOrNull()
             }
 
             BottomSheetScaffold(
@@ -149,7 +120,8 @@ internal fun FirstLaunchSetupScreen(
                 sheetSwipeEnabled = setupStarted,
                 containerColor = Color.Transparent,
                 sheetContent = {
-                    // Use the exact reusable glass surface used throughout the application.
+                    // Same 25 dp CONTENT blur as the cards on the main page. The source is now
+                    // static, so only the sheet position changes while dragging.
                     TranslucentBackdropSurface(
                         shape = sheetShape,
                         tint = MaterialTheme.colorScheme.surface,
@@ -157,7 +129,7 @@ internal fun FirstLaunchSetupScreen(
                             .fillMaxWidth()
                             .height(sheetHeight),
                         blurRadius = ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
-                        backdropLayer = DynamicBackdropLayer.SHEET,
+                        backdropLayer = DynamicBackdropLayer.CONTENT,
                         followMotion = true,
                         tintAlpha = surfaceAlpha
                     ) {
@@ -319,14 +291,13 @@ internal fun FirstLaunchSetupScreen(
                     }
                 }
             ) { _ ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .dynamicBackdropSource(
-                            DynamicBackdropLayer.BACKGROUND,
-                            followMotion = true
-                        )
-                ) {
+                Box(Modifier.fillMaxSize()) {
+                    // Same stable three-layer backdrop used on the main page: source, one shared
+                    // pre-blur, then a sharp visible copy. Nothing is re-rasterized by rotation.
+                    FirstLaunchStaticBackdrop()
+                    SettingsBlurredBackdropSource()
+                    FirstLaunchStaticBackdrop(registerAsSource = false)
+
                     Text(
                         text = stringResource(R.string.onboarding_hero_title),
                         style = MaterialTheme.typography.headlineMedium,
@@ -337,69 +308,73 @@ internal fun FirstLaunchSetupScreen(
                             .padding(start = 24.dp, top = 18.dp)
                             .fillMaxWidth(0.58f)
                     )
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset(
-                                x = -(shapeSize * 0.24f),
-                                y = screenHeight - shapeSize * 0.56f
-                            )
-                            .size(shapeSize)
-                            .graphicsLayer {
-                                rotationZ = -14f + rotationProgress.value * 360f
-                            }
-                            .clip(MaterialShapes.Cookie12Sided.toShape())
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset(
-                                x = screenWidth - shapeSize * 0.76f,
-                                y = screenHeight * 0.58f
-                            )
-                            .size(shapeSize)
-                            .graphicsLayer {
-                                rotationZ = 18f - rotationProgress.value * 300f
-                            }
-                            .clip(MaterialShapes.Clover8Leaf.toShape())
-                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset(
-                                x = -(shapeSize * 0.12f),
-                                y = screenHeight * 0.32f
-                            )
-                            .size(shapeSize)
-                            .graphicsLayer {
-                                rotationZ = -20f + rotationProgress.value * 420f
-                            }
-                            .clip(MaterialShapes.Cookie6Sided.toShape())
-                            .background(MaterialTheme.colorScheme.tertiaryContainer)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset(
-                                x = screenWidth - shapeSize * 0.78f,
-                                y = screenHeight * 0.06f
-                            )
-                            .size(shapeSize)
-                            .graphicsLayer {
-                                rotationZ = 14f - rotationProgress.value * 360f
-                            }
-                            .clip(MaterialShapes.Cookie9Sided.toShape())
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    )
                 }
             }
         }
+    }
+}
+
+/** Static M3 silhouettes arranged like the main page backdrop, without a moving Gem. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun FirstLaunchStaticBackdrop(registerAsSource: Boolean = true) {
+    val colors = MaterialTheme.colorScheme
+    Box(
+        Modifier
+            .fillMaxSize()
+            .then(
+                if (registerAsSource) {
+                    Modifier.dynamicBackdropSource(DynamicBackdropLayer.BACKGROUND)
+                } else {
+                    Modifier
+                }
+            )
+            .background(colors.background)
+    ) {
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 58.dp, y = (-48).dp)
+                .size(216.dp)
+                .rotate(14f)
+                .background(
+                    colors.primaryContainer.copy(alpha = 0.24f),
+                    MaterialShapes.Cookie12Sided.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = (-70).dp, y = (-64).dp)
+                .size(176.dp)
+                .rotate(-21f)
+                .background(
+                    colors.tertiaryContainer.copy(alpha = 0.18f),
+                    MaterialShapes.Clover8Leaf.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = 52.dp, y = 96.dp)
+                .size(156.dp)
+                .rotate(10f)
+                .background(
+                    colors.secondaryContainer.copy(alpha = 0.18f),
+                    MaterialShapes.Sunny.toShape()
+                )
+        )
+        Box(
+            Modifier
+                .align(Alignment.BottomStart)
+                .offset(x = (-52).dp, y = (-76).dp)
+                .size(196.dp)
+                .rotate(27f)
+                .background(
+                    colors.primaryContainer.copy(alpha = 0.16f),
+                    MaterialShapes.Cookie9Sided.toShape()
+                )
+        )
     }
 }
 
