@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">الأذونات الأساسية</string>
     <string name="onboarding_permissions_subtitle">الوصول إلى SMS والإشعارات. تُطلب جهات الاتصال عند الحاجة فقط.</string>
     <string name="onboarding_privacy">تبقى الرسائل وبيانات الإعداد على هذا الجهاز.</string>
+    <string name="onboarding_start_setup">بدء الإعداد</string>
+    <string name="onboarding_skip_setup">تخطي</string>
     <string name="onboarding_action_default">تعيين كتطبيق افتراضي</string>
     <string name="onboarding_action_permissions">منح الأذونات</string>
     <string name="onboarding_action_finish">بدء المراسلة</string>

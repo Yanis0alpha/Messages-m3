@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">必要權限</string>
     <string name="onboarding_permissions_subtitle">簡訊和通知權限。只在需要時要求聯絡人權限。</string>
     <string name="onboarding_privacy">簡訊和設定資料只會保留在此裝置上。</string>
+    <string name="onboarding_start_setup">開始設定</string>
+    <string name="onboarding_skip_setup">略過</string>
     <string name="onboarding_action_default">設為預設應用程式</string>
     <string name="onboarding_action_permissions">授予權限</string>
     <string name="onboarding_action_finish">開始傳送簡訊</string>

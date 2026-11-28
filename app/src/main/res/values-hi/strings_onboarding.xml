@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">ज़रूरी अनुमतियाँ</string>
     <string name="onboarding_permissions_subtitle">SMS और सूचनाओं की पहुँच। संपर्क केवल ज़रूरत पड़ने पर माँगे जाते हैं।</string>
     <string name="onboarding_privacy">संदेश और सेटअप डेटा इसी डिवाइस पर रहते हैं।</string>
+    <string name="onboarding_start_setup">सेटअप शुरू करें</string>
+    <string name="onboarding_skip_setup">छोड़ें</string>
     <string name="onboarding_action_default">डिफ़ॉल्ट बनाएँ</string>
     <string name="onboarding_action_permissions">अनुमतियाँ दें</string>
     <string name="onboarding_action_finish">मैसेजिंग शुरू करें</string>

@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">Niezbędne uprawnienia</string>
     <string name="onboarding_permissions_subtitle">Dostęp do SMS-ów i powiadomień. Kontakty są wymagane dopiero w razie potrzeby.</string>
     <string name="onboarding_privacy">Wiadomości i dane konfiguracji pozostają na tym urządzeniu.</string>
+    <string name="onboarding_start_setup">Rozpocznij konfigurację</string>
+    <string name="onboarding_skip_setup">Pomiń</string>
     <string name="onboarding_action_default">Ustaw jako domyślną</string>
     <string name="onboarding_action_permissions">Przyznaj uprawnienia</string>
     <string name="onboarding_action_finish">Rozpocznij wiadomości</string>

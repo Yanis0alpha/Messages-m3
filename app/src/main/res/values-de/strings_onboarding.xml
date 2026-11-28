@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">Erforderliche Berechtigungen</string>
     <string name="onboarding_permissions_subtitle">SMS-Zugriff und Benachrichtigungen. Kontakte werden erst bei Bedarf angefordert.</string>
     <string name="onboarding_privacy">Nachrichten und Einrichtungsdaten bleiben auf diesem Gerät.</string>
+    <string name="onboarding_start_setup">Einrichtung starten</string>
+    <string name="onboarding_skip_setup">Überspringen</string>
     <string name="onboarding_action_default">Als Standard festlegen</string>
     <string name="onboarding_action_permissions">Berechtigungen erteilen</string>
     <string name="onboarding_action_finish">Nachrichten starten</string>

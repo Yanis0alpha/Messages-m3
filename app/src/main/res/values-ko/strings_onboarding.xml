@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">필수 권한</string>
     <string name="onboarding_permissions_subtitle">SMS 및 알림 접근 권한입니다. 연락처는 필요할 때만 요청합니다.</string>
     <string name="onboarding_privacy">메시지와 설정 데이터는 이 기기에만 보관됩니다.</string>
+    <string name="onboarding_start_setup">설정 시작</string>
+    <string name="onboarding_skip_setup">건너뛰기</string>
     <string name="onboarding_action_default">기본 앱으로 설정</string>
     <string name="onboarding_action_permissions">권한 허용</string>
     <string name="onboarding_action_finish">메시지 시작</string>

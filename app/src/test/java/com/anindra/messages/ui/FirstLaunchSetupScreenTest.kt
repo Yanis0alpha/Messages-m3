@@ -36,45 +36,55 @@ class FirstLaunchSetupScreenTest {
 
     @Test
     fun pixelInspiredArtworkUsesTheRequestedExpressiveMotion() {
-        assertTrue(source.contains("MaterialShapes.Cookie9Sided.toShape()"))
+        assertTrue(source.contains("MaterialShapes.Cookie12Sided.toShape()"))
+        assertTrue(source.contains("MaterialShapes.Clover8Leaf.toShape()"))
+        assertTrue(source.contains("MaterialShapes.Cookie6Sided.toShape()"))
         assertTrue(source.contains("MaterialShapes.Gem.toShape()"))
         assertTrue(source.contains("SetupShapeMotion.frame(motionProgress.value)"))
-        assertTrue(source.contains("durationMillis = 3_000"))
+        assertTrue(source.contains("durationMillis = 4_200"))
         assertTrue(source.contains("val reduceMotion = LocalReduceMotion.current"))
         assertTrue(source.contains("SetupShapeMotion.resting"))
     }
 
     @Test
-    fun gravityImpactAndRestitutionAreOneCoordinatedMotion() {
+    fun threeImpactsSendTheMovingShapeUpInAZigzag() {
         val start = SetupShapeMotion.frame(0f)
-        val fallingEarly = SetupShapeMotion.frame(0.24f)
-        val fallingMiddle = SetupShapeMotion.frame(0.32f)
-        val fallingLate = SetupShapeMotion.frame(0.40f)
-        val impact = SetupShapeMotion.frame(0.53f)
-        val rebound = SetupShapeMotion.frame(0.68f)
+        val lower = SetupShapeMotion.frame(0.22f)
+        val middle = SetupShapeMotion.frame(0.48f)
+        val upper = SetupShapeMotion.frame(0.72f)
         val end = SetupShapeMotion.frame(1f)
 
-        assertTrue("cookie must enter from below-left", start.cookieYFraction > 0.4f)
-        assertTrue(
-            "falling distance must accelerate under gravity",
-            fallingLate.gemYFraction - fallingMiddle.gemYFraction >
-                fallingMiddle.gemYFraction - fallingEarly.gemYFraction
-        )
-        assertTrue("cookie must squash at impact", impact.cookieScaleY < 1f)
-        assertTrue("cookie must spread at impact", impact.cookieScaleX > 1f)
-        assertTrue("gem must squash at impact", impact.gemScaleY < 1f)
-        assertTrue("restitution must send the gem upward", rebound.gemYFraction < impact.gemYFraction)
-        assertTrue("cookie must leave below before the loop restarts", end.cookieYFraction > 0.4f)
+        assertTrue("moving shape must enter from below", start.movingYFraction > 1f)
+        assertTrue("first collision must travel left", lower.movingXFraction < start.movingXFraction)
+        assertTrue("second collision must rebound right", middle.movingXFraction > lower.movingXFraction)
+        assertTrue("third collision must rebound left", upper.movingXFraction < middle.movingXFraction)
+        assertTrue("final rebound must leave to the right", end.movingXFraction > upper.movingXFraction)
+        assertTrue("moving shape must leave above the screen", end.movingYFraction < 0f)
+        assertTrue("lower obstacle must receive the first impact", lower.lowerImpact > 0.99f)
+        assertTrue("middle obstacle must receive the second impact", middle.middleImpact > 0.99f)
+        assertTrue("upper obstacle must receive the third impact", upper.upperImpact > 0.99f)
+        assertTrue("moving shape must squash on impact", middle.movingScaleY < 1f)
     }
 
     @Test
     fun reducedMotionKeepsAReadableCollisionFreeComposition() {
         val frame = SetupShapeMotion.resting
-        assertEquals(1f, frame.cookieScaleX, 0f)
-        assertEquals(1f, frame.cookieScaleY, 0f)
-        assertEquals(1f, frame.gemScaleX, 0f)
-        assertEquals(1f, frame.gemScaleY, 0f)
-        assertTrue(frame.gemYFraction < 0.5f)
+        assertEquals(1f, frame.movingScaleX, 0f)
+        assertEquals(1f, frame.movingScaleY, 0f)
+        assertEquals(0f, frame.lowerImpact, 0f)
+        assertEquals(0f, frame.middleImpact, 0f)
+        assertEquals(0f, frame.upperImpact, 0f)
+        assertTrue(frame.movingYFraction in 0f..0.5f)
+    }
+
+    @Test
+    fun collapsedActionsExpandARealNinetyPercentSetupSheet() {
+        assertTrue(source.contains("screenHeight * 0.10f"))
+        assertTrue(source.contains("screenHeight * 0.90f"))
+        assertTrue(source.contains("setupExpanded = true"))
+        assertTrue(source.contains("R.string.onboarding_start_setup"))
+        assertTrue(source.contains("R.string.onboarding_skip_setup"))
+        assertTrue(source.contains("OutlinedButton("))
     }
 
     @Test
@@ -109,6 +119,8 @@ class FirstLaunchSetupScreenTest {
             "onboarding_title",
             "onboarding_default_title",
             "onboarding_permissions_title",
+            "onboarding_start_setup",
+            "onboarding_skip_setup",
             "onboarding_action_finish",
             "onboarding_not_now"
         )

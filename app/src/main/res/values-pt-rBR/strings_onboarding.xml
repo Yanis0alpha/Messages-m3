@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">Permissões essenciais</string>
     <string name="onboarding_permissions_subtitle">Acesso a SMS e notificações. Os contatos são solicitados apenas quando necessários.</string>
     <string name="onboarding_privacy">As mensagens e os dados de configuração permanecem neste dispositivo.</string>
+    <string name="onboarding_start_setup">Iniciar configuração</string>
+    <string name="onboarding_skip_setup">Ignorar</string>
     <string name="onboarding_action_default">Definir como padrão</string>
     <string name="onboarding_action_permissions">Conceder permissões</string>
     <string name="onboarding_action_finish">Começar a conversar</string>

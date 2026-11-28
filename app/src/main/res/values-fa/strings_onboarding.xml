@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">مجوزهای ضروری</string>
     <string name="onboarding_permissions_subtitle">دسترسی به پیامک و اعلان‌ها. مخاطبان فقط هنگام نیاز درخواست می‌شوند.</string>
     <string name="onboarding_privacy">پیام‌ها و داده‌های راه‌اندازی روی این دستگاه می‌مانند.</string>
+    <string name="onboarding_start_setup">شروع راه‌اندازی</string>
+    <string name="onboarding_skip_setup">رد کردن</string>
     <string name="onboarding_action_default">تنظیم به‌عنوان پیش‌فرض</string>
     <string name="onboarding_action_permissions">دادن مجوزها</string>
     <string name="onboarding_action_finish">شروع پیام‌رسانی</string>

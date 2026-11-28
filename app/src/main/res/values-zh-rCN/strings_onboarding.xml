@@ -7,6 +7,8 @@
     <string name="onboarding_permissions_title">必要权限</string>
     <string name="onboarding_permissions_subtitle">短信和通知权限。仅在需要时请求联系人权限。</string>
     <string name="onboarding_privacy">短信和设置数据仅保留在此设备上。</string>
+    <string name="onboarding_start_setup">开始设置</string>
+    <string name="onboarding_skip_setup">跳过</string>
     <string name="onboarding_action_default">设为默认应用</string>
     <string name="onboarding_action_permissions">授予权限</string>
     <string name="onboarding_action_finish">开始发短信</string>

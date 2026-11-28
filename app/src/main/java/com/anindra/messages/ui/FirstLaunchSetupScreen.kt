@@ -2,6 +2,9 @@ package com.anindra.messages.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,13 +37,17 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,8 +61,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.R
 import com.anindra.messages.ui.theme.LocalReduceMotion
-import kotlin.math.PI
-import kotlin.math.sin
 
 internal enum class FirstLaunchAction {
     REQUEST_DEFAULT_SMS,
@@ -72,143 +77,117 @@ internal object FirstLaunchSetupFlow {
 }
 
 internal data class SetupShapeMotionFrame(
-    val cookieXFraction: Float,
-    val cookieYFraction: Float,
-    val cookieRotation: Float,
-    val cookieScaleX: Float,
-    val cookieScaleY: Float,
-    val gemXFraction: Float,
-    val gemYFraction: Float,
-    val gemRotation: Float,
-    val gemScaleX: Float,
-    val gemScaleY: Float
+    val movingXFraction: Float,
+    val movingYFraction: Float,
+    val movingRotation: Float,
+    val movingScaleX: Float,
+    val movingScaleY: Float,
+    val lowerImpact: Float,
+    val middleImpact: Float,
+    val upperImpact: Float
 )
 
 /**
- * One deterministic pass of the setup artwork. The timing follows the same model used by
- * Feldman Clock's open-source Setup Wizard artwork (`feldmandev/feldman-clock`): gravity
- * accelerates the falling body, restitution sends it back up, and the large cookie behaves as a
- * springy trampoline at the collision. The equations here are a small local implementation, so
- * this screen does not pull the reference app's much larger motion-and-font dependency.
+ * A lightweight multi-collision physics timeline inspired by the open-source Feldman Clock setup
+ * artwork. The moving shape is launched upward, loses speed under gravity, collides with three
+ * staggered Material shapes and leaves through the top in a natural zigzag. Each impact is shared
+ * with the obstacle so the background visibly absorbs and returns the energy.
  */
 internal object SetupShapeMotion {
-    private const val IMPACT_START = 0.48f
-    private const val IMPACT_END = 0.58f
+    private const val LOWER_HIT = 0.22f
+    private const val MIDDLE_HIT = 0.48f
+    private const val UPPER_HIT = 0.72f
 
     val resting = SetupShapeMotionFrame(
-        cookieXFraction = 0f,
-        cookieYFraction = 0f,
-        cookieRotation = -12f,
-        cookieScaleX = 1f,
-        cookieScaleY = 1f,
-        gemXFraction = 0.53f,
-        gemYFraction = 0.34f,
-        gemRotation = 58f,
-        gemScaleX = 1f,
-        gemScaleY = 1f
+        movingXFraction = 0.52f,
+        movingYFraction = 0.16f,
+        movingRotation = 24f,
+        movingScaleX = 1f,
+        movingScaleY = 1f,
+        lowerImpact = 0f,
+        middleImpact = 0f,
+        upperImpact = 0f
     )
 
     fun frame(rawProgress: Float): SetupShapeMotionFrame {
         val progress = rawProgress.coerceIn(0f, 1f)
-        val entrance = phase(progress, 0f, 0.20f)
-        val entranceSpring = easeOutBack(entrance)
-        val exit = phase(progress, 0.84f, 1f)
-        val impact = phase(progress, IMPACT_START, IMPACT_END)
-        val compression = if (progress in IMPACT_START..IMPACT_END) {
-            sin(impact * PI.toFloat()).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
+        val lowerImpact = impactPulse(progress, LOWER_HIT)
+        val middleImpact = impactPulse(progress, MIDDLE_HIT)
+        val upperImpact = impactPulse(progress, UPPER_HIT)
+        val strongestImpact = maxOf(lowerImpact, middleImpact, upperImpact)
 
-        val gemX: Float
-        val gemY: Float
-        val gemRotation: Float
-        val gemScaleX: Float
-        val gemScaleY: Float
-        when {
-            progress < 0.16f -> {
-                gemX = 0.70f
-                gemY = -0.34f
-                gemRotation = -28f
-                gemScaleX = 1f
-                gemScaleY = 1f
-            }
-            progress < IMPACT_START -> {
-                val fall = phase(progress, 0.16f, IMPACT_START)
-                // Constant gravity: travelled distance is proportional to time squared.
-                val gravity = fall * fall
-                gemX = lerp(0.70f, 0.52f, fall)
-                gemY = lerp(-0.34f, 0.50f, gravity)
-                gemRotation = lerp(-28f, 68f, fall)
-                gemScaleX = 1f
-                gemScaleY = 1f
-            }
-            progress <= IMPACT_END -> {
-                gemX = 0.52f
-                gemY = 0.50f + 0.026f * compression
-                gemRotation = lerp(68f, 94f, impact)
-                // Squash on contact, then stretch as restitution takes over.
-                val release = phase(impact, 0.5f, 1f)
-                if (impact < 0.5f) {
-                    val squash = sin(impact * PI.toFloat())
-                    gemScaleX = 1f + 0.13f * squash
-                    gemScaleY = 1f - 0.20f * squash
-                } else {
-                    gemScaleX = lerp(1.13f, 0.934f, release)
-                    gemScaleY = lerp(0.80f, 1.12f, release)
-                }
-            }
-            progress < 0.84f -> {
-                val rebound = phase(progress, IMPACT_END, 0.84f)
-                // Restitution gives a high initial velocity which eases as the gem reaches its apex.
-                val ballisticRise = 1f - (1f - rebound) * (1f - rebound)
-                gemX = lerp(0.52f, 0.61f, rebound)
-                gemY = lerp(0.50f, -0.34f, ballisticRise)
-                gemRotation = lerp(94f, 178f, rebound)
-                val stretch = (1f - rebound) * 0.12f
-                gemScaleX = 1f - stretch * 0.55f
-                gemScaleY = 1f + stretch
-            }
-            else -> {
-                gemX = 0.61f
-                gemY = -0.34f
-                gemRotation = 178f
-                gemScaleX = 1f
-                gemScaleY = 1f
-            }
+        val point = when {
+            progress <= LOWER_HIT -> arcPoint(
+                phase(progress, 0f, LOWER_HIT),
+                fromX = 0.38f,
+                fromY = 1.08f,
+                toX = 0.22f,
+                toY = 0.70f,
+                gravityArc = 0.045f
+            )
+            progress <= MIDDLE_HIT -> arcPoint(
+                phase(progress, LOWER_HIT, MIDDLE_HIT),
+                fromX = 0.22f,
+                fromY = 0.70f,
+                toX = 0.58f,
+                toY = 0.56f,
+                gravityArc = 0.055f
+            )
+            progress <= UPPER_HIT -> arcPoint(
+                phase(progress, MIDDLE_HIT, UPPER_HIT),
+                fromX = 0.58f,
+                fromY = 0.56f,
+                toX = 0.20f,
+                toY = 0.36f,
+                gravityArc = 0.050f
+            )
+            else -> arcPoint(
+                phase(progress, UPPER_HIT, 1f),
+                fromX = 0.20f,
+                fromY = 0.36f,
+                toX = 0.64f,
+                toY = -0.18f,
+                gravityArc = 0.040f
+            )
         }
 
         return SetupShapeMotionFrame(
-            cookieXFraction = -0.10f * (1f - entrance.coerceIn(0f, 1f)) - 0.10f * exit,
-            cookieYFraction = 0.74f * (1f - entranceSpring) + 0.74f * exit,
-            cookieRotation = lerp(-24f, -12f, entrance.coerceIn(0f, 1f)) +
-                2.5f * compression,
-            cookieScaleX = 1f + 0.075f * compression,
-            cookieScaleY = 1f - 0.095f * compression,
-            gemXFraction = gemX,
-            gemYFraction = gemY,
-            gemRotation = gemRotation,
-            gemScaleX = gemScaleX,
-            gemScaleY = gemScaleY
+            movingXFraction = point.first,
+            movingYFraction = point.second,
+            movingRotation = -36f + progress * 520f,
+            movingScaleX = 1f + strongestImpact * 0.16f,
+            movingScaleY = 1f - strongestImpact * 0.20f,
+            lowerImpact = lowerImpact,
+            middleImpact = middleImpact,
+            upperImpact = upperImpact
         )
     }
+
+    private fun arcPoint(
+        fraction: Float,
+        fromX: Float,
+        fromY: Float,
+        toX: Float,
+        toY: Float,
+        gravityArc: Float
+    ): Pair<Float, Float> {
+        // A fresh rebound starts quickly and decelerates as gravity wins near the next obstacle.
+        val travelled = 1f - (1f - fraction) * (1f - fraction)
+        val gravity = 4f * fraction * (1f - fraction) * gravityArc
+        return lerp(fromX, toX, travelled) to lerp(fromY, toY, travelled) + gravity
+    }
+
+    private fun impactPulse(progress: Float, center: Float): Float =
+        (1f - kotlin.math.abs(progress - center) / 0.045f).coerceIn(0f, 1f)
 
     private fun phase(value: Float, start: Float, end: Float): Float =
         ((value - start) / (end - start)).coerceIn(0f, 1f)
 
     private fun lerp(start: Float, end: Float, fraction: Float): Float =
         start + (end - start) * fraction
-
-    /** Slight overshoot gives the heavy cookie a spring rather than a tweened slide. */
-    private fun easeOutBack(value: Float): Float {
-        val c1 = 1.70158f
-        val c3 = c1 + 1f
-        val shifted = value - 1f
-        return 1f + c3 * shifted * shifted * shifted + c1 * shifted * shifted
-    }
 }
 
-/** Pixel-inspired first-run setup with a bouncing expressive gem. */
+/** Pixel-inspired first-run setup with a three-collision expressive shape path. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FirstLaunchSetupScreen(
@@ -221,16 +200,50 @@ internal fun FirstLaunchSetupScreen(
 ) {
     val reduceMotion = LocalReduceMotion.current
     val action = FirstLaunchSetupFlow.nextAction(defaultSmsReady, permissionsReady)
+    var setupExpanded by rememberSaveable { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val visualWidth = maxWidth
-            val visualHeight = maxHeight * 0.43f
-            val cookieSize = if (visualWidth < 520.dp) visualWidth * 0.94f else 460.dp
+            val screenWidth = maxWidth
+            val screenHeight = maxHeight
+            val proposedCollapsedHeight = screenHeight * 0.10f
+            val collapsedHeight = if (proposedCollapsedHeight < 80.dp) {
+                80.dp
+            } else {
+                proposedCollapsedHeight
+            }
+            val sheetHeight by animateDpAsState(
+                targetValue = if (setupExpanded) screenHeight * 0.90f else collapsedHeight,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+                label = "first_launch_sheet_height"
+            )
+            val lowerSize = if (screenWidth < 520.dp) screenWidth * 0.76f else 420.dp
+            val middleSize = if (screenWidth < 520.dp) screenWidth * 0.46f else 260.dp
+            val upperSize = if (screenWidth < 520.dp) screenWidth * 0.38f else 220.dp
+            val movingSize = if (screenWidth < 520.dp) 88.dp else 104.dp
             val motionProgress = remember { Animatable(0f) }
+            val sheetReveal = remember { Animatable(if (reduceMotion) 1f else 0f) }
+
+            LaunchedEffect(reduceMotion) {
+                if (reduceMotion) {
+                    sheetReveal.snapTo(1f)
+                } else {
+                    sheetReveal.snapTo(0f)
+                    sheetReveal.animateTo(
+                        targetValue = 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
+                }
+            }
 
             LaunchedEffect(reduceMotion) {
                 if (reduceMotion) {
@@ -241,7 +254,7 @@ internal fun FirstLaunchSetupScreen(
                         motionProgress.animateTo(
                             targetValue = 1f,
                             animationSpec = tween(
-                                durationMillis = 3_000,
+                                durationMillis = 4_200,
                                 easing = LinearEasing
                             )
                         )
@@ -254,155 +267,240 @@ internal fun FirstLaunchSetupScreen(
                 SetupShapeMotion.frame(motionProgress.value)
             }
 
-            Column(Modifier.fillMaxSize()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(visualHeight)
-                ) {
-                    Text(
-                        text = stringResource(R.string.onboarding_brand),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .statusBarsPadding()
-                            .padding(start = 24.dp, top = 12.dp)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .offset(
-                                x = -(cookieSize * 0.28f) +
-                                    cookieSize * motionFrame.cookieXFraction,
-                                y = cookieSize * 0.30f +
-                                    cookieSize * motionFrame.cookieYFraction
-                            )
-                            .size(cookieSize)
-                            .graphicsLayer {
-                                rotationZ = motionFrame.cookieRotation
-                                scaleX = motionFrame.cookieScaleX
-                                scaleY = motionFrame.cookieScaleY
-                                transformOrigin = TransformOrigin(0.5f, 0.82f)
-                            }
-                            .clip(MaterialShapes.Cookie9Sided.toShape())
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset(
-                                x = visualWidth * motionFrame.gemXFraction,
-                                y = visualHeight * motionFrame.gemYFraction
-                            )
-                            .size(96.dp)
-                            .graphicsLayer {
-                                rotationZ = motionFrame.gemRotation
-                                scaleX = motionFrame.gemScaleX
-                                scaleY = motionFrame.gemScaleY
-                            }
-                            .clip(MaterialShapes.Gem.toShape())
-                            .background(MaterialTheme.colorScheme.primary)
-                    )
-                }
+            Text(
+                text = stringResource(R.string.onboarding_brand),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(start = 24.dp, top = 12.dp)
+            )
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .verticalScroll(rememberScrollState())
-                        .navigationBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(R.string.onboarding_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
+            // Lowest obstacle: a large cookie emerging from the bottom-left corner.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(
+                        x = -(lowerSize * 0.22f),
+                        y = screenHeight - lowerSize * 0.56f
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.onboarding_subtitle),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(24.dp))
+                    .size(lowerSize)
+                    .graphicsLayer {
+                        rotationZ = -14f + motionFrame.lowerImpact * 5f
+                        scaleX = 1f + motionFrame.lowerImpact * 0.08f
+                        scaleY = 1f - motionFrame.lowerImpact * 0.10f
+                        transformOrigin = TransformOrigin(0.45f, 0.80f)
+                    }
+                    .clip(MaterialShapes.Cookie12Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            )
 
-                    SetupRequirementCard(
-                        icon = Icons.Rounded.Sms,
-                        title = stringResource(R.string.onboarding_default_title),
-                        subtitle = stringResource(R.string.onboarding_default_subtitle),
-                        complete = defaultSmsReady,
-                        onClick = onRequestDefaultSms
+            // The right obstacle sits above the cookie and returns the shape towards the left.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(
+                        x = screenWidth - middleSize * 0.72f,
+                        y = screenHeight * 0.58f
                     )
-                    Spacer(Modifier.height(10.dp))
-                    SetupRequirementCard(
-                        icon = Icons.Rounded.Notifications,
-                        title = stringResource(R.string.onboarding_permissions_title),
-                        subtitle = stringResource(R.string.onboarding_permissions_subtitle),
-                        complete = permissionsReady,
-                        onClick = onRequestPermissions
-                    )
-                    Spacer(Modifier.height(18.dp))
+                    .size(middleSize)
+                    .graphicsLayer {
+                        rotationZ = 18f - motionFrame.middleImpact * 7f
+                        scaleX = 1f - motionFrame.middleImpact * 0.09f
+                        scaleY = 1f + motionFrame.middleImpact * 0.08f
+                    }
+                    .clip(MaterialShapes.Clover8Leaf.toShape())
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+            )
 
+            // The last obstacle is higher on the left and launches the moving shape off-screen.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(
+                        x = -(upperSize * 0.10f),
+                        y = screenHeight * 0.34f
+                    )
+                    .size(upperSize)
+                    .graphicsLayer {
+                        rotationZ = -20f + motionFrame.upperImpact * 8f
+                        scaleX = 1f + motionFrame.upperImpact * 0.08f
+                        scaleY = 1f - motionFrame.upperImpact * 0.09f
+                    }
+                    .clip(MaterialShapes.Cookie6Sided.toShape())
+                    .background(MaterialTheme.colorScheme.tertiaryContainer)
+            )
+
+            // One medium Gem climbs through all three collisions in a continuous zigzag.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(
+                        x = screenWidth * motionFrame.movingXFraction,
+                        y = screenHeight * motionFrame.movingYFraction
+                    )
+                    .size(movingSize)
+                    .graphicsLayer {
+                        rotationZ = motionFrame.movingRotation
+                        scaleX = motionFrame.movingScaleX
+                        scaleY = motionFrame.movingScaleY
+                    }
+                    .clip(MaterialShapes.Gem.toShape())
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(sheetHeight)
+                    .offset(y = sheetHeight * (1f - sheetReveal.value)),
+                shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                tonalElevation = 6.dp
+            ) {
+                if (!setupExpanded) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Shield,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.onboarding_privacy),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Spacer(Modifier.height(22.dp))
-
-                    Button(
-                        onClick = {
-                            when (action) {
-                                FirstLaunchAction.REQUEST_DEFAULT_SMS -> onRequestDefaultSms()
-                                FirstLaunchAction.REQUEST_PERMISSIONS -> onRequestPermissions()
-                                FirstLaunchAction.COMPLETE -> onComplete()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            stringResource(
-                                when (action) {
-                                    FirstLaunchAction.REQUEST_DEFAULT_SMS ->
-                                        R.string.onboarding_action_default
-                                    FirstLaunchAction.REQUEST_PERMISSIONS ->
-                                        R.string.onboarding_action_permissions
-                                    FirstLaunchAction.COMPLETE ->
-                                        R.string.onboarding_action_finish
-                                }
+                        Button(
+                            onClick = { setupExpanded = true },
+                            modifier = Modifier.weight(1.35f),
+                            shape = RoundedCornerShape(
+                                topStart = 28.dp,
+                                bottomStart = 28.dp,
+                                topEnd = 8.dp,
+                                bottomEnd = 8.dp
                             )
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Icon(
-                            imageVector = if (action == FirstLaunchAction.COMPLETE) {
-                                Icons.Rounded.Check
-                            } else {
-                                Icons.AutoMirrored.Rounded.ArrowForward
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.onboarding_start_setup),
+                                maxLines = 1
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = onNotNow,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(
+                                topStart = 8.dp,
+                                bottomStart = 8.dp,
+                                topEnd = 28.dp,
+                                bottomEnd = 28.dp
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.onboarding_skip_setup),
+                                maxLines = 1
+                            )
+                        }
                     }
-                    TextButton(onClick = onNotNow) {
-                        Text(stringResource(R.string.onboarding_not_now))
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .navigationBarsPadding()
+                            .padding(horizontal = 24.dp, vertical = 22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            Modifier
+                                .width(36.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        Text(
+                            text = stringResource(R.string.onboarding_title),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.onboarding_subtitle),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(24.dp))
+
+                        SetupRequirementCard(
+                            icon = Icons.Rounded.Sms,
+                            title = stringResource(R.string.onboarding_default_title),
+                            subtitle = stringResource(R.string.onboarding_default_subtitle),
+                            complete = defaultSmsReady,
+                            onClick = onRequestDefaultSms
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        SetupRequirementCard(
+                            icon = Icons.Rounded.Notifications,
+                            title = stringResource(R.string.onboarding_permissions_title),
+                            subtitle = stringResource(R.string.onboarding_permissions_subtitle),
+                            complete = permissionsReady,
+                            onClick = onRequestPermissions
+                        )
+                        Spacer(Modifier.height(18.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Shield,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.onboarding_privacy),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(Modifier.height(22.dp))
+
+                        Button(
+                            onClick = {
+                                when (action) {
+                                    FirstLaunchAction.REQUEST_DEFAULT_SMS -> onRequestDefaultSms()
+                                    FirstLaunchAction.REQUEST_PERMISSIONS -> onRequestPermissions()
+                                    FirstLaunchAction.COMPLETE -> onComplete()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                stringResource(
+                                    when (action) {
+                                        FirstLaunchAction.REQUEST_DEFAULT_SMS ->
+                                            R.string.onboarding_action_default
+                                        FirstLaunchAction.REQUEST_PERMISSIONS ->
+                                            R.string.onboarding_action_permissions
+                                        FirstLaunchAction.COMPLETE ->
+                                            R.string.onboarding_action_finish
+                                    }
+                                )
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Icon(
+                                imageVector = if (action == FirstLaunchAction.COMPLETE) {
+                                    Icons.Rounded.Check
+                                } else {
+                                    Icons.AutoMirrored.Rounded.ArrowForward
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
