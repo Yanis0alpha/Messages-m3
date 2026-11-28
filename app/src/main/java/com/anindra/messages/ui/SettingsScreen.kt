@@ -55,7 +55,6 @@ import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.SimCard
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VolumeUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.CircularProgressIndicator
@@ -734,7 +733,7 @@ fun SettingsScreen(
     }
 
     if (themeDialog) {
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = { themeDialog = false },
             title = { Text(stringResource(R.string.settings_choose_theme)) },
             text = {
@@ -781,7 +780,7 @@ fun SettingsScreen(
 
 
     if (markReadDialog) {
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = { markReadDialog = false },
             title = {
                 val title = stringResource(R.string.settings_mark_read_confirm_title)
@@ -816,7 +815,7 @@ fun SettingsScreen(
         sims.forEach { sub ->
             options += sub.subscriptionId to simSettingsLabel(context, sub)
         }
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = { simDialog = false },
             title = { Text(stringResource(R.string.settings_pin_sim_card)) },
             text = {
@@ -872,7 +871,7 @@ fun SettingsScreen(
                 )
             }
         }
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = { importSourceDialog = false },
             title = { Text(stringResource(R.string.settings_import_source_title)) },
             text = {
@@ -935,7 +934,7 @@ fun SettingsScreen(
                 else -> vm.importDatabase(target, null, mode, showImportResult)
             }
         }
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = {
                 importModeDialog = false
                 pendingImportUri = null
@@ -1002,7 +1001,7 @@ fun SettingsScreen(
     }
 
     pinMode?.let { mode ->
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = {
                 pinMode = null
                 pendingImportUri = null
@@ -1190,7 +1189,7 @@ fun SettingsScreen(
     }
 
     if (showRawBackupWarning) {
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = { showRawBackupWarning = false },
             title = { DialogText(stringResource(R.string.settings_backup_unencrypted_title)) },
             text = { DialogText(stringResource(R.string.settings_backup_unencrypted_warning)) },
@@ -1210,7 +1209,7 @@ fun SettingsScreen(
 
     val importLoading = vm.importLoading.value
     if (importLoading != null) {
-        AlertDialog(
+        ExpressiveSettingsDialog(
             onDismissRequest = {},
             title = { Text(stringResource(R.string.settings_loading)) },
             text = {
@@ -1253,7 +1252,9 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
                 .size(176.dp)
                 .rotate(-16f)
                 .background(
-                    colors.primaryContainer.copy(alpha = 0.34f),
+                    colors.primaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.surfaceContainer, 0.50f, 0.34f)
+                    ),
                     MaterialShapes.Cookie12Sided.toShape()
                 )
         )
@@ -1264,7 +1265,9 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
                 .size(138.dp)
                 .rotate(21f)
                 .background(
-                    colors.tertiaryContainer.copy(alpha = 0.30f),
+                    colors.tertiaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.surfaceContainer, 0.46f, 0.30f)
+                    ),
                     MaterialShapes.Clover8Leaf.toShape()
                 )
         )
@@ -1275,7 +1278,9 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
                 .size(126.dp)
                 .rotate(11f)
                 .background(
-                    colors.secondaryContainer.copy(alpha = 0.28f),
+                    colors.secondaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.surfaceContainer, 0.44f, 0.28f)
+                    ),
                     MaterialShapes.Sunny.toShape()
                 )
         )
@@ -1286,7 +1291,9 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
                 .size(184.dp)
                 .rotate(-24f)
                 .background(
-                    colors.primaryContainer.copy(alpha = 0.30f),
+                    colors.primaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.surfaceContainer, 0.46f, 0.30f)
+                    ),
                     MaterialShapes.Gem.toShape()
                 )
         )
@@ -1297,7 +1304,9 @@ internal fun SettingsExpressiveBackdrop(registerAsSource: Boolean = true) {
                 .size(154.dp)
                 .rotate(17f)
                 .background(
-                    colors.tertiaryContainer.copy(alpha = 0.28f),
+                    colors.tertiaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.surfaceContainer, 0.44f, 0.28f)
+                    ),
                     MaterialShapes.Cookie9Sided.toShape()
                 )
         )

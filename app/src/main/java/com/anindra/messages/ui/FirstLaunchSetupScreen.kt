@@ -338,7 +338,9 @@ internal fun FirstLaunchStaticBackdrop(registerAsSource: Boolean = true) {
                 .size(216.dp)
                 .rotate(14f)
                 .background(
-                    colors.primaryContainer.copy(alpha = 0.24f),
+                    colors.primaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.background, 0.48f, 0.24f)
+                    ),
                     MaterialShapes.Cookie12Sided.toShape()
                 )
         )
@@ -349,7 +351,9 @@ internal fun FirstLaunchStaticBackdrop(registerAsSource: Boolean = true) {
                 .size(176.dp)
                 .rotate(-21f)
                 .background(
-                    colors.tertiaryContainer.copy(alpha = 0.18f),
+                    colors.tertiaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.background, 0.42f, 0.18f)
+                    ),
                     MaterialShapes.Clover8Leaf.toShape()
                 )
         )
@@ -360,7 +364,9 @@ internal fun FirstLaunchStaticBackdrop(registerAsSource: Boolean = true) {
                 .size(156.dp)
                 .rotate(10f)
                 .background(
-                    colors.secondaryContainer.copy(alpha = 0.18f),
+                    colors.secondaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.background, 0.42f, 0.18f)
+                    ),
                     MaterialShapes.Sunny.toShape()
                 )
         )
@@ -371,7 +377,9 @@ internal fun FirstLaunchStaticBackdrop(registerAsSource: Boolean = true) {
                 .size(196.dp)
                 .rotate(27f)
                 .background(
-                    colors.primaryContainer.copy(alpha = 0.16f),
+                    colors.primaryContainer.copy(
+                        alpha = expressiveShapeAlpha(colors.background, 0.38f, 0.16f)
+                    ),
                     MaterialShapes.Cookie9Sided.toShape()
                 )
         )

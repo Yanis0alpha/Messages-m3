@@ -26,6 +26,23 @@ class TranslucentBackdropSurfaceTest {
     }
 
     @Test
+    fun settingsDialogsShareTheExpressiveGlassSurface() {
+        val dialog = source("java/com/anindra/messages/ui/ExpressiveSettingsDialog.kt")
+        val settings = source("java/com/anindra/messages/ui/SettingsScreen.kt")
+
+        assertTrue(dialog.contains("Dialog("))
+        assertTrue(dialog.contains("TranslucentBackdropSurface("))
+        assertTrue(dialog.contains("RoundedCornerShape("))
+        assertTrue(dialog.contains("blurRadius = 0.dp"))
+        assertTrue(dialog.contains("backdropLayer = DynamicBackdropLayer.SETTINGS_CARD"))
+        assertTrue(dialog.contains("LocalSettingsCardBlurEnabled.current"))
+        assertTrue(dialog.contains("LocalSettingsCardAlpha.current.coerceAtLeast(0.52f)"))
+        assertTrue(settings.contains("ExpressiveSettingsDialog("))
+        assertFalse(settings.contains("AlertDialog("))
+        assertTrue(settings.contains("expressiveShapeAlpha(colors.surfaceContainer, 0.50f, 0.34f)"))
+    }
+
+    @Test
     fun conversationContactsStartChatAndSettingsUseTheGlassSurface() {
         val conversations = source("java/com/anindra/messages/ui/ConversationsScreen.kt")
         val newChat = source("java/com/anindra/messages/ui/NewChatScreen.kt")

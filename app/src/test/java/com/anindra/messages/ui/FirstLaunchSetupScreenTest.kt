@@ -45,6 +45,9 @@ class FirstLaunchSetupScreenTest {
         assertEquals(4, Regex("\\.rotate\\(").findAll(source).count())
         assertTrue(!source.contains("rotationProgress"))
         assertTrue(!source.contains("Animatable("))
+        assertTrue(source.contains("expressiveShapeAlpha(colors.background, 0.48f, 0.24f)"))
+        assertTrue(source.contains("expressiveShapeAlpha(colors.background, 0.42f, 0.18f)"))
+        assertTrue(source.contains("expressiveShapeAlpha(colors.background, 0.38f, 0.16f)"))
         assertTrue(source.contains("R.string.onboarding_hero_title"))
     }
 
