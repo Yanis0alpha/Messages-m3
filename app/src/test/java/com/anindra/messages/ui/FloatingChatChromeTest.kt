@@ -1,7 +1,6 @@
 package com.anindra.messages.ui
 
 import java.io.File
-import kotlin.math.abs
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -172,22 +171,9 @@ class FloatingChatChromeTest {
         assertTrue(blur.contains("textureBlurEffect("))
         assertTrue(blur.contains("noiseCoefficient = BlurDefaults.NoiseCoefficient"))
         assertFalse(blur.contains("noiseCoefficient = 0f"))
-        assertTrue(blur.contains("layer == DynamicBackdropLayer.SHEET"))
-        assertTrue(blur.contains("downscaleFactor = 1"))
-        assertTrue(blur.contains("effect(\n                        BlurEffect("))
-        assertTrue(blur.contains("edgeTreatment = TileMode.Decal"))
-    }
-
-    @Test
-    fun nativeSheetBlurKeepsFullResolutionPaddingAroundEveryEdge() {
-        listOf(25f, 50f, 75f, 100f).forEach { radiusPx ->
-            val padding = DynamicBackdropBlurQuality.nativeEdgePadding(radiusPx)
-            val expected = radiusPx *
-                DynamicBackdropBlurQuality.NATIVE_EDGE_PADDING_MULTIPLIER
-
-            assertTrue(abs(padding - expected) < 0.001f)
-            assertTrue(padding >= radiusPx)
-        }
+        assertFalse(blur.contains("if (layer == DynamicBackdropLayer.SHEET)"))
+        assertFalse(blur.contains("downscaleFactor = 1"))
+        assertFalse(blur.contains("BlurEffect("))
     }
 
     @Test

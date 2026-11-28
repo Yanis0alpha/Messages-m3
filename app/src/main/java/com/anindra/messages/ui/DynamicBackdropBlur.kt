@@ -21,10 +21,8 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.unit.Density
@@ -37,8 +35,6 @@ import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import top.yukonga.miuix.kmp.blur.effect
-import top.yukonga.miuix.kmp.blur.noiseDither
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.blur.textureBlurEffect
 
@@ -56,14 +52,6 @@ internal object DynamicBackdropLayer {
     // Sheet children are above the sheet backdrop and must never be fed back into it.
     const val SHEET_CONTENT = 6f
     const val SHEET_FLOATING_CONTENT = 7f
-}
-
-/** Full-resolution sheet blur constants, kept separate from the adaptive miuix fallback. */
-internal object DynamicBackdropBlurQuality {
-    const val NATIVE_EDGE_PADDING_MULTIPLIER = 1.5f
-
-    fun nativeEdgePadding(radiusPx: Float): Float =
-        radiusPx.coerceAtLeast(0f) * NATIVE_EDGE_PADDING_MULTIPLIER
 }
 
 private data class DynamicBackdropSource(
@@ -288,32 +276,11 @@ internal fun Modifier.dynamicBackdropEffect(
             // coordinates on the current frame even when an ancestor only transforms the layer.
             if (followMotion) graph.motionFrame
             if (blurRadius.value > 0f) {
-                if (layer == DynamicBackdropLayer.SHEET) {
-                    val radiusPx = blurRadius.value * density
-
-                    // Bypass miuix's adaptive low-resolution Gaussian for large sheets. The
-                    // backdrop graph still supplies the live pixels, but Android's hardware
-                    // RenderEffect now blurs a 1:1 texture instead of enlarging a coarse capture.
-                    downscaleFactor = 1
-                    padding = maxOf(
-                        padding,
-                        DynamicBackdropBlurQuality.nativeEdgePadding(radiusPx)
-                    )
-                    noiseDither(BlurDefaults.NoiseCoefficient)
-                    effect(
-                        BlurEffect(
-                            radiusX = radiusPx,
-                            radiusY = radiusPx,
-                            edgeTreatment = TileMode.Decal
-                        )
-                    )
-                } else {
-                    textureBlurEffect(
-                        blurRadiusX = blurRadius.value,
-                        // Full-resolution dither hides quantisation bands after texture upscaling.
-                        noiseCoefficient = BlurDefaults.NoiseCoefficient
-                    )
-                }
+                // Every glass surface, including setup, uses one identical app-wide effect.
+                textureBlurEffect(
+                    blurRadiusX = blurRadius.value,
+                    noiseCoefficient = BlurDefaults.NoiseCoefficient
+                )
             }
         }
     )

@@ -149,28 +149,18 @@ internal fun FirstLaunchSetupScreen(
                 sheetSwipeEnabled = setupStarted,
                 containerColor = Color.Transparent,
                 sheetContent = {
-                    Box(
-                        Modifier
+                    // Use the exact reusable glass surface used throughout the application.
+                    TranslucentBackdropSurface(
+                        shape = sheetShape,
+                        tint = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .height(sheetHeight)
-                            .clip(sheetShape)
-                            .dynamicBackdropEffect(
-                                ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
-                                DynamicBackdropLayer.SHEET,
-                                followMotion = true
-                            )
+                            .height(sheetHeight),
+                        blurRadius = ChatSheetLayout.BACKGROUND_BLUR_RADIUS,
+                        backdropLayer = DynamicBackdropLayer.SHEET,
+                        followMotion = true,
+                        tintAlpha = surfaceAlpha
                     ) {
-                        // Keep the exact same glass recipe as the app's conversation sheet.
-                        Box(
-                            Modifier
-                                .matchParentSize()
-                                .background(
-                                    MaterialTheme.colorScheme.surface.copy(
-                                        alpha = surfaceAlpha
-                                    )
-                                )
-                        )
-
                         if (!setupStarted) {
                             Row(
                                 modifier = Modifier

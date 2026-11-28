@@ -68,8 +68,10 @@ class FirstLaunchSetupScreenTest {
         assertTrue(source.contains("R.string.onboarding_start_setup"))
         assertTrue(source.contains("R.string.onboarding_skip_setup"))
         assertTrue(source.contains("OutlinedButton("))
+        assertTrue(source.contains("TranslucentBackdropSurface("))
         assertTrue(source.contains("ChatSheetLayout.BACKGROUND_BLUR_RADIUS"))
-        assertTrue(source.contains("alpha = surfaceAlpha"))
+        assertTrue(source.contains("backdropLayer = DynamicBackdropLayer.SHEET"))
+        assertTrue(source.contains("tintAlpha = surfaceAlpha"))
     }
 
     @Test
